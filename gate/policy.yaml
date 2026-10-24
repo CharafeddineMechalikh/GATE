@@ -1,0 +1,8 @@
+# GATE/policy.yaml
+permissions:
+  # Allow any tool that requires network outbound (e.g., calling Gemini API)
+  network:outbound: ["*"]
+  # Example: file write permission only for a specific demo tool
+  fs:write: [write_demo_file]
+  # Read permission allowed for all tools
+  fs:read: ["*"]

@@ -1,0 +1,50 @@
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Packaging artefacts
+*.egg-info/
+/build/
+/dist/
+
+# Secrets and runtime state
+.env
+.env.*
+*.key
+*.log
+
+# Local scratch files at the repository root
+/*.aux
+/*.out
+/*.txt
+/*.png
+/adapter_base.py
+/assess_ncbf.py
+/chk.py
+/inspect_report.py
+/langchain_adapter.py
+/llamaindex_adapter.py
+/tmp_patch.py
+/train_ncbf.py
+/adapters/
+
+# Material kept outside this repository
+/.cio/
+/benchmarks/
+/paper/
+/gui/
+/examples/
+/tools/
+/github_publish/
+/.github/workflows/python-publish.yml
+
+# Superseded packaging metadata
+/setup.cfg
