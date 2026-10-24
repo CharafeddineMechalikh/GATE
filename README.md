@@ -59,11 +59,23 @@ result = secure.invoke({"messages": [...]})
 
 The example enables only the deterministic stages so it runs without downloading an embedding model. The default configuration enables all five stages.
 
+## Documentation
+
+Full documentation lives in [`docs/`](docs/README.md):
+
+- [Installation](docs/installation.md): requirements, extras, verified framework versions.
+- [Quick start](docs/quickstart.md): a guarded agent, block handling, approvals.
+- [Architecture](docs/architecture.md) and [Enforcement plumbing](docs/enforcement.md): how a call reaches the monitor and how guards are installed.
+- [Security stages](docs/stages/privilege.md): privilege, DFA, contracts, semantic firewall, and D-CBF.
+- [Framework adapters](docs/adapters/README.md): what complete mediation means for each framework.
+- [Security model](docs/security-model.md): guarantees, known gaps, and deployment guidance.
+- [API reference](docs/api-reference.md) and [FAQ](docs/faq.md).
+
 ## Tests
 
 ```bash
-pytest tests/ -q
-pytest tests/test_framework_adapters.py -v
+python -m pytest tests/ -q
+python -m pytest tests/test_framework_adapters.py -v
 ```
 
 `tests/test_framework_adapters.py` builds real framework objects and drives each framework's native dispatch path: LangGraph `ToolNode`, LangChain's compiled agent graph, OpenAI's `FunctionTool.on_invoke_tool`, and CrewAI's function-call dispatch table. No model, API key, or network access is needed.
@@ -76,8 +88,13 @@ gate/
   security/   privilege, DFA, contracts, semantic firewall, D-CBF
   adapters/   framework wrappers and the shared enforcement layer
   audit/      encrypted audit log
+docs/         user and developer documentation
 tests/        unit and framework integration tests
 ```
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).
 
 ## Scope
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Extensive documentation under `docs/`: installation, quick start, architecture, enforcement plumbing, configuration, all five security stages, the four framework adapters, human-in-the-loop, audit, security model, API reference, testing, standalone utilities, and an FAQ.
+- Apache-2.0 `LICENSE`.
+
+### Changed
+
+- `README.md` now links the documentation set and the license, and lists `docs/` in the repository layout.
+- Package metadata now points at the actual repository and documentation URLs.
+- The `firewall` extra no longer pins `sentence-transformers<3`, which conflicted with the base dependency and would have downgraded a verified 6.1.0 environment.
+
 ## [0.3.0] - 2026-10-24
 
 ### Added

@@ -9,7 +9,7 @@ description = "Agent Execution Guard with Invariant Safety - Zero-trust security
 readme = "README.md"
 license = {text = "Apache-2.0"}
 authors = [
-    {name = "GATE Team", email = "GATE@example.com"}
+    {name = "Charafeddine Mechalikh"}
 ]
 requires-python = ">=3.9"
 classifiers = [
@@ -50,7 +50,7 @@ all = [
     "GATE-security[langchain,langgraph,openai-agents,crewai]",
 ]
 
-firewall = ["sentence-transformers>=2.2,<3"]
+firewall = ["sentence-transformers>=2.2.0"]
 audit = []
 gemini = ["google-generativeai", "langchain"]
 llamaindex = ["llama-index"]
@@ -64,10 +64,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/GATE-security/GATE"
-Documentation = "https://github.com/GATE-security/GATE#readme"
-Repository = "https://github.com/GATE-security/GATE"
-Issues = "https://github.com/GATE-security/GATE/issues"
+Homepage = "https://github.com/CharafeddineMechalikh/GATE"
+Documentation = "https://github.com/CharafeddineMechalikh/GATE/blob/main/docs/README.md"
+Repository = "https://github.com/CharafeddineMechalikh/GATE"
+Issues = "https://github.com/CharafeddineMechalikh/GATE/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
