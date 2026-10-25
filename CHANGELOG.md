@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- The project is now licensed under the MIT License instead of Apache-2.0. The `LICENSE` file, package metadata, citation metadata, README, and documentation were updated together.
+
 ## [1.1.0] - 2026-10-25
 
 ### Added

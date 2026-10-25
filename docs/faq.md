@@ -161,8 +161,8 @@ It is version 1.1.0. The adapter dispatch paths are tested against real framewor
 
 ### Can I use GATE in a commercial product?
 
-Yes. GATE is licensed under Apache-2.0, which permits commercial use, modification, and redistribution, provided you retain the license and notices and state significant changes. The license also includes a patent grant. See [LICENSE](https://github.com/CharafeddineMechalikh/GATE/blob/main/LICENSE). This answer is a summary, not legal advice; read the license text.
+Yes. GATE is licensed under the MIT License, which permits commercial use, modification, and redistribution, provided you keep the copyright notice and the permission notice in copies of the software. See [LICENSE](https://github.com/CharafeddineMechalikh/GATE/blob/main/LICENSE). This answer is a summary, not legal advice; read the license text.
 
 ### Can I publish a modified version?
 
-Yes, under the terms of Apache-2.0. Keep the `LICENSE` and `NOTICE` files (if present), mark modified files, and do not use the project's trademarks in a way that suggests endorsement.
+Yes, under the terms of the MIT License. Keep the copyright notice and the permission notice from `LICENSE` in copies you distribute, and do not use the project's name in a way that suggests endorsement.

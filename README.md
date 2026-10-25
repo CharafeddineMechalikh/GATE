@@ -2,7 +2,7 @@
 
 **Validate every guarded tool call before it executes. Keep your agent loop.**
 
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![Version](https://img.shields.io/badge/version-1.1.0-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-441%20passing-brightgreen.svg)](tests/)
@@ -33,7 +33,7 @@ BibTeX:
   title        = {{GATE}: A Zero-Trust Runtime Reference Monitor for {LLM} Agent Frameworks},
   year         = {2026},
   howpublished = {\url{https://github.com/CharafeddineMechalikh/GATE}},
-  note         = {Version 1.1.0, Apache-2.0 license}
+  note         = {Version 1.1.0, MIT license}
 }
 ```
 
@@ -231,7 +231,7 @@ If GATE is useful to you, a star helps other agent developers find it.
 
 ## License
 
-Licensed under the [Apache License 2.0](LICENSE).
+Licensed under the [MIT License](LICENSE).
 
 ## Scope
 

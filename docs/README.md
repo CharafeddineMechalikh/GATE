@@ -73,7 +73,7 @@ The pages below form a guided path from "what it does" to "how it is built" to "
 | Import package | `gate` |
 | Version | 1.1.0 |
 | Python | 3.9 or newer |
-| License | [Apache-2.0](https://github.com/CharafeddineMechalikh/GATE/blob/main/LICENSE) |
+| License | [MIT](https://github.com/CharafeddineMechalikh/GATE/blob/main/LICENSE) |
 | Runtime dependencies | `pydantic`, `numpy`, `faiss-cpu`, `sentence-transformers`, `tenacity` |
 | Supported frameworks | LangChain, LangGraph, OpenAI Agents SDK, CrewAI |
 | Decision model | Ternary: ALLOW, BLOCK, ESCALATE |

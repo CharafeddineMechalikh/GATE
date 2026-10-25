@@ -7,7 +7,7 @@ name = "GATE-security"
 version = "1.1.0"
 description = "Zero-trust runtime guardrails for LLM agents: validate every tool call before execution in LangChain, LangGraph, OpenAI Agents SDK, and CrewAI."
 readme = "README.md"
-license = {text = "Apache-2.0"}
+license = {text = "MIT"}
 authors = [
     {name = "Charafeddine Mechalikh"}
 ]
@@ -35,7 +35,7 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
