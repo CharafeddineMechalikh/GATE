@@ -205,14 +205,14 @@ The accompanying manuscript is under review; this section and [`CITATION.cff`](C
 
 Plain text:
 
-> Mechalikh, C. (2026). *GATE: Guarded Agent Tool Execution* (Version 1.0.0) [Computer software]. https://github.com/CharafeddineMechalikh/GATE
+> Mechalikh, C. (2026). *GATE: A Zero-Trust Runtime Reference Monitor for LLM Agent Frameworks* (Version 1.0.0) [Computer software]. https://github.com/CharafeddineMechalikh/GATE
 
 BibTeX:
 
 ```bibtex
 @misc{mechalikh_gate_2026,
   author       = {Mechalikh, Charafeddine},
-  title        = {{GATE}: Guarded Agent Tool Execution},
+  title        = {{GATE}: A Zero-Trust Runtime Reference Monitor for {LLM} Agent Frameworks},
   year         = {2026},
   howpublished = {\url{https://github.com/CharafeddineMechalikh/GATE}},
   note         = {Version 1.0.0, Apache-2.0 license}
