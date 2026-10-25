@@ -8,6 +8,35 @@ GATE (Guarded Agent Tool Execution) is a runtime security layer for LLM agents. 
 
 GATE does not replace the agent loop, the planner, or the tools. The framework keeps running its own graph or execution loop; only the dispatch boundary of the tools it owns is guarded.
 
+## Suggested reading order
+
+The pages below form a guided path from "what it does" to "how it is built" to "how to deploy it". Read them top to bottom. The [documentation map](#documentation-map) further down is the same set, organised by topic for reference.
+
+1. [Installation](installation.md) — requirements, extras, verified framework versions
+2. [Quick start](quickstart.md) — a minimal guarded agent, block handling, HITL, audit
+3. [Framework scenarios](framework-scenarios.md) — one policy and scenario across all four frameworks
+4. [Architecture](architecture.md) — components, request lifecycle, state machine, failure semantics
+5. The security pipeline, in check order:
+   1. [Privilege](stages/privilege.md) — tool allow-lists, data scope, budget checks
+   2. [DFA supervision](stages/dfa.md) — phases, transitions, step and loop budgets
+   3. [Smart contracts](stages/contracts.md) — preconditions and postconditions
+   4. [Semantic firewall](stages/semantic-firewall.md) — SSS scoring, intent anchor, thresholds
+   5. [D-CBF monitor](stages/dcbf.md) — barrier functions and forward invariance
+6. [Enforcement plumbing](enforcement.md) — `ToolEnforcement`, guards, argument marshalling, timeouts
+7. [Configuration](configuration.md) — every field and whether the runtime uses it
+8. Adapters — what complete mediation means per framework:
+   1. [Adapters overview](adapters/README.md)
+   2. [LangChain](adapters/langchain.md)
+   3. [LangGraph](adapters/langgraph.md)
+   4. [OpenAI Agents SDK](adapters/openai-agents.md)
+   5. [CrewAI](adapters/crewai.md)
+9. [Human-in-the-loop](human-in-the-loop.md) — approval queue, channels, SLA, sync approval
+10. [Audit](audit.md) — encrypted log, PII masking, KMS backends, retention
+11. [Security model](security-model.md) — threat model, guarantees, known gaps
+12. [Standalone utilities](standalone-utilities.md) — tenant isolation, irreversibility, circuit breaker, Neural CBF
+13. [Testing](testing.md) — test layout and how to run the real-framework integration tests
+14. [FAQ](faq.md) — common questions and pitfalls
+
 ## Documentation map
 
 | Page | Contents |
