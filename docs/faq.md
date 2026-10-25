@@ -155,7 +155,7 @@ This repository distributes the runtime framework, its adapters, and their tests
 
 ### Is GATE production-ready?
 
-It is version 1.0.0. The adapter dispatch paths are tested against real framework objects, but the semantic stage and D-CBF are best-effort signals, not a substitute for application authorization. Read [Security model](security-model.md) before putting GATE in a production path.
+It is version 1.1.0. The adapter dispatch paths are tested against real framework objects, but the semantic stage and D-CBF are best-effort signals, not a substitute for application authorization. Read [Security model](security-model.md) before putting GATE in a production path.
 
 ## Licensing
 

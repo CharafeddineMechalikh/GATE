@@ -71,7 +71,7 @@ The pages below form a guided path from "what it does" to "how it is built" to "
 |---|---|
 | Distribution name | `GATE-security` |
 | Import package | `gate` |
-| Version | 1.0.0 |
+| Version | 1.1.0 |
 | Python | 3.9 or newer |
 | License | [Apache-2.0](https://github.com/CharafeddineMechalikh/GATE/blob/main/LICENSE) |
 | Runtime dependencies | `pydantic`, `numpy`, `faiss-cpu`, `sentence-transformers`, `tenacity` |
@@ -88,4 +88,4 @@ Citation details are being finalised. The [repository README](https://github.com
 
 ## Status
 
-GATE is at version 1.0.0. The adapter integration tests drive real framework dispatch paths, but the semantic firewall and D-CBF stages are not a substitute for application-level authorization. Read [Security model](security-model.md) before deploying GATE in a production path. Security reports follow [`SECURITY.md`](https://github.com/CharafeddineMechalikh/GATE/blob/main/SECURITY.md).
+GATE is at version 1.1.0. The adapter integration tests drive real framework dispatch paths, but the semantic firewall and D-CBF stages are not a substitute for application-level authorization. Read [Security model](security-model.md) before deploying GATE in a production path. Security reports follow [`SECURITY.md`](https://github.com/CharafeddineMechalikh/GATE/blob/main/SECURITY.md).
