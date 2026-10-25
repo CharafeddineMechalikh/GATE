@@ -1,0 +1,34 @@
+# CI constraints: pin the framework stack to the versions the adapter
+# integration tests are verified against. A fresh `pip install .[all]` resolves
+# the newest LangChain/LangGraph/CrewAI/OpenAI-Agents, which are not the
+# versions the adapters hook, so CI must use these exact pins.
+#
+# Rationale for the tricky ones:
+# - openai-agents 0.6.0 accepts openai<3, which is what keeps CrewAI's `openai<3`
+#   pin and OpenAI Agents importable in the same environment.
+# - transformers 5.0.0 is the release that still accepts torch 2.5.1.
+
+pydantic==2.12.5
+numpy==2.0.1
+faiss-cpu==1.15.1
+tenacity==9.2.1
+
+sentence-transformers==6.1.0
+torch==2.5.1
+transformers==5.0.0
+tokenizers==0.22.2
+huggingface-hub==1.33.0
+
+langchain==1.4.7
+langchain-core==1.7.0
+langgraph==1.2.17
+langgraph-checkpoint==4.3.0
+langgraph-prebuilt==1.1.1
+langgraph-sdk==0.4.9
+
+openai==2.54.0
+openai-agents==0.6.0
+
+crewai==1.15.30
+crewai-cli==1.15.30
+crewai-core==1.15.30
