@@ -182,6 +182,160 @@ pre code {
   font-size: 0.86em;
 }
 
+/* Rouge syntax tokens, light theme */
+.highlight .c,
+.highlight .c1,
+.highlight .cm,
+.highlight .cs {
+  color: #6a737d;
+  font-style: italic;
+}
+
+.highlight .k,
+.highlight .kc,
+.highlight .kd,
+.highlight .kn,
+.highlight .kr,
+.highlight .kt,
+.highlight .ow {
+  color: #d73a49;
+}
+
+.highlight .s,
+.highlight .s1,
+.highlight .s2,
+.highlight .sb,
+.highlight .sc,
+.highlight .sd,
+.highlight .se,
+.highlight .sh,
+.highlight .si,
+.highlight .sr,
+.highlight .sx {
+  color: #032f62;
+}
+
+.highlight .m,
+.highlight .mb,
+.highlight .mf,
+.highlight .mh,
+.highlight .mi,
+.highlight .il {
+  color: #005cc5;
+}
+
+.highlight .nc,
+.highlight .nn,
+.highlight .nf,
+.highlight .fm,
+.highlight .nd,
+.highlight .na {
+  color: #6f42c1;
+}
+
+.highlight .nb,
+.highlight .bp,
+.highlight .nv,
+.highlight .vi {
+  color: #005cc5;
+}
+
+.highlight .nt {
+  color: #22863a;
+}
+
+.highlight .o,
+.highlight .p {
+  color: #24292e;
+}
+
+.highlight .gd {
+  color: #b31d28;
+  background: #ffeef0;
+}
+
+.highlight .gi {
+  color: #22863a;
+  background: #f0fff4;
+}
+
+@media (prefers-color-scheme: dark) {
+  .highlight .c,
+  .highlight .c1,
+  .highlight .cm,
+  .highlight .cs {
+    color: #8b949e;
+  }
+
+  .highlight .k,
+  .highlight .kc,
+  .highlight .kd,
+  .highlight .kn,
+  .highlight .kr,
+  .highlight .kt,
+  .highlight .ow {
+    color: #ff7b72;
+  }
+
+  .highlight .s,
+  .highlight .s1,
+  .highlight .s2,
+  .highlight .sb,
+  .highlight .sc,
+  .highlight .sd,
+  .highlight .se,
+  .highlight .sh,
+  .highlight .si,
+  .highlight .sr,
+  .highlight .sx {
+    color: #a5d6ff;
+  }
+
+  .highlight .m,
+  .highlight .mb,
+  .highlight .mf,
+  .highlight .mh,
+  .highlight .mi,
+  .highlight .il {
+    color: #79c0ff;
+  }
+
+  .highlight .nc,
+  .highlight .nn,
+  .highlight .nf,
+  .highlight .fm,
+  .highlight .nd,
+  .highlight .na {
+    color: #d2a8ff;
+  }
+
+  .highlight .nb,
+  .highlight .bp,
+  .highlight .nv,
+  .highlight .vi {
+    color: #79c0ff;
+  }
+
+  .highlight .nt {
+    color: #7ee787;
+  }
+
+  .highlight .o,
+  .highlight .p {
+    color: #c9d1d9;
+  }
+
+  .highlight .gd {
+    color: #ffdcd7;
+    background: #67060c;
+  }
+
+  .highlight .gi {
+    color: #aff5b4;
+    background: #033a16;
+  }
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
