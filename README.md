@@ -13,6 +13,32 @@
 [![Last commit](https://img.shields.io/github/last-commit/CharafeddineMechalikh/GATE.svg)](https://github.com/CharafeddineMechalikh/GATE/commits/main)
 [![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)](CHANGELOG.md)
 
+## Citation
+
+If GATE supports your research, please cite it.
+
+**Please cite us as:** *to be specified soon.*
+
+The accompanying manuscript is under review; this section and [`CITATION.cff`](CITATION.cff) will be updated with the final reference. Until then, please cite the software.
+
+Plain text:
+
+> Mechalikh, C. (2026). *GATE: A Zero-Trust Runtime Reference Monitor for LLM Agent Frameworks* (Version 1.1.0) [Computer software]. https://github.com/CharafeddineMechalikh/GATE
+
+BibTeX:
+
+```groovy
+@misc{mechalikh_gate_2026,
+  author       = {Mechalikh, Charafeddine},
+  title        = {{GATE}: A Zero-Trust Runtime Reference Monitor for {LLM} Agent Frameworks},
+  year         = {2026},
+  howpublished = {\url{https://github.com/CharafeddineMechalikh/GATE}},
+  note         = {Version 1.1.0, Apache-2.0 license}
+}
+```
+
+GitHub's **Cite this repository** button reads [`CITATION.cff`](CITATION.cff).
+
 GATE (Guarded Agent Tool Execution) is a zero-trust runtime security layer for LLM agents. It wraps an existing agent framework, intercepts every guarded tool call at the dispatch boundary, and returns `ALLOW`, `BLOCK`, or `ESCALATE` before the tool body runs. The planner, the graph, and the tools stay as they are; only the dispatch of the tools GATE can see is mediated.
 
 It works with **LangChain**, **LangGraph**, the **OpenAI Agents SDK**, and **CrewAI**, with the same policy and decision model in every framework.
@@ -21,6 +47,7 @@ It works with **LangChain**, **LangGraph**, the **OpenAI Agents SDK**, and **Cre
 
 ## Table of contents
 
+- [Citation](#citation)
 - [Why GATE](#why-gate)
 - [How it works](#how-it-works)
 - [Security stages](#security-stages)
@@ -30,7 +57,6 @@ It works with **LangChain**, **LangGraph**, the **OpenAI Agents SDK**, and **Cre
 - [Guarantees and limits](#guarantees-and-limits)
 - [Documentation](#documentation)
 - [Tests](#tests)
-- [Citation](#citation)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -198,32 +224,6 @@ python -m pytest tests/test_framework_adapters.py -v
 ```
 
 The framework integration suite builds real framework objects and drives each framework's native dispatch path: LangGraph `ToolNode`, LangChain's compiled agent graph, OpenAI's `FunctionTool.on_invoke_tool`, and CrewAI's function-call dispatch table. No model, API key, or network access is needed.
-
-## Citation
-
-If GATE supports your research, please cite it.
-
-**Please cite us as:** *to be specified soon.*
-
-The accompanying manuscript is under review; this section and [`CITATION.cff`](CITATION.cff) will be updated with the final reference. Until then, please cite the software.
-
-Plain text:
-
-> Mechalikh, C. (2026). *GATE: A Zero-Trust Runtime Reference Monitor for LLM Agent Frameworks* (Version 1.1.0) [Computer software]. https://github.com/CharafeddineMechalikh/GATE
-
-BibTeX:
-
-```bibtex
-@misc{mechalikh_gate_2026,
-  author       = {Mechalikh, Charafeddine},
-  title        = {{GATE}: A Zero-Trust Runtime Reference Monitor for {LLM} Agent Frameworks},
-  year         = {2026},
-  howpublished = {\url{https://github.com/CharafeddineMechalikh/GATE}},
-  note         = {Version 1.1.0, Apache-2.0 license}
-}
-```
-
-GitHub's **Cite this repository** button reads [`CITATION.cff`](CITATION.cff).
 
 ## Contributing
 
