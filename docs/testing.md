@@ -1,6 +1,6 @@
 # Testing
 
-The repository ships 59 tests. The framework adapter tests build real framework objects and drive each framework's native dispatch path; they do not call a model, so they need no API key and no network access.
+The repository ships 441 tests. The framework adapter tests build real framework objects and drive each framework's native dispatch path; they do not call a model, so they need no API key and no network access. The remaining tests are unit tests for the security stages, the enforcement plumbing, the core data models and configuration, and the standalone utilities.
 
 ## Run the suite
 
@@ -24,10 +24,10 @@ python -m pytest tests/test_framework_adapters.py -v
 
 ## Current result
 
-Verified on 2026-10-25 with Python 3.12.4 and the framework versions listed in [Installation](installation.md#framework-versions):
+Verified on 2026-10-25 with Python 3.12.4 and the framework versions listed in [Installation](installation.md#framework-versions), run offline (`HF_HUB_OFFLINE=1`):
 
 ```text
-59 passed, 195 warnings in 36.89s
+441 passed, 618 warnings in 292.73s
 ```
 
 The warnings are deprecations from the frameworks and from dependencies, not GATE failures.
@@ -37,26 +37,46 @@ The warnings are deprecations from the frameworks and from dependencies, not GAT
 Measured with `pytest --cov=gate` against the same environment:
 
 ```text
-TOTAL 3267 statements, 1390 missed, 57% coverage
+TOTAL 3267 statements, 284 missed, 91% coverage
 ```
 
 ```bash
 python -m pytest tests/ --cov=gate --cov-report=term-missing
 ```
 
-The uncovered majority is concentrated in modules the framework path does not reach: the optional encrypted audit logger, the HITL notification transports (Slack and PagerDuty), the embedding and vector-store utilities (the semantic stage is disabled in the adapter tests), and the standalone utilities documented in [Standalone utilities](standalone-utilities.md). The core decision path, the five stages, and all four adapters are the well-covered parts of that figure.
+The core is fully covered: the monitor decision path, the five stages, smart contracts, the D-CBF and Neural-CBF barrier math, tenant isolation, privilege enforcement, irreversibility safeguards, the encrypted audit logger, the HITL queue, the configuration and data models, the exception hierarchy, the abstract interfaces, and the standalone policy/semantic/audit utilities. The remaining ~284 uncovered statements are concentrated in the framework adapters' wrap/discovery branches that the real-dispatch tests do not reach (`crewai_adapter`, `langchain_adapter`, `langgraph_adapter`, `openai_agents_adapter`), a few optional transports and key-rotation paths in the encrypted logger, and a handful of `ImportError` guards that only fire when an optional dependency is absent.
 
 ## Test layout
 
 | File | Tests | Covers |
 |---|---:|---|
 | `tests/test_framework_adapters.py` | 13 | Real LangGraph, LangChain, OpenAI Agents, and CrewAI dispatch |
-| `tests/test_smart_contracts.py` | 9 | SQL, HTTP, email, and code contracts |
+| `tests/test_registry.py` | 10 | Adapter registry lookup and graceful import-skip |
+| `tests/test_adapters_base.py` | 14 | Adapter base: abstract methods, timeout helpers and config |
+| `tests/test_enforcement_unit.py` | 42 | Tool-enforcement lifecycle, argument marshalling, guards |
+| `tests/test_monitor_unit.py` | 26 | Monitor stage orchestration and postcondition validation |
+| `tests/test_smart_contracts.py` | 41 | SQL, HTTP, email, and code contracts and injection patterns |
+| `tests/test_semantic_firewall_unit.py` | 19 | Semantic scoring, intent-drift, and escalation decisions |
+| `tests/test_privilege_enforcer.py` | 21 | Capability tokens, tool/data-scope, and budget checks |
+| `tests/test_dfa_supervisor.py` | 17 | Phase transitions, action-phase paths, and budgets |
 | `tests/test_enhanced_cbf.py` | 13 | Hand-designed barriers and forward invariance |
-| `tests/test_neural_cbf.py` | 5 | Experimental Neural CBF |
-| `tests/test_circuit_breaker.py` | 8 | Circuit breaker states and transitions |
-| `tests/test_dfa_supervisor.py` | 6 | Phase transitions and budgets |
+| `tests/test_neural_cbf.py` | 20 | Experimental Neural CBF training, verification, and persistence |
+| `tests/test_irreversibility.py` | 12 | Irreversible-action classification and dry-run safeguards |
+| `tests/test_tenant_isolator.py` | 16 | Tenant context propagation and store/audit isolation |
+| `tests/test_hitl_queue.py` | 12 | Approval queue lifecycle and SLA expiry |
+| `tests/test_encrypted_logger.py` | 21 | Encrypted audit logger, KMS key handling, and rotation |
+| `tests/test_circuit_breaker.py` | 16 | Circuit breaker states, fallbacks, and the decorator |
+| `tests/test_retry.py` | 9 | Retry and exponential-backoff behavior |
+| `tests/test_embedding.py` | 9 | Embedding model loading and caching |
+| `tests/test_vector_store.py` | 11 | Vector-store indexing and cosine search |
+| `tests/test_core_config_models.py` | 30 | Configuration validation, data-scope, and core data models |
+| `tests/test_core_exceptions.py` | 18 | Exception hierarchy, attributes, and detail formatting |
+| `tests/test_interfaces.py` | 9 | Abstract base contracts exercised through concrete subclasses |
 | `tests/test_integration.py` | 5 | Privilege and data-scope decisions through the monitor |
+| `tests/test_legacy_policy_engines.py` | 25 | Standalone yaml policy engine and step-budget engine |
+| `tests/test_legacy_semantic_and_audit.py` | 12 | Standalone semantic firewall wrapper and encrypted logger |
+
+Total: 441 tests.
 
 ## What the adapter tests actually exercise
 

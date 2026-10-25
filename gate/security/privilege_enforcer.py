@@ -25,7 +25,7 @@ class CapabilityToken:
     
     def is_valid(self) -> bool:
         """Check if token is still valid."""
-        if self.expires_at and time.time() > self.expires_at:
+        if self.expires_at is not None and time.time() > self.expires_at:
             return False
         return True
     

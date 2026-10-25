@@ -15,6 +15,12 @@
 - Version bumped to 1.0.0 in package metadata, runtime, documentation, and citation metadata. The public API and framework keys are unchanged from 0.3.0.
 - Package metadata now carries PyPI keywords, AI and security classifiers, and Changelog and Citation URLs, alongside the existing repository and documentation URLs.
 - The `firewall` extra no longer pins `sentence-transformers<3`, which conflicted with the base dependency and would have downgraded a verified 6.1.0 environment.
+- Test suite expanded from 59 to 441 tests, raising measured coverage of the `gate` package from 57% to 91%. Coverage now reaches the security stages, enforcement plumbing, configuration, core models, interfaces, exceptions, and the standalone utilities, all against real dispatch paths.
+
+### Fixed
+
+- `CapabilityToken.is_valid()` treated `revoke()`'s `expires_at = 0.0` as "no expiry" because `0.0` is falsy, so revoked tokens stayed valid. The expiry check now compares against `None`.
+- `DFASupervisor` defaulted `valid_transitions` to the shared mutable class-level set, so `add_transition` / `remove_transition` mutated every later instance. Each instance now starts from a copy.
 
 ## [0.3.0] - 2026-10-24
 

@@ -5,8 +5,8 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![Version](https://img.shields.io/badge/version-1.0.0-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-59%20passing-brightgreen.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-57%25-yellow.svg)](docs/testing.md)
+[![Tests](https://img.shields.io/badge/tests-441%20passing-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen.svg)](docs/testing.md)
 [![Security policy](https://img.shields.io/badge/security-policy-blue.svg)](SECURITY.md)
 [![Frameworks](https://img.shields.io/badge/frameworks-4-8A2BE2.svg)](#supported-frameworks)
 [![Stars](https://img.shields.io/github/stars/CharafeddineMechalikh/GATE.svg)](https://github.com/CharafeddineMechalikh/GATE/stargazers)
@@ -45,7 +45,7 @@ GATE moves the security decision to the one place every tool action must pass th
 - **Three outcomes.** `ALLOW`, `BLOCK`, or `ESCALATE`; escalations go to a human queue instead of being silently allowed.
 - **Defense in depth.** Five configurable stages: privilege, DFA supervision, smart contracts, semantic firewall, and a discrete control barrier function (D-CBF).
 - **Fails closed.** An unexpected stage error is a denial, not a pass, and a failed postcondition withholds the output.
-- **Tested as a framework component.** 59 tests, including real dispatch paths for all four frameworks, with no API key or network required.
+- **Tested as a framework component.** 441 tests, including real dispatch paths for all four frameworks, with no API key or network required.
 
 Typical places it fits:
 

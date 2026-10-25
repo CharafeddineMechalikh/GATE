@@ -35,7 +35,11 @@ class DefaultDFASupervisor(DFASupervisor):
     ) -> None:
         self.max_steps = max_steps
         self.max_loops_per_phase = max_loops_per_phase
-        self.valid_transitions = valid_transitions or self.DEFAULT_VALID_TRANSITIONS
+        self.valid_transitions = (
+            set(valid_transitions)
+            if valid_transitions
+            else set(self.DEFAULT_VALID_TRANSITIONS)
+        )
         
         self._transition_history: List[Tuple[str, str, float]] = []
         
