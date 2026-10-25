@@ -99,6 +99,9 @@ Issues = "https://github.com/CharafeddineMechalikh/GATE/issues"
 where = ["."]
 include = ["gate*"]
 
+[tool.setuptools.package-data]
+gate = ["policy.yaml", "unsafe_corpus.txt"]
+
 [tool.black]
 line-length = 100
 target-version = ["py39"]
