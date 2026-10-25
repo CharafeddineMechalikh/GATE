@@ -1,6 +1,6 @@
 # GATE documentation
 
-GATE (Agent Execution Guard with Invariant Safety) is a runtime security layer for LLM agents. It wraps an existing agent framework, intercepts every guarded tool call before dispatch, and returns one of three decisions:
+GATE (Guarded Agent Tool Execution) is a runtime security layer for LLM agents. It wraps an existing agent framework, intercepts every guarded tool call before dispatch, and returns one of three decisions:
 
 - **ALLOW**: the call proceeds to the original tool body unchanged.
 - **BLOCK**: the call is refused and `ToolExecutionBlocked` is raised instead of the tool output.
@@ -14,6 +14,7 @@ GATE does not replace the agent loop, the planner, or the tools. The framework k
 |---|---|
 | [Installation](installation.md) | Requirements, extras, verified framework versions, model download |
 | [Quick start](quickstart.md) | A minimal guarded agent, block handling, HITL, audit |
+| [Framework scenarios](framework-scenarios.md) | The same policy and scenario in all four frameworks, with keyless drivers |
 | [Architecture](architecture.md) | Components, request lifecycle, state machine, concurrency, failure semantics |
 | [Enforcement plumbing](enforcement.md) | `ToolEnforcement`, guards, argument marshalling, timeouts, custom adapters |
 | [Privilege](stages/privilege.md) | Tool allow-lists, data scope, budget checks |
@@ -41,9 +42,9 @@ GATE does not replace the agent loop, the planner, or the tools. The framework k
 |---|---|
 | Distribution name | `GATE-security` |
 | Import package | `gate` |
-| Version | 0.3.0 |
+| Version | 1.0.0 |
 | Python | 3.9 or newer |
-| License | [Apache-2.0](../LICENSE) |
+| License | [Apache-2.0](https://github.com/CharafeddineMechalikh/GATE/blob/main/LICENSE) |
 | Runtime dependencies | `pydantic`, `numpy`, `faiss-cpu`, `sentence-transformers`, `tenacity` |
 | Supported frameworks | LangChain, LangGraph, OpenAI Agents SDK, CrewAI |
 | Decision model | Ternary: ALLOW, BLOCK, ESCALATE |
@@ -52,6 +53,10 @@ GATE does not replace the agent loop, the planner, or the tools. The framework k
 
 This repository contains the runtime framework, its adapters, and their tests. The evaluation harness, benchmark data, and manuscript are maintained separately and are not part of this distribution.
 
+## Citation
+
+Citation details are being finalised. The [repository README](https://github.com/CharafeddineMechalikh/GATE#citation) and [`CITATION.cff`](https://github.com/CharafeddineMechalikh/GATE/blob/main/CITATION.cff) carry the current reference.
+
 ## Status
 
-GATE is beta software at version 0.3.0. The adapter integration tests drive real framework dispatch paths, but the semantic firewall and D-CBF stages are not a substitute for application-level authorization. Read [Security model](security-model.md) before deploying GATE in a production path.
+GATE is at version 1.0.0. The adapter integration tests drive real framework dispatch paths, but the semantic firewall and D-CBF stages are not a substitute for application-level authorization. Read [Security model](security-model.md) before deploying GATE in a production path. Security reports follow [`SECURITY.md`](https://github.com/CharafeddineMechalikh/GATE/blob/main/SECURITY.md).

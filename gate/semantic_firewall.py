@@ -7,8 +7,8 @@ examples.  If the cosine similarity exceeds a configurable threshold the
 prompt is rejected.
 
 In a production system the unsafe corpus would be much larger (thousands of
-samples) and the threshold would be tuned on a validation set.  For the paper
-we keep it tiny so the repository stays lightweight.
+samples) and the threshold would be tuned on a validation set.  Here the
+corpus is kept tiny so the repository stays lightweight.
 """
 
 import os

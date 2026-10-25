@@ -40,6 +40,39 @@ All four adapters accept `approval_queue=`.
 
 The tool is withheld while the queue waits. For a synchronous framework invocation, the call to `secure.invoke` blocks until the approval resolves or the SLA expires.
 
+```mermaid
+sequenceDiagram
+    participant FW as Agent framework
+    participant G as ToolEnforcement
+    participant M as gateMonitor
+    participant Q as HumanApprovalQueue
+    participant H as Approver
+    participant T as Original tool
+
+    FW->>G: guarded tool call
+    G->>M: validate_action(...)
+    M-->>G: ESCALATE (escalated=True)
+    G->>Q: request_and_await_approval(...)
+    Q->>H: notify (Slack, PagerDuty)
+    Note over G,Q: Tool body withheld and enforcement lock held
+    Note over G: No queue or a full queue refuses before waiting
+    alt approved
+        H->>Q: approve(request_id, approver_id)
+        Q-->>G: ApprovalResult(approved=True)
+        G-->>FW: ToolCall
+        FW->>T: original tool body
+        T-->>FW: output
+        FW->>G: after_call(action, output)
+        G->>M: validate_result(...)
+        M-->>G: postcondition result
+        G-->>FW: output or postcondition block
+    else rejected or SLA expired
+        H-->>Q: reject or no response
+        Q-->>G: ApprovalResult(approved=False)
+        G-->>FW: raise ToolExecutionBlocked(stage="hitl")
+    end
+```
+
 ## Resolving a request
 
 The approval queue API is async:

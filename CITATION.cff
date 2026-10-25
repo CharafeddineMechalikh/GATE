@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "Citation details will be specified soon. Until the final reference is available, please cite this software using the metadata below."
+title: "GATE: Guarded Agent Tool Execution"
+abstract: "A zero-trust runtime security layer that validates every guarded tool call before execution in LangChain, LangGraph, the OpenAI Agents SDK, and CrewAI."
+type: software
+authors:
+  - family-names: Mechalikh
+    given-names: Charafeddine
+version: 1.0.0
+date-released: 2026-10-25
+license: Apache-2.0
+repository-code: "https://github.com/CharafeddineMechalikh/GATE"
+url: "https://github.com/CharafeddineMechalikh/GATE"
+keywords:
+  - LLM agent security
+  - AI agent guardrails
+  - tool call validation
+  - prompt injection defense
+  - runtime security
+  - zero trust
+  - agent safety
+  - AI safety
+  - LangChain
+  - LangGraph
+  - OpenAI Agents SDK
+  - CrewAI
+  - semantic firewall
+  - control barrier function

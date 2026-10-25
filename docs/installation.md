@@ -74,7 +74,7 @@ The deterministic stages (`privilege`, `dfa`, `contracts`) and the D-CBF stage d
 import gate
 from gate import gateConfig, AgentProfile
 
-print(gate.__version__)  # 0.3.0
+print(gate.__version__)  # 1.0.0
 
 config = gateConfig(
     agent_profile=AgentProfile(
@@ -101,4 +101,4 @@ The adapters enforce invocation timeouts. On POSIX systems in the main thread, a
 
 ## Upgrading
 
-Version 0.3.0 changed the monitor API to async (`validate_action`, `validate_result`) and introduced the shared enforcement layer. Code written against 0.1.x that called monitor methods synchronously, or that assumed adapters only observed calls, must be updated. See the [changelog](../CHANGELOG.md).
+The 0.3.0 release changed the monitor API to async (`validate_action`, `validate_result`) and introduced the shared enforcement layer. Code written against 0.1.x that called monitor methods synchronously, or that assumed adapters only observed calls, must be updated. See the [changelog](https://github.com/CharafeddineMechalikh/GATE/blob/main/CHANGELOG.md).

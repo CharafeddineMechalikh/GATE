@@ -15,6 +15,11 @@ env/
 /build/
 /dist/
 
+# Jekyll build output for the docs site
+_site/
+.jekyll-cache/
+.jekyll-metadata
+
 # Secrets and runtime state
 .env
 .env.*

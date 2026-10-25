@@ -1,16 +1,18 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.0] - 2026-10-25
 
 ### Added
 
 - Extensive documentation under `docs/`: installation, quick start, architecture, enforcement plumbing, configuration, all five security stages, the four framework adapters, human-in-the-loop, audit, security model, API reference, testing, standalone utilities, and an FAQ.
 - Apache-2.0 `LICENSE`.
+- `CITATION.cff` with provisional software citation metadata, and a README citation section that will be updated when the final reference is available.
+- `SECURITY.md` with the supported-version table, the private advisory link, and the in-scope bypass classes.
 
 ### Changed
 
-- `README.md` now links the documentation set and the license, and lists `docs/` in the repository layout.
-- Package metadata now points at the actual repository and documentation URLs.
+- Version bumped to 1.0.0 in package metadata, runtime, documentation, and citation metadata. The public API and framework keys are unchanged from 0.3.0.
+- Package metadata now carries PyPI keywords, AI and security classifiers, and Changelog and Citation URLs, alongside the existing repository and documentation URLs.
 - The `firewall` extra no longer pins `sentence-transformers<3`, which conflicted with the base dependency and would have downgraded a verified 6.1.0 environment.
 
 ## [0.3.0] - 2026-10-24
@@ -25,8 +27,6 @@
 
 - `SecurityMonitor.validate_action` and the new `validate_result` are async; adapters bridge synchronous tool hooks onto a dedicated event loop per wrapped agent.
 - The adapter registry forwards adapter-specific options such as `tools=` and `approval_queue=`.
-- Paper adapter claims reconciled with the implemented behaviour, and the module-size table updated to 1,438 adapter lines.
-- Table 1 corrected after checking each system against its primary source: only GATE is a framework wrapper; NeMo Guardrails is an LLM proxy, CaMeL a replacement interpreter, GuardAgent an external guard agent, IPIGuard an agent-loop redesign, Task Shield an in-loop check, and AGrail an external guard model. AGrail's evaluation set corrected to Mind2Web, EICU-AC, AdvWeb, EIA, and the stateful-constraint entries for Task Shield and AGrail corrected. GATE's row is now set in bold and separated from the other systems by a midrule.
 - Package metadata now reports 0.3.0 consistently in `pyproject.toml` and `gate.__version__`.
 
 ### Fixed

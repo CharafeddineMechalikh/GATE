@@ -1,0 +1,170 @@
+title: GATE
+tagline: Runtime security guardrails for LLM agents
+description: "GATE (Guarded Agent Tool Execution) validates every guarded tool call before execution in LangChain, LangGraph, the OpenAI Agents SDK, and CrewAI."
+url: "https://charafeddinemechalikh.github.io"
+baseurl: "/GATE"
+lang: en
+author: Charafeddine Mechalikh
+repository: CharafeddineMechalikh/GATE
+
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-relative-links
+  - jekyll-readme-index
+  - jekyll-titles-from-headings
+  - jekyll-default-layout
+  - jekyll-optional-front-matter
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+  - scope:
+      path: "README.md"
+    values:
+      title: "Runtime security guardrails for LLM agents"
+      description: "GATE wraps LangChain, LangGraph, OpenAI Agents SDK, and CrewAI agents with a runtime guard that validates every guarded tool call before dispatch."
+  - scope:
+      path: "installation.md"
+    values:
+      title: "Install GATE for LangChain, LangGraph, and CrewAI"
+      description: "Install GATE, choose framework extras, and verify LangChain, LangGraph, OpenAI Agents SDK, and CrewAI versions."
+  - scope:
+      path: "quickstart.md"
+    values:
+      title: "Quick start: guard tool calls in an LLM agent"
+      description: "Guard an LLM agent in minutes: configure GATE, allow a tool, block another, handle escalations, and inspect execution state."
+  - scope:
+      path: "framework-scenarios.md"
+    values:
+      title: "GATE scenarios for LangGraph, LangChain, CrewAI"
+      description: "The same GATE policy and end-to-end scenario in LangGraph, LangChain, OpenAI Agents SDK, and CrewAI, with keyless drivers."
+  - scope:
+      path: "architecture.md"
+    values:
+      title: "Architecture: how GATE intercepts tool calls"
+      description: "How GATE intercepts tool calls: state machine, monitor stages, enforcement plumbing, concurrency, and failure semantics."
+  - scope:
+      path: "enforcement.md"
+    values:
+      title: "Enforcement plumbing for framework tool guards"
+      description: "How GATE installs guards on framework tool objects, marshals arguments, bridges sync and async dispatch, and handles timeouts."
+  - scope:
+      path: "configuration.md"
+    values:
+      title: "Configuration reference"
+      description: "Every GATE configuration field, its default, and whether the runtime actually reads it."
+  - scope:
+      path: "security-model.md"
+    values:
+      title: "Security model: guarantees, gaps, and deployment"
+      description: "GATE threat model, guarantees, known bypasses, and deployment guidance for runtime LLM agent security."
+  - scope:
+      path: "human-in-the-loop.md"
+    values:
+      title: "Human-in-the-loop approvals"
+      description: "GATE human-in-the-loop approvals: queue configuration, Slack and PagerDuty channels, SLA handling, and synchronous approval."
+  - scope:
+      path: "audit.md"
+    values:
+      title: "Encrypted audit logging"
+      description: "GATE encrypted audit logging: event schema, PII masking, key management backends, retention, and integration limits."
+  - scope:
+      path: "api-reference.md"
+    values:
+      title: "API reference"
+      description: "Public GATE classes, methods, configuration models, and exceptions for wrapping LLM agents with runtime tool-call enforcement."
+  - scope:
+      path: "testing.md"
+    values:
+      title: "Testing GATE against real framework dispatch paths"
+      description: "Run the GATE test suite, including real LangChain, LangGraph, OpenAI Agents SDK, and CrewAI dispatch-path tests."
+  - scope:
+      path: "standalone-utilities.md"
+    values:
+      title: "Standalone utilities: tenants, irreversibility, CBF"
+      description: "GATE standalone utilities: tenant isolation, irreversibility checks, circuit breaker, and neural control barrier functions."
+  - scope:
+      path: "faq.md"
+    values:
+      title: "FAQ and common pitfalls"
+      description: "Common GATE questions: framework support, blocked calls, escalation, performance, semantic stages, and deployment pitfalls."
+  - scope:
+      path: "stages/privilege.md"
+    values:
+      title: "Privilege enforcement"
+      description: "GATE privilege enforcement: tool allow-lists, data-scope checks, and resource budgets for LLM agents."
+  - scope:
+      path: "stages/dfa.md"
+    values:
+      title: "DFA supervision"
+      description: "GATE DFA supervision: execution phases, legal transitions, step budgets, loop budgets, and denial semantics."
+  - scope:
+      path: "stages/contracts.md"
+    values:
+      title: "Smart contracts for tool calls"
+      description: "GATE smart contracts: preconditions, postconditions, built-in SQL, HTTP, email, and code rules, and custom contracts."
+  - scope:
+      path: "stages/semantic-firewall.md"
+    values:
+      title: "Semantic firewall"
+      description: "GATE semantic firewall: SSS scoring, intent anchor, harm prototypes, thresholds, and adversarial limitations."
+  - scope:
+      path: "stages/dcbf.md"
+    values:
+      title: "D-CBF monitor"
+      description: "GATE discrete control barrier function monitor: barrier definitions, forward invariance, defaults, and limitations."
+  - scope:
+      path: "adapters/README.md"
+    values:
+      title: "Framework adapters"
+      description: "What complete mediation means for GATE guards in LangChain, LangGraph, OpenAI Agents SDK, and CrewAI."
+  - scope:
+      path: "adapters/langchain.md"
+    values:
+      title: "LangChain adapter"
+      description: "GATE LangChain adapter: guard AgentExecutor and compiled agent graph tool dispatch before execution."
+  - scope:
+      path: "adapters/langgraph.md"
+    values:
+      title: "LangGraph adapter"
+      description: "GATE LangGraph adapter: guard ToolNode execution in compiled state graphs, including nested tool cases."
+  - scope:
+      path: "adapters/openai-agents.md"
+    values:
+      title: "OpenAI Agents SDK adapter"
+      description: "GATE OpenAI Agents SDK adapter: guard FunctionTool.on_invoke_tool, handoffs, and hosted tools."
+  - scope:
+      path: "adapters/crewai.md"
+    values:
+      title: "CrewAI adapter"
+      description: "GATE CrewAI adapter: guard agent tools and task tools through CrewAI's function-call dispatch table."
+
+titles_from_headings:
+  enabled: true
+  strip_title: false
+  collections: false
+
+relative_links:
+  enabled: true
+  collections: false
+
+readme_index:
+  enabled: true
+  remove_originals: false
+  with_frontmatter: false
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  auto_ids: true
+  syntax_highlighter: rouge
+  hard_wrap: false
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor

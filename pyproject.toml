@@ -4,23 +4,47 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "GATE-security"
-version = "0.3.0"
-description = "Agent Execution Guard with Invariant Safety - Zero-trust security wrapper for LLM agents"
+version = "1.0.0"
+description = "Zero-trust runtime guardrails for LLM agents: validate every tool call before execution in LangChain, LangGraph, OpenAI Agents SDK, and CrewAI."
 readme = "README.md"
 license = {text = "Apache-2.0"}
 authors = [
     {name = "Charafeddine Mechalikh"}
 ]
 requires-python = ">=3.9"
+keywords = [
+    "AI agent security",
+    "LLM security",
+    "agent guardrails",
+    "AI guardrails",
+    "tool call validation",
+    "prompt injection defense",
+    "runtime security",
+    "zero trust",
+    "agent safety",
+    "AI safety",
+    "LangChain",
+    "LangGraph",
+    "OpenAI Agents SDK",
+    "CrewAI",
+    "semantic firewall",
+    "control barrier function",
+]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 dependencies = [
@@ -67,6 +91,8 @@ dev = [
 Homepage = "https://github.com/CharafeddineMechalikh/GATE"
 Documentation = "https://github.com/CharafeddineMechalikh/GATE/blob/main/docs/README.md"
 Repository = "https://github.com/CharafeddineMechalikh/GATE"
+Changelog = "https://github.com/CharafeddineMechalikh/GATE/blob/main/CHANGELOG.md"
+Citation = "https://github.com/CharafeddineMechalikh/GATE/blob/main/CITATION.cff"
 Issues = "https://github.com/CharafeddineMechalikh/GATE/issues"
 
 [tool.setuptools.packages.find]

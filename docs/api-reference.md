@@ -501,5 +501,5 @@ The firewall reads prototypes directly; it does not use `search_nearest_harm`.
 
 ```python
 import gate
-gate.__version__  # "0.3.0"
+gate.__version__  # "1.0.0"
 ```

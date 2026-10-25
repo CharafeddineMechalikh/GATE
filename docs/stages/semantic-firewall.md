@@ -42,6 +42,23 @@ Default thresholds from `SemanticThresholds`:
 | `< 0.5` | BLOCK |
 | `0.5 <= SSS <= 0.7` | ESCALATE |
 
+```mermaid
+flowchart TD
+    A["Proposed ToolCall"] --> B["Action text from get_action_description()"]
+    B --> C["Embedding"]
+    C --> D["drift_to_harm: minimum cosine distance to harm prototypes"]
+    C --> E["drift_to_safe: Mahalanobis distance to the tool safe centroid"]
+    C --> F["drift_to_intent: EMA anchor and trajectory centroid"]
+    D --> G["SSS = (drift_to_harm + eps) / (drift_to_safe + drift_to_intent + eps)"]
+    E --> G
+    F --> G
+    G --> H{"SSS thresholds"}
+    H -->|"SSS > 0.7"| I["ALLOW: continue to D-CBF"]
+    H -->|"0.5 <= SSS <= 0.7"| J["ESCALATE: withhold and request approval"]
+    H -->|"SSS < 0.5"| K["BLOCK (fail closed)"]
+    L["Embedding or scoring error"] --> K
+```
+
 Both comparisons are strict. A score of exactly `0.7` escalates; exactly `0.5` escalates.
 
 An `ALLOW` continues to the D-CBF stage. A `BLOCK` stops validation and raises `SemanticSafetyViolation`, which the guard converts to `ToolExecutionBlocked`. An `ESCALATE` returns immediately with `escalated=True` and `requires_approval=True`; it does **not** run the D-CBF stage and it does **not** dispatch. The guard sends it to the approval queue. With no queue, the call is refused.

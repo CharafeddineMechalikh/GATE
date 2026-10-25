@@ -1,9 +1,9 @@
 """
-gate - Agent Execution Guard with Invariant Safety
+gate - Guarded Agent Tool Execution
 Zero-trust security wrapper for LLM agent frameworks.
 """
 
-__version__ = "0.3.0"
+__version__ = "1.0.0"
 __author__ = "gate Team"
 
 from .core.config import (

@@ -1,0 +1,251 @@
+:root {
+  --bg: #ffffff;
+  --bg-subtle: #f6f8fa;
+  --text: #1f2328;
+  --muted: #59636e;
+  --border: #d1d9e0;
+  --accent: #0969da;
+  --code-bg: #f6f8fa;
+  --header-bg: #0b1f33;
+  --header-text: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --bg-subtle: #151b23;
+    --text: #e6edf3;
+    --muted: #9198a1;
+    --border: #30363d;
+    --accent: #4493f8;
+    --code-bg: #151b23;
+    --header-bg: #010409;
+    --header-text: #f0f6fc;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--accent);
+  color: #ffffff;
+  padding: 0.5rem 0.75rem;
+  z-index: 10;
+}
+
+.skip-link:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+}
+
+.site-header {
+  background: var(--header-bg);
+  color: var(--header-text);
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header-inner {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+}
+
+.site-title {
+  color: var(--header-text);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.site-title:hover {
+  text-decoration: none;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  font-size: 0.92rem;
+}
+
+.site-nav a {
+  color: var(--header-text);
+  opacity: 0.85;
+}
+
+.site-nav a:hover {
+  opacity: 1;
+  text-decoration: none;
+}
+
+.site-content {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+.site-content h1,
+.site-content h2,
+.site-content h3,
+.site-content h4 {
+  line-height: 1.25;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.site-content h1 {
+  margin-top: 0;
+  font-size: 2.1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.4rem;
+}
+
+.site-content h2 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3rem;
+}
+
+.site-content h3 {
+  font-size: 1.2rem;
+}
+
+p,
+ul,
+ol,
+table,
+pre,
+blockquote {
+  margin: 0 0 1rem;
+}
+
+blockquote {
+  margin-left: 0;
+  padding: 0.6rem 1rem;
+  border-left: 4px solid var(--accent);
+  background: var(--bg-subtle);
+  color: var(--muted);
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-size: 0.86em;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+th,
+td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--bg-subtle);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid {
+  margin: 1.25rem 0;
+  padding: 1rem;
+  overflow-x: auto;
+  text-align: center;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg-subtle);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.site-footer p {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+@media (max-width: 700px) {
+  .site-content h1 {
+    font-size: 1.7rem;
+  }
+
+  .site-content table {
+    display: block;
+    overflow-x: auto;
+  }
+}

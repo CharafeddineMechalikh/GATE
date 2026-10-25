@@ -158,6 +158,8 @@ If no queue is configured, an escalated call is refused with `ToolExecutionBlock
 
 ## Other frameworks
 
+The configuration and decision model are the same in every adapter. [Framework scenarios](framework-scenarios.md) runs this scenario end to end in all four frameworks, with a complete keyless driver for each.
+
 ```python
 # LangChain AgentExecutor or compiled agent graph
 secure = wrap_agent(agent, "langchain", config)

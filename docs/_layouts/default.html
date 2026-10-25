@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="{{ site.lang | default: 'en' }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% seo %}
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": {{ site.title | jsonify }},
+        "alternateName": "Guarded Agent Tool Execution",
+        "description": {{ site.description | jsonify }},
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "OS Independent",
+        "softwareRequirements": "Python 3.9 or newer",
+        "programmingLanguage": "Python",
+        "license": "https://www.apache.org/licenses/LICENSE-2.0",
+        "codeRepository": "https://github.com/CharafeddineMechalikh/GATE",
+        "url": "https://github.com/CharafeddineMechalikh/GATE",
+        "author": {
+          "@type": "Person",
+          "name": {{ site.author | jsonify }}
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+    {% if content contains 'language-mermaid' %}
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";
+
+      document.querySelectorAll("div.language-mermaid, pre > code.language-mermaid").forEach((element) => {
+        const code = element.matches("code") ? element : element.querySelector("code");
+        if (!code) return;
+        const target = document.createElement("div");
+        target.className = "mermaid";
+        target.textContent = code.textContent;
+        if (element.matches("div")) {
+          element.replaceWith(target);
+        } else {
+          element.closest("pre").replaceWith(target);
+        }
+      });
+
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "strict",
+        theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "default"
+      });
+      await mermaid.run({ querySelector: ".mermaid" });
+    </script>
+    {% endif %}
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="site-title" href="{{ '/' | relative_url }}">GATE</a>
+        <nav class="site-nav" aria-label="Documentation">
+          <a href="{{ '/quickstart.html' | relative_url }}">Quick start</a>
+          <a href="{{ '/architecture.html' | relative_url }}">Architecture</a>
+          <a href="{{ '/stages/privilege.html' | relative_url }}">Stages</a>
+          <a href="{{ '/adapters/' | relative_url }}">Adapters</a>
+          <a href="{{ '/security-model.html' | relative_url }}">Security model</a>
+          <a href="{{ '/api-reference.html' | relative_url }}">API</a>
+        </nav>
+      </div>
+    </header>
+    <main id="content" class="site-content">
+      {{ content }}
+    </main>
+    <footer class="site-footer">
+      <p>
+        GATE is <a href="https://github.com/CharafeddineMechalikh/GATE/blob/main/LICENSE">Apache-2.0 licensed</a>.
+        <a href="https://github.com/CharafeddineMechalikh/GATE">Source on GitHub</a>.
+        <a href="https://github.com/CharafeddineMechalikh/GATE#citation">Cite GATE</a>.
+      </p>
+    </footer>
+  </body>
+</html>

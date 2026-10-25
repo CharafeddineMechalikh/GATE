@@ -155,13 +155,13 @@ This repository distributes the runtime framework, its adapters, and their tests
 
 ### Is GATE production-ready?
 
-It is beta software at 0.3.0. The adapter dispatch paths are tested against real framework objects, but the semantic stage and D-CBF are best-effort signals, not a substitute for application authorization. Read [Security model](security-model.md) before putting GATE in a production path.
+It is version 1.0.0. The adapter dispatch paths are tested against real framework objects, but the semantic stage and D-CBF are best-effort signals, not a substitute for application authorization. Read [Security model](security-model.md) before putting GATE in a production path.
 
 ## Licensing
 
 ### Can I use GATE in a commercial product?
 
-Yes. GATE is licensed under Apache-2.0, which permits commercial use, modification, and redistribution, provided you retain the license and notices and state significant changes. The license also includes a patent grant. See [LICENSE](../LICENSE). This answer is a summary, not legal advice; read the license text.
+Yes. GATE is licensed under Apache-2.0, which permits commercial use, modification, and redistribution, provided you retain the license and notices and state significant changes. The license also includes a patent grant. See [LICENSE](https://github.com/CharafeddineMechalikh/GATE/blob/main/LICENSE). This answer is a summary, not legal advice; read the license text.
 
 ### Can I publish a modified version?
 

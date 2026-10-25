@@ -22,7 +22,26 @@ The adapters share one enforcement layer. Understanding it is useful when writin
 | `.state` | The current `AgentState` |
 | `.monitor`, `.config`, `.approval_queue` | Injected components |
 
-A synchronous guard calls `sync_before_call`, and then `sync_after_call` only after the original body returns. A timeout in either bridge is converted to `ToolExecutionBlocked` with stage `monitor` or `postcondition` respectively. An exception from the monitor other than a timeout propagates unchanged.
+The synchronous path through the bridge:
+
+```mermaid
+flowchart TD
+    A["Guarded _run (sync)"] --> B["sync_before_call"]
+    B --> C["Dedicated gate-monitor event loop"]
+    C --> D["ToolEnforcement.before_call"]
+    D --> E{"Monitor decision"}
+    E -->|"ALLOW"| F["Original tool body"]
+    E -->|"BLOCK"| G["ToolExecutionBlocked with ValidationResult"]
+    E -->|"ESCALATE"| H["Await human approval"]
+    H -->|"approved"| F
+    H -->|"denied or expired"| I["ToolExecutionBlocked(stage=hitl)"]
+    F --> J["sync_after_call"]
+    J --> K{"Postcondition"}
+    K -->|"pass"| L["Output to framework"]
+    K -->|"fail"| M["ToolExecutionBlocked(post_execution=True)"]
+```
+
+A synchronous guard calls `sync_before_call`, and then `sync_after_call` only after the original body returns. A timeout in either bridge is converted to `ToolExecutionBlocked` with stage `monitor` or `postcondition` respectively. An exception from the monitor other than a timeout propagates unchanged. Async framework paths call `before_call` and `after_call` directly on the caller's event loop; validation and postcondition behavior is otherwise the same.
 
 ## Guard installation
 
