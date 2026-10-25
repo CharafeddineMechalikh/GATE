@@ -37,8 +37,6 @@ BibTeX:
 }
 ```
 
-GitHub's **Cite this repository** button reads [`CITATION.cff`](CITATION.cff).
-
 GATE (Guarded Agent Tool Execution) is a zero-trust runtime security layer for LLM agents. It wraps an existing agent framework, intercepts every guarded tool call at the dispatch boundary, and returns `ALLOW`, `BLOCK`, or `ESCALATE` before the tool body runs. The planner, the graph, and the tools stay as they are; only the dispatch of the tools GATE can see is mediated.
 
 It works with **LangChain**, **LangGraph**, the **OpenAI Agents SDK**, and **CrewAI**, with the same policy and decision model in every framework.
