@@ -89,7 +89,7 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/CharafeddineMechalikh/GATE"
-Documentation = "https://github.com/CharafeddineMechalikh/GATE/blob/main/docs/README.md"
+Documentation = "https://charafeddinemechalikh.github.io/GATE/"
 Repository = "https://github.com/CharafeddineMechalikh/GATE"
 Changelog = "https://github.com/CharafeddineMechalikh/GATE/blob/main/CHANGELOG.md"
 Citation = "https://github.com/CharafeddineMechalikh/GATE/blob/main/CITATION.cff"

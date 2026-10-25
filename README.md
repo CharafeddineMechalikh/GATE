@@ -202,7 +202,7 @@ Read [Security model](docs/security-model.md) for the full threat model and [dep
 
 ## Documentation
 
-Full documentation lives in [`docs/`](docs/README.md):
+The rendered documentation is at <https://charafeddinemechalikh.github.io/GATE/>. The sources live in [`docs/`](docs/README.md):
 
 - [Installation](docs/installation.md): requirements, extras, verified framework versions.
 - [Quick start](docs/quickstart.md): a guarded agent, block handling, approvals, audit.
