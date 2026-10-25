@@ -225,7 +225,7 @@ The framework integration suite builds real framework objects and drives each fr
 
 ## Contributing
 
-Issues and pull requests are welcome. Before opening a pull request, run `python -m pytest tests/ -q` and describe which framework dispatch path your change touches. If you find a bypass, use the private reporting flow in [`SECURITY.md`](SECURITY.md) rather than a public issue.
+Issues and pull requests are welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for development setup, tests, and style. Before opening a pull request, run `python -m pytest tests/ -q` and describe which framework dispatch path your change touches. If you find a bypass, use the private reporting flow in [`SECURITY.md`](SECURITY.md) rather than a public issue.
 
 If GATE is useful to you, a star helps other agent developers find it.
 
