@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-1.1.0-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.1-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-441%20passing-brightgreen.svg)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen.svg)](docs/testing.md)
 [![Security policy](https://img.shields.io/badge/security-policy-blue.svg)](SECURITY.md)
@@ -23,7 +23,7 @@ The accompanying manuscript is under review; this section and [`CITATION.cff`](C
 
 Plain text:
 
-> Mechalikh, C. (2026). *GATE: A Zero-Trust Runtime Reference Monitor for LLM Agent Frameworks* (Version 1.1.0) [Computer software]. https://github.com/CharafeddineMechalikh/GATE
+> Mechalikh, C. (2026). *GATE: A Zero-Trust Runtime Reference Monitor for LLM Agent Frameworks* (Version 1.1.1) [Computer software]. https://github.com/CharafeddineMechalikh/GATE
 
 BibTeX:
 
@@ -33,7 +33,7 @@ BibTeX:
   title        = {{GATE}: A Zero-Trust Runtime Reference Monitor for {LLM} Agent Frameworks},
   year         = {2026},
   howpublished = {\url{https://github.com/CharafeddineMechalikh/GATE}},
-  note         = {Version 1.1.0, MIT license}
+  note         = {Version 1.1.1, MIT license}
 }
 ```
 

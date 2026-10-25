@@ -1,10 +1,11 @@
 # Changelog
 
-## [Unreleased]
+## [1.1.1] - 2026-10-25
 
 ### Changed
 
 - The project is now licensed under the MIT License instead of Apache-2.0. The `LICENSE` file, package metadata, citation metadata, README, and documentation were updated together.
+- The documentation site is now published at <https://charafeddinemechalikh.github.io/GATE/> and is linked from the README, the package metadata, and the repository homepage.
 
 ## [1.1.0] - 2026-10-25
 

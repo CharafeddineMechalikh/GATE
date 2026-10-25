@@ -152,7 +152,7 @@ Out of scope:
 
 ## Reporting
 
-GATE is research software at version 1.1.0. If you find a bypass, open an issue with a minimal reproduction and state whether the tool reached the guard. Do not include secrets or live credentials in a report.
+GATE is research software at version 1.1.1. If you find a bypass, open an issue with a minimal reproduction and state whether the tool reached the guard. Do not include secrets or live credentials in a report.
 
 ## Related pages
 

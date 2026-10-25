@@ -3,7 +3,7 @@ gate - Guarded Agent Tool Execution
 Zero-trust security wrapper for LLM agent frameworks.
 """
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __author__ = "gate Team"
 
 from .core.config import (

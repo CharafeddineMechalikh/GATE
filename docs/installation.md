@@ -74,7 +74,7 @@ The deterministic stages (`privilege`, `dfa`, `contracts`) and the D-CBF stage d
 import gate
 from gate import gateConfig, AgentProfile
 
-print(gate.__version__)  # 1.1.0
+print(gate.__version__)  # 1.1.1
 
 config = gateConfig(
     agent_profile=AgentProfile(
