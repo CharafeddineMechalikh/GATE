@@ -142,6 +142,18 @@ except CircuitBreakerError:
 | `OPEN` | Calls are rejected with `CircuitBreakerError`, or answered by `fallback`. After `recovery_timeout` seconds the `state` property moves it to `HALF_OPEN`. |
 | `HALF_OPEN` | At most `half_open_max_calls` calls proceed. A success count reaching the same value closes the circuit; a failure reopens it. |
 
+```mermaid
+stateDiagram-v2
+    [*] --> CLOSED
+    CLOSED --> OPEN: failure_threshold consecutive failures
+    OPEN --> HALF_OPEN: recovery_timeout elapsed
+    HALF_OPEN --> CLOSED: success count reaches half_open_max_calls
+    HALF_OPEN --> OPEN: failure
+    OPEN --> CLOSED: reset()
+```
+
+`reset()` clears the counters from any state. While `OPEN`, a call is answered by the fallback if one is configured, otherwise it raises `CircuitBreakerError` without invoking the wrapped call.
+
 Notes:
 
 - `call()` accepts sync or async callables. Sync callables run inline on the event loop, so long blocking work still blocks the loop.

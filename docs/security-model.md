@@ -14,6 +14,30 @@ GATE is a runtime guard at the tool-dispatch boundary. This page states what it 
 | Harm prototypes and safe centroids | Trusted data. Poisoned prototypes change decisions. |
 | Audit storage and KMS | Trusted, and outside the process. |
 
+```mermaid
+flowchart LR
+    subgraph U["Untrusted"]
+        M["Model output and proposed tool call"]
+    end
+    subgraph P["Trusted process"]
+        F["Agent framework"]
+        G["GATE guard and monitor"]
+        C["Configuration and profiles"]
+        T["Tool implementation"]
+    end
+    subgraph X["Outside the process"]
+        A["Audit storage and KMS"]
+    end
+    M -->|proposes| F
+    F -->|dispatches| G
+    G -->|ALLOW| T
+    T -.->|result| F
+    C -.->|policy| G
+    G -.->|"when a logger is attached"| A
+```
+
+Everything inside the process is trusted code. GATE mediates the edge that runs from the framework to the tool; it cannot defend the process, the tool bodies, or the configuration from an attacker who already executes inside it.
+
 GATE assumes the process itself is not compromised. It does not protect against an attacker who can import Python, patch the monitor, modify the tool object before wrapping, or read the configuration. It is a policy-enforcement layer, not a sandbox or a TCB.
 
 ## Guarantees

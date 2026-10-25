@@ -122,6 +122,20 @@ The event type, agent identifier, timestamp, and key identifier are stored in pl
 
 The payload hash is computed over the plaintext JSON before encryption. It allows a verifier to check that a decrypted payload matches the recorded hash. GATE does not ship a verification routine, and there is no signature or MAC over the record.
 
+### Write path
+
+```mermaid
+flowchart LR
+    E["Security event"] --> M["Mask tool arguments, result, and violation details"]
+    M --> J["Serialise the masked payload"]
+    J --> H["SHA-256 of the plaintext JSON"]
+    H --> K["Encrypt through the KMS backend"]
+    K --> Q["Enqueue for the async writer task"]
+    Q --> S["Append to log_path/tenant_id/YYYY-MM-DD.log.enc"]
+```
+
+Masking happens before hashing and encryption, so the stored payload never contains the original PII and the hash covers exactly what was encrypted. Masking, hashing, and encryption run inline in `log_event`, so a network-backed KMS call adds latency to that call. Only the disk append is queued: the background writer batches records and flushes them on a size or time threshold. If the queue is full, the event is dropped and an error is logged.
+
 ## KMS backends
 
 | Backend | Constructor | Requirements |
