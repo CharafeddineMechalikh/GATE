@@ -197,24 +197,24 @@ ValidationResult(
 
 ## Exceptions
 
-```text
-gateException
-├── SecurityViolation
-│   ├── SemanticSafetyViolation
-│   ├── SemanticEscalation
-│   ├── ContractViolation
-│   ├── DCBFViolation
-│   ├── PrivilegeViolation
-│   ├── DataScopeViolation
-│   ├── ResourceBudgetExceeded
-│   ├── DFAViolation
-│   └── TimeoutViolation
-└── gateSystemError
-    ├── EmbeddingModelError
-    ├── VectorStoreError
-    ├── AdapterError
-    ├── ConfigurationError
-    └── NeuralCBFError
+```mermaid
+graph TD
+    E["gateException"] --> SV["SecurityViolation"]
+    E --> SE["gateSystemError"]
+    SV --> SSV["SemanticSafetyViolation"]
+    SV --> SCE["SemanticEscalation"]
+    SV --> CV["ContractViolation"]
+    SV --> DV["DCBFViolation"]
+    SV --> PV["PrivilegeViolation"]
+    SV --> DSV["DataScopeViolation"]
+    SV --> RB["ResourceBudgetExceeded"]
+    SV --> DFV["DFAViolation"]
+    SV --> TV["TimeoutViolation"]
+    SE --> EME["EmbeddingModelError"]
+    SE --> VSE["VectorStoreError"]
+    SE --> AE["AdapterError"]
+    SE --> CE["ConfigurationError"]
+    SE --> NE["NeuralCBFError"]
 ```
 
 `ToolExecutionBlocked` is a `SecurityViolation` defined in `gate.adapters.enforcement`. It is raised by the guard, not by the monitor.

@@ -4,22 +4,19 @@ GATE is a reference monitor placed at the tool-dispatch boundary of an agent fra
 
 ## Components
 
-```text
-                    host application
-                           |
-                    SecureAgent wrapper
-                           |
-              +------------+-------------+
-              |                          |
-        ToolEnforcement              framework object
-        (run state, decisions)       (graph / executor / crew)
-              |                          |
-        gateMonitor --------------> guarded tool objects
-              |
-   +----------+-----------+----------+-----------+
-   |          |           |          |           |
-Privilege   DFA     Smart contracts  Semantic   D-CBF
-enforcer  supervisor   registry      firewall   monitor
+```mermaid
+flowchart TD
+    App["host application"] --> SA["SecureAgent wrapper"]
+    SA --> TE["ToolEnforcement<br>(run state, decisions)"]
+    SA --> FW["framework object<br>(graph / executor / crew)"]
+    TE --> M["gateMonitor"]
+    FW -->|dispatches| GT["guarded tool objects"]
+    M -->|validates every call| GT
+    M --> P["Privilege enforcer"]
+    M --> D["DFA supervisor"]
+    M --> C["Smart contracts registry"]
+    M --> S["Semantic firewall"]
+    M --> B["D-CBF monitor"]
 ```
 
 | Component | Module | Responsibility |

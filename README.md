@@ -5,8 +5,13 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![Version](https://img.shields.io/badge/version-1.0.0-orange.svg)](CHANGELOG.md)
+[![CI](https://github.com/CharafeddineMechalikh/GATE/actions/workflows/tests.yml/badge.svg)](https://github.com/CharafeddineMechalikh/GATE/actions/workflows/tests.yml)
 [![Tests](https://img.shields.io/badge/tests-59%20passing-brightgreen.svg)](tests/)
+[![Security policy](https://img.shields.io/badge/security-policy-blue.svg)](SECURITY.md)
+[![Citation](https://img.shields.io/badge/cite-this%20repo-8A2BE2.svg)](CITATION.cff)
 [![Frameworks](https://img.shields.io/badge/frameworks-4-8A2BE2.svg)](#supported-frameworks)
+[![Stars](https://img.shields.io/github/stars/CharafeddineMechalikh/GATE.svg)](https://github.com/CharafeddineMechalikh/GATE/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/CharafeddineMechalikh/GATE.svg)](https://github.com/CharafeddineMechalikh/GATE/commits/main)
 [![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)](CHANGELOG.md)
 
 GATE (Guarded Agent Tool Execution) is a zero-trust runtime security layer for LLM agents. It wraps an existing agent framework, intercepts every guarded tool call at the dispatch boundary, and returns `ALLOW`, `BLOCK`, or `ESCALATE` before the tool body runs. The planner, the graph, and the tools stay as they are; only the dispatch of the tools GATE can see is mediated.

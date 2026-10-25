@@ -8,6 +8,7 @@
 - Apache-2.0 `LICENSE`.
 - `CITATION.cff` with provisional software citation metadata, and a README citation section that will be updated when the final reference is available.
 - `SECURITY.md` with the supported-version table, the private advisory link, and the in-scope bypass classes.
+- Continuous integration workflow (`.github/workflows/tests.yml`) that installs the full framework matrix and runs the test suite on every push and pull request.
 
 ### Changed
 
