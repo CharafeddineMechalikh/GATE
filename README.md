@@ -6,6 +6,7 @@
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![Version](https://img.shields.io/badge/version-1.0.0-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-59%20passing-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-57%25-yellow.svg)](docs/testing.md)
 [![Security policy](https://img.shields.io/badge/security-policy-blue.svg)](SECURITY.md)
 [![Frameworks](https://img.shields.io/badge/frameworks-4-8A2BE2.svg)](#supported-frameworks)
 [![Stars](https://img.shields.io/github/stars/CharafeddineMechalikh/GATE.svg)](https://github.com/CharafeddineMechalikh/GATE/stargazers)

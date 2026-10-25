@@ -32,6 +32,20 @@ Verified on 2026-10-25 with Python 3.12.4 and the framework versions listed in [
 
 The warnings are deprecations from the frameworks and from dependencies, not GATE failures.
 
+## Coverage
+
+Measured with `pytest --cov=gate` against the same environment:
+
+```text
+TOTAL 3267 statements, 1390 missed, 57% coverage
+```
+
+```bash
+python -m pytest tests/ --cov=gate --cov-report=term-missing
+```
+
+The uncovered majority is concentrated in modules the framework path does not reach: the optional encrypted audit logger, the HITL notification transports (Slack and PagerDuty), the embedding and vector-store utilities (the semantic stage is disabled in the adapter tests), and the standalone utilities documented in [Standalone utilities](standalone-utilities.md). The core decision path, the five stages, and all four adapters are the well-covered parts of that figure.
+
 ## Test layout
 
 | File | Tests | Covers |

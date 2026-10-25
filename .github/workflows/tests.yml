@@ -22,4 +22,4 @@ jobs:
           python -m pip install -c .github/requirements-ci.txt -e ".[all,dev]"
 
       - name: Run tests
-        run: python -m pytest tests/ -q -ra
+        run: python -m pytest tests/ -q -ra --cov=gate --cov-report=term
