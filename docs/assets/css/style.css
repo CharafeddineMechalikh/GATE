@@ -786,7 +786,10 @@ pre code {
 /* Tables ------------------------------------------------------------------ */
 
 table {
+  display: block;
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
   border-collapse: collapse;
   font-size: 0.92rem;
   line-height: 1.55;
@@ -895,6 +898,36 @@ tbody tr:nth-child(even) {
     padding-left: 36px;
     padding-right: 36px;
   }
+
+  /* Without the right rail, keep the page TOC reachable at the top of the
+     sidebar instead of burying it under the whole manual. */
+  .sidebar-inner {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-top {
+    order: 0;
+  }
+
+  #toc-slot-sidebar {
+    order: 1;
+  }
+
+  .sidebar-nav {
+    order: 2;
+  }
+
+  .sidebar-meta {
+    order: 3;
+  }
+
+  #toc-slot-sidebar .page-toc {
+    margin-top: 14px;
+    padding-bottom: 4px;
+    border-top: 0;
+    border-bottom: 1px solid var(--border);
+  }
 }
 
 @media (min-width: 1200px) {
@@ -973,17 +1006,6 @@ tbody tr:nth-child(even) {
 
   .site-content {
     padding: 26px 18px 56px;
-  }
-
-  .site-content table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  .site-content table th,
-  .site-content table td {
-    white-space: normal;
   }
 
   .site-footer p {
