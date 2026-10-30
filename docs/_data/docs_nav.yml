@@ -1,0 +1,68 @@
+# Ordered manual navigation for the documentation sidebar.
+# Every entry is a page under docs/; keep the order of the reading path in
+# docs/README.md so the sidebar and the overview agree.
+- label: Start here
+  pages:
+    - title: Overview
+      url: /
+    - title: Installation
+      url: /installation.html
+    - title: Quick start
+      url: /quickstart.html
+    - title: Framework scenarios
+      url: /framework-scenarios.html
+
+- label: How it works
+  pages:
+    - title: Architecture
+      url: /architecture.html
+    - title: Enforcement plumbing
+      url: /enforcement.html
+    - title: Security model
+      url: /security-model.html
+
+- label: Security stages
+  pages:
+    - title: Privilege
+      url: /stages/privilege.html
+    - title: DFA supervision
+      url: /stages/dfa.html
+    - title: Smart contracts
+      url: /stages/contracts.html
+    - title: Semantic firewall
+      url: /stages/semantic-firewall.html
+    - title: D-CBF monitor
+      url: /stages/dcbf.html
+
+- label: Framework adapters
+  pages:
+    - title: Adapters overview
+      url: /adapters/
+    - title: LangChain
+      url: /adapters/langchain.html
+    - title: LangGraph
+      url: /adapters/langgraph.html
+    - title: OpenAI Agents SDK
+      url: /adapters/openai-agents.html
+    - title: CrewAI
+      url: /adapters/crewai.html
+
+- label: Operations
+  pages:
+    - title: Configuration
+      url: /configuration.html
+    - title: Human-in-the-loop
+      url: /human-in-the-loop.html
+    - title: Audit logging
+      url: /audit.html
+    - title: Testing
+      url: /testing.html
+
+- label: Reference
+  pages:
+    - title: API reference
+      url: /api-reference.html
+    - title: Standalone utilities
+      url: /standalone-utilities.html
+    - title: FAQ
+      url: /faq.html

@@ -27,6 +27,10 @@
         }
       }
     </script>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%234c1d95'/%3E%3Cpath d='M12 4l6 2.4v4.4c0 3.8-2.5 6.6-6 7.8-3.5-1.2-6-4-6-7.8V6.4L12 4z' fill='none' stroke='%23fff' stroke-width='1.6'/%3E%3Cpath d='M9.4 11.6l1.8 1.8 3.4-3.6' fill='none' stroke='%23fff' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
     <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
     {% if content contains 'language-mermaid' %}
     <script type="module">
@@ -58,20 +62,53 @@
     <a class="skip-link" href="#content">Skip to content</a>
     <header class="site-header">
       <div class="site-header-inner">
-        <a class="site-title" href="{{ '/' | relative_url }}">GATE</a>
-        <nav class="site-nav" aria-label="Documentation">
-          <a href="{{ '/quickstart.html' | relative_url }}">Quick start</a>
-          <a href="{{ '/architecture.html' | relative_url }}">Architecture</a>
-          <a href="{{ '/stages/privilege.html' | relative_url }}">Stages</a>
-          <a href="{{ '/adapters/' | relative_url }}">Adapters</a>
-          <a href="{{ '/security-model.html' | relative_url }}">Security model</a>
-          <a href="{{ '/api-reference.html' | relative_url }}">API</a>
+        <a class="brand" href="{{ '/' | relative_url }}">
+          <span class="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3l7 2.8v5.4c0 4.3-2.9 7.4-7 8.8-4.1-1.4-7-4.5-7-8.8V5.8L12 3z"/>
+              <path d="M9 11.8l2.1 2.1L15.2 10"/>
+            </svg>
+          </span>
+          <span class="brand-text">
+            <span class="brand-name">GATE</span>
+            <span class="brand-tagline">Guarded Agent Tool Execution</span>
+          </span>
+        </a>
+        <nav class="top-nav" aria-label="Project links">
+          <a class="nav-link" href="{{ '/quickstart.html' | relative_url }}">Quick start</a>
+          <a class="nav-link nav-github" href="https://github.com/CharafeddineMechalikh/GATE">
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            <span>GitHub</span>
+          </a>
         </nav>
       </div>
     </header>
-    <main id="content" class="site-content">
-      {{ content }}
-    </main>
+
+    <div class="page-shell">
+      {% include docs-sidebar.html %}
+      <div class="sidebar-scrim" hidden></div>
+
+      <main id="content" class="site-content">
+        {{ content }}
+        <div class="page-meta">
+          {%- if page.path %}
+          <a href="https://github.com/CharafeddineMechalikh/GATE/edit/main/docs/{{ page.path }}">Edit this page</a>
+          <span aria-hidden="true">·</span>
+          {%- endif %}
+          <a href="https://github.com/CharafeddineMechalikh/GATE/issues">Report an issue</a>
+        </div>
+      </main>
+
+      <aside class="toc-rail" aria-label="On this page">
+        <div class="toc-sticky" id="toc-slot-rail"></div>
+      </aside>
+    </div>
+
+    <button type="button" class="sidebar-toggle" aria-controls="docs-sidebar" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      <span>Contents</span>
+    </button>
+
     <footer class="site-footer">
       <p>
         GATE is <a href="https://github.com/CharafeddineMechalikh/GATE/blob/main/LICENSE">MIT licensed</a>.
@@ -79,5 +116,194 @@
         <a href="https://github.com/CharafeddineMechalikh/GATE#citation">Cite GATE</a>.
       </p>
     </footer>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var sidebar = document.getElementById("docs-sidebar");
+        var main = document.getElementById("content");
+        var toggle = document.querySelector(".sidebar-toggle");
+        if (!sidebar || !main) {
+          return;
+        }
+
+        var toc = document.createElement("nav");
+        toc.className = "page-toc";
+        toc.setAttribute("aria-label", "On this page");
+        var tocHeading = document.createElement("p");
+        tocHeading.className = "sidebar-heading";
+        tocHeading.textContent = "On this page";
+        var tocList = document.createElement("ul");
+        tocList.id = "page-toc-list";
+        toc.appendChild(tocHeading);
+        toc.appendChild(tocList);
+
+        // The rail is used when there is room for it, otherwise the TOC lives
+        // at the bottom of the manual sidebar (and inside the mobile drawer).
+        var tocSlots = {
+          rail: document.getElementById("toc-slot-rail"),
+          sidebar: document.getElementById("toc-slot-sidebar")
+        };
+        var wide = window.matchMedia("(min-width: 1200px)");
+
+        function placeToc() {
+          var slot = wide.matches ? tocSlots.rail : tocSlots.sidebar;
+          if (slot && toc.parentNode !== slot) {
+            slot.appendChild(toc);
+          }
+        }
+
+        placeToc();
+        if (wide.addEventListener) {
+          wide.addEventListener("change", placeToc);
+        }
+
+        var headings = Array.prototype.slice.call(main.querySelectorAll("h2, h3"));
+        var entries = [];
+
+        headings.forEach(function (heading) {
+          var text = (heading.textContent || "").trim();
+          if (!text) {
+            return;
+          }
+          if (!heading.id) {
+            var slug = text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "section";
+            var unique = slug;
+            var suffix = 1;
+            while (document.getElementById(unique)) {
+              unique = slug + "-" + suffix;
+              suffix += 1;
+            }
+            heading.id = unique;
+          }
+
+          var item = document.createElement("li");
+          var link = document.createElement("a");
+          link.href = "#" + heading.id;
+          link.textContent = text;
+          link.className = heading.tagName === "H3" ? "toc-depth-3" : "toc-depth-2";
+          item.appendChild(link);
+          tocList.appendChild(item);
+          entries.push({ link: link, heading: heading });
+        });
+
+        toc.hidden = entries.length === 0;
+
+        headings.forEach(function (heading) {
+          var anchor = document.createElement("a");
+          anchor.className = "heading-anchor";
+          anchor.href = "#" + heading.id;
+          anchor.setAttribute("aria-label", "Link to this section");
+          anchor.textContent = "#";
+          heading.appendChild(anchor);
+        });
+
+        var headerOffset = 96;
+        var activeLink = null;
+
+        function updateActiveSection() {
+          var current = null;
+          for (var index = 0; index < entries.length; index += 1) {
+            if (entries[index].heading.getBoundingClientRect().top <= headerOffset) {
+              current = entries[index].link;
+            } else {
+              break;
+            }
+          }
+          if (!current && entries.length > 0) {
+            current = entries[0].link;
+          }
+          if (current === activeLink) {
+            return;
+          }
+          if (activeLink) {
+            activeLink.classList.remove("is-active");
+            activeLink.removeAttribute("aria-current");
+          }
+          activeLink = current;
+          if (activeLink) {
+            activeLink.classList.add("is-active");
+            activeLink.setAttribute("aria-current", "location");
+          }
+        }
+
+        var scheduled = false;
+        function onScroll() {
+          if (scheduled) {
+            return;
+          }
+          scheduled = true;
+          window.requestAnimationFrame(function () {
+            scheduled = false;
+            updateActiveSection();
+          });
+        }
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+        updateActiveSection();
+
+        var scrim = document.querySelector(".sidebar-scrim");
+        var closeButton = sidebar.querySelector(".sidebar-close");
+        var narrow = window.matchMedia("(max-width: 1023px)");
+
+        function setSidebar(open) {
+          sidebar.classList.toggle("is-open", open);
+          document.body.classList.toggle("sidebar-open", open);
+          if (scrim) {
+            scrim.hidden = !open;
+          }
+          if (toggle) {
+            toggle.setAttribute("aria-expanded", String(open));
+          }
+          if (open && closeButton) {
+            closeButton.focus();
+          }
+        }
+
+        if (toggle) {
+          toggle.addEventListener("click", function () {
+            setSidebar(!sidebar.classList.contains("is-open"));
+          });
+        }
+        if (closeButton) {
+          closeButton.addEventListener("click", function () {
+            setSidebar(false);
+            if (toggle) {
+              toggle.focus();
+            }
+          });
+        }
+        if (scrim) {
+          scrim.addEventListener("click", function () {
+            setSidebar(false);
+            if (toggle) {
+              toggle.focus();
+            }
+          });
+        }
+        document.addEventListener("keydown", function (event) {
+          if (event.key === "Escape" && sidebar.classList.contains("is-open")) {
+            setSidebar(false);
+            if (toggle) {
+              toggle.focus();
+            }
+          }
+        });
+        tocList.addEventListener("click", function (event) {
+          if (event.target.tagName === "A" && narrow.matches) {
+            setSidebar(false);
+          }
+        });
+        if (narrow.addEventListener) {
+          narrow.addEventListener("change", function (event) {
+            if (!event.matches) {
+              setSidebar(false);
+            }
+          });
+        }
+      })();
+    </script>
   </body>
 </html>

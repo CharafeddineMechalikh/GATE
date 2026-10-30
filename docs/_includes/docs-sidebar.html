@@ -1,0 +1,31 @@
+{%- assign current_url = page.url | default: '/' -%}
+{%- if current_url == '/index.html' -%}{%- assign current_url = '/' -%}{%- endif -%}
+<aside class="sidebar" id="docs-sidebar" aria-label="Documentation contents">
+  <div class="sidebar-inner">
+    <div class="sidebar-top">
+      <span class="sidebar-brand">GATE documentation</span>
+      <button type="button" class="sidebar-close" aria-label="Close documentation contents">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Manual">
+      {%- for group in site.data.docs_nav %}
+      <p class="sidebar-heading">{{ group.label }}</p>
+      <ul class="sidebar-pages">
+        {%- for item in group.pages %}
+        <li><a href="{{ item.url | relative_url }}"{% if item.url == current_url %} aria-current="page"{% endif %}>{{ item.title }}</a></li>
+        {%- endfor %}
+      </ul>
+      {%- endfor %}
+    </nav>
+
+    <div id="toc-slot-sidebar"></div>
+
+    <div class="sidebar-meta">
+      <a href="https://github.com/CharafeddineMechalikh/GATE">Source</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/CharafeddineMechalikh/GATE/blob/main/LICENSE">MIT license</a>
+    </div>
+  </div>
+</aside>
