@@ -1,6 +1,6 @@
 # Semantic firewall
 
-The semantic stage embeds the proposed action, compares it with three references, and produces a Semantic Safety Score (SSS). It is the only stage that uses a model, and the only stage that can return `ESCALATE`.
+The semantic stage embeds the proposed action, compares it with three references, and produces a Semantic Safety Score (SSS). It is the only stage that uses a model, and the only stage that can return `ESCALATE`. It runs last in the chain, so escalation is genuinely a last resort: a call reaches it only after privilege, DFA, contracts and the barrier monitor have all allowed it.
 
 ## Inputs
 

@@ -79,6 +79,21 @@ class TestValidateActionPhase:
         assert allowed is False
         assert "Too many loops" in reason
 
+    def test_planning_under_loop_limit_reaches_acting(self):
+        state = AgentState(
+            agent_id="test", current_phase="PLANNING", loop_count={"PLANNING": 1}
+        )
+        allowed, _ = self.supervisor.validate_action_phase(state)
+        assert allowed is True
+
+    def test_planning_blocked_when_loops_exceeded(self):
+        state = AgentState(
+            agent_id="test", current_phase="PLANNING", loop_count={"PLANNING": 2}
+        )
+        allowed, reason = self.supervisor.validate_action_phase(state)
+        assert allowed is False
+        assert "Too many loops" in reason
+
     def test_terminal_state_blocked(self):
         state = AgentState(agent_id="test", current_phase="ANSWERING")
         allowed, reason = self.supervisor.validate_action_phase(state)

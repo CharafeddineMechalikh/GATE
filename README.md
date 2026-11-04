@@ -67,7 +67,7 @@ GATE moves the security decision to the one place every tool action must pass th
 - **Framework-native.** Wrap the agent you already have. No DSL, no loop rewrite, no proxy in front of the model.
 - **Decision before side effects.** A guarded tool body runs only after `ALLOW` or explicit human approval.
 - **Three outcomes.** `ALLOW`, `BLOCK`, or `ESCALATE`; escalations go to a human queue instead of being silently allowed.
-- **Defense in depth.** Five configurable stages: privilege, DFA supervision, smart contracts, semantic firewall, and a discrete control barrier function (D-CBF).
+- **Defense in depth.** Five configurable stages, evaluated in order: privilege, DFA supervision, smart contracts, a discrete control barrier function (D-CBF), and the semantic firewall.
 - **Fails closed.** An unexpected stage error is a denial, not a pass, and a failed postcondition withholds the output.
 - **Tested as a framework component.** 441 tests, including real dispatch paths for all four frameworks, with no API key or network required.
 
@@ -208,7 +208,7 @@ The rendered documentation is at <https://charafeddinemechalikh.github.io/GATE/>
 - [Quick start](docs/quickstart.md): a guarded agent, block handling, approvals, audit.
 - [Framework scenarios](docs/framework-scenarios.md): the same policy and scenario in LangGraph, LangChain, OpenAI Agents, and CrewAI.
 - [Architecture](docs/architecture.md) and [Enforcement plumbing](docs/enforcement.md): how a call reaches the monitor and how guards are installed.
-- [Security stages](docs/stages/privilege.md): privilege, DFA, contracts, semantic firewall, and D-CBF.
+- [Security stages](docs/stages/privilege.md): privilege, DFA, contracts, D-CBF, and the semantic firewall.
 - [Framework adapters](docs/adapters/README.md): what complete mediation means for each framework.
 - [Human-in-the-loop](docs/human-in-the-loop.md) and [Audit](docs/audit.md): approvals, SLA, encrypted audit log.
 - [Security model](docs/security-model.md): guarantees, known gaps, and deployment guidance.

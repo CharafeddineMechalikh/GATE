@@ -230,6 +230,19 @@ class TestDcbfStage:
         assert result.is_allowed is False
         assert "dcbf" in result.checks_failed
 
+    @pytest.mark.asyncio
+    async def test_dcbf_blocks_before_escalate(self):
+        # The firewall runs after D-CBF now, so a call that trips a barrier and
+        # also sits in the escalate band is hard-blocked, not pushed to a human.
+        mon = _monitor(
+            sem=SemStub(decision="ESCALATE", sss=0.6),
+            dcbf=DcbfStub(safe=False, reason="barrier breached"),
+        )
+        result = await mon.validate_action(_action(), AgentState(agent_id="a1"))
+        assert result.escalated is False
+        assert result.is_allowed is False
+        assert "dcbf" in result.checks_failed
+
 
 class TestValidateResult:
     @pytest.mark.asyncio

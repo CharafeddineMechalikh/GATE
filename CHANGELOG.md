@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.0] - 2026-11-04
+
+### Changed
+
+- Reordered the enforcement pipeline to `privilege → DFA → contracts → D-CBF → semantic`. The semantic firewall now runs last, so escalation is a genuine last resort and an escalated call can no longer skip the D-CBF barrier check that would have blocked it outright; deferring the embedding stage also lets every earlier rejection avoid its cost.
+
+### Fixed
+
+- `DFASupervisor.validate_action_phase` now enforces the per-phase loop budget for every non-terminal phase, not only `ACTING`, and reaches `ACTING` through any legal multi-hop transition path (for example `IDLE → PLANNING → ACTING`). Re-entering `PLANNING` past the loop bound is now refused, closing the planning-loop gap the union benchmark exposed.
+
 ## [1.1.1] - 2026-10-25
 
 ### Changed

@@ -89,10 +89,15 @@ class DefaultDFASupervisor(DFASupervisor):
         if current_phase in self.TERMINAL_STATES:
             return False, f"Cannot transition from terminal state: {current_phase}"
 
+        # The per-phase loop bound applies to whatever phase the agent is sitting
+        # in, not only ACTING. Re-entering PLANNING past the limit is the same
+        # pathological spin as re-entering ACTING, and SPEC F11 defines the bound
+        # per phase, so it is enforced here for every non-terminal phase.
+        loop_count = current_state.loop_count.get(current_phase, 0)
+        if loop_count >= self.max_loops_per_phase:
+            return False, f"Too many loops in {current_phase}: {loop_count}/{self.max_loops_per_phase}"
+
         if current_phase == "ACTING":
-            loop_count = current_state.loop_count.get("ACTING", 0)
-            if loop_count >= self.max_loops_per_phase:
-                return False, f"Too many loops in ACTING: {loop_count}/{self.max_loops_per_phase}"
             return True, ""
 
         if self._shortest_path(current_phase, "ACTING") is None:

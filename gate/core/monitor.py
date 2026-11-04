@@ -124,8 +124,8 @@ class gateMonitor(SecurityMonitor):
         1. Privilege check
         2. DFA supervisor
         3. Smart contracts
-        4. Semantic firewall
-        5. D-CBF monitor
+        4. D-CBF monitor
+        5. Semantic firewall (last, so escalation is a last resort)
         """
         checks_passed: List[str] = []
         checks_failed: List[str] = []
@@ -181,8 +181,26 @@ class gateMonitor(SecurityMonitor):
                     checks_failed=checks_failed,
                 )
         
-        # 4. Semantic firewall
+        # 4. D-CBF monitor
         semantic_score = None
+        if self.config.is_check_enabled("dcbf") and self.dcbf_monitor:
+            try:
+                await self._check_dcbf(action, state)
+                checks_passed.append("dcbf")
+            except DCBFViolation as e:
+                logger.warning(f"D-CBF check failed: {e}")
+                checks_failed.append("dcbf")
+                await self._log_violation(action, state, "DCBF_VIOLATION", str(e))
+                return ValidationResult(
+                    is_allowed=False,
+                    reason=f"D-CBF violation: {e.message}",
+                    details=e.details,
+                    semantic_score=semantic_score,
+                    checks_passed=checks_passed,
+                    checks_failed=checks_failed,
+                )
+
+        # 5. Semantic firewall
         if self.config.is_check_enabled("semantic") and self.semantic_firewall:
             try:
                 semantic_score = await self._check_semantic_safety(action, state)
@@ -222,24 +240,6 @@ class gateMonitor(SecurityMonitor):
                         "is in the escalate band; awaiting human approval"
                     ),
                     details={"needs_user_approval": True},
-                    semantic_score=semantic_score,
-                    checks_passed=checks_passed,
-                    checks_failed=checks_failed,
-                )
-        
-        # 5. D-CBF monitor
-        if self.config.is_check_enabled("dcbf") and self.dcbf_monitor:
-            try:
-                await self._check_dcbf(action, state)
-                checks_passed.append("dcbf")
-            except DCBFViolation as e:
-                logger.warning(f"D-CBF check failed: {e}")
-                checks_failed.append("dcbf")
-                await self._log_violation(action, state, "DCBF_VIOLATION", str(e))
-                return ValidationResult(
-                    is_allowed=False,
-                    reason=f"D-CBF violation: {e.message}",
-                    details=e.details,
                     semantic_score=semantic_score,
                     checks_passed=checks_passed,
                     checks_failed=checks_failed,

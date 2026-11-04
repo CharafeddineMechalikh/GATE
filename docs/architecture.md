@@ -81,10 +81,10 @@ The guard is installed on the live tool object, not on a copy. A `ToolNode`, `Ag
 1. **Privilege**: is this agent allowed to call this tool, touch this data resource, and spend this estimated cost?
 2. **DFA**: is a tool call legal in the current execution phase, and are the step and loop budgets intact?
 3. **Contracts**: do the tool's registered preconditions hold?
-4. **Semantic**: is the action text semantically close to harm and far from intent?
-5. **D-CBF**: does the proposed transition keep every barrier inside the safe set?
+4. **D-CBF**: does the proposed transition keep every barrier inside the safe set?
+5. **Semantic**: is the action text semantically close to harm and far from intent?
 
-The order is deliberate. Cheap deterministic checks run before the embedding-based check, and any stage can veto without consulting later stages. A semantic `ESCALATE` returns immediately and does not run the D-CBF stage; the action is withheld pending approval regardless of its barrier state.
+The order is deliberate. Cheap deterministic checks run before the embedding-based check, and any stage can veto without consulting later stages. Because the firewall runs last, `D-CBF` evaluates the barrier state before the semantic stage is consulted, so a barrier violation is blocked outright rather than escalated past it; only a call that clears every deterministic stage can reach the `ESCALATE` band.
 
 ## Decision semantics
 

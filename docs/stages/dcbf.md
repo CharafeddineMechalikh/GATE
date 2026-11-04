@@ -1,6 +1,6 @@
 # D-CBF monitor
 
-The D-CBF (discrete control barrier function) stage asks whether the next action keeps the agent inside a safe set defined by five barrier functions. It runs last, after every other stage has allowed the action.
+The D-CBF (discrete control barrier function) stage asks whether the next action keeps the agent inside a safe set defined by five barrier functions. It runs after privilege, DFA and contracts and immediately before the semantic firewall, so a barrier violation is blocked outright before an ambiguous call can be escalated past it.
 
 ## The safe set
 
