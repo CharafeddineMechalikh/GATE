@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `AdminToolContract`, registered for `admin_tool`, scopes the administrative grant to read-only operations: it whitelists read-shaped leading verbs and rejects a mutating, capability-granting, or security-altering action with `MUTATING_ADMIN_OPERATION`, and fails closed on an empty or missing action with `MISSING_ADMIN_ACTION`. Before this, `admin_tool` had no contract, so mutating administrative calls fell through the contract stage to the semantic firewall and many escalated instead of hard-blocking.
+
+### Changed
+
+- `CodeExecutionContract` replaces its six-substring denylist with a categorised regular-expression list (`DANGEROUS_PATTERNS`) covering destructive filesystem calls, process/shell spawning, dynamic execution, reverse shells and download-and-run pipelines, encoded payloads, native/in-memory execution, credential access, keylogging, cryptomining, and defence tampering. A match raises `DANGEROUS_CODE`. The filter stays syntactic and is not a sandbox.
+
 ## [1.2.0] - 2026-11-04
 
 ### Changed

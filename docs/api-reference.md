@@ -348,7 +348,7 @@ ContractRegistry()
 | `ContractRegistry.unregister_contract(tool_name)` | Remove |
 | `ContractRegistry.list_contracts()` | Registered names |
 
-Built-ins: `SQLQueryContract`, `HTTPRequestContract`, `EmailSendContract`, `CodeExecutionContract`.
+Built-ins: `SQLQueryContract`, `HTTPRequestContract`, `EmailSendContract`, `CodeExecutionContract`, `AdminToolContract`.
 
 ### Semantic firewall
 

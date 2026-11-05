@@ -64,14 +64,15 @@ The monitor reports a failed precondition as `checks_failed=["contracts"]` and i
 
 ## Built-in contracts
 
-The default `ContractRegistry` registers four contracts:
+The default `ContractRegistry` registers five contracts:
 
 | Tool name | Contract | Enforcement |
 |---|---|---|
 | `sql_query` | `SQLQueryContract` | Query shape, injection patterns, file access |
 | `http_request` | `HTTPRequestContract` | Destination, internal addresses, method |
 | `send_email` | `EmailSendContract` | Recipient domain, PII patterns, subject length |
-| `code_execute` | `CodeExecutionContract` | Dangerous substrings, code length |
+| `code_execute` | `CodeExecutionContract` | Dangerous patterns (regex), code length |
+| `admin_tool` | `AdminToolContract` | Read-only admin verbs, deny-by-default on unknown actions |
 
 These names are literal. A tool called `run_sql` or `postgres_query` is not covered.
 
@@ -113,10 +114,21 @@ The domain list is hard-coded. Replace the contract to use your own domains.
 
 Reads `code`.
 
-- Rejects the substrings `os.system`, `subprocess`, `shutil.rmtree`, `eval(`, `exec(`, and `__import__`.
-- Rejects code longer than 10,000 characters.
+- Rejects code matching any pattern in `DANGEROUS_PATTERNS`, a categorised regular-expression list covering primitives that are dangerous in an agent runtime regardless of the surrounding task: destructive filesystem calls (`rm -rf`, `shutil.rmtree`, `os.remove/unlink/rmdir`, `format`, `mkfs`), process/shell spawning (`subprocess`, `os.system`, `os.popen`, `os.exec*`, `pty.spawn`), dynamic execution (`eval(`, `exec(`, `__import__`, `compile(`, `marshal.loads`), reverse shells and download-and-run (`socket.socket`, `/dev/tcp`, `curl … | sh`, `wget … | sh`), encoded payloads (`base64 … decode … exec`, `powershell -enc`), native/in-memory execution (`ctypes`, `CDLL`, `windll`, `VirtualAlloc`, `shellcode`), credential access (`/etc/shadow`, `id_rsa`, `.ssh/`, `lsass`, `mimikatz`), keylogging (`pynput`, `keyboard.Listener`), cryptomining (`xmrig`, `stratum+tcp`), and defence tampering (`netsh advfirewall`, `Set-MpPreference`, `iptables -F`). A match raises `ContractViolation` with type `DANGEROUS_CODE`.
+- Rejects code longer than 10,000 characters (`CODE_TOO_LONG`).
 
-Substring matching is easy to bypass with aliasing, encoding, or indirect calls. It is a guardrail against obvious mistakes, not a sandbox. Run untrusted code in an isolated process or container.
+The filter is syntactic: it catches the named primitive wherever it appears, but it is still easy to defeat with aliasing, encoding, or an indirect call, and it deliberately does not try to judge natural-language intent smuggled into `code` — that is the semantic firewall's job. It is a guardrail against obvious mistakes, not a sandbox. Run untrusted code in an isolated process or container.
+
+### `AdminToolContract`
+
+Reads `action`.
+
+The `admin_tool` grant is scoped to read-only administration (enumerating accounts, inspecting configuration, reporting status). The contract whitelists read-shaped leading verbs (`list`, `get`, `read`, `view`, `describe`, `show`, `inspect`, `check`, `search`, `fetch`, `enumerate`, `count`, `status`, `report`, `query`, `lookup`, `browse`, `monitor`) and rejects anything else:
+
+- An action whose leading verb mutates state, grants a capability, or alters a security control (`delete`, `grant_*`, `disable_*`, `modify_sudoers`, …) raises `ContractViolation` with type `MUTATING_ADMIN_OPERATION`.
+- An empty or missing action fails closed with type `MISSING_ADMIN_ACTION`, consistent with the monitor's deny-by-default stance.
+
+This is what stops an irreversible administrative operation at the contract stage rather than letting it fall through to the escalation hedge.
 
 ## Postconditions
 

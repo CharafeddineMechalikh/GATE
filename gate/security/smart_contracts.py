@@ -326,26 +326,62 @@ class EmailSendContract(BaseSmartContract):
 
 
 class CodeExecutionContract(BaseSmartContract):
-    """Smart contract for code execution."""
-    
+    """Smart contract for code execution.
+
+    Guards the ``code`` argument against primitives that are dangerous in an
+    agent runtime regardless of the surrounding task: destructive filesystem
+    calls, process/shell spawning, dynamic code execution, reverse shells and
+    download-and-run pipelines, encoded payloads, native-memory execution,
+    credential-file access, keylogging, cryptomining and defence tampering.
+    Intent-only abuse (a natural-language instruction smuggled into ``code``)
+    is out of scope for a syntactic filter and is left to the semantic firewall.
+    """
+
+    DANGEROUS_PATTERNS: List[str] = [
+        # destructive filesystem operations
+        r"rm\s+-rf", r"--no-preserve-root", r"shutil\.rmtree",
+        r"os\.(remove|unlink|rmdir)\s*\(", r"os\.(rename|replace)\s*\(",
+        r"\bformat\s+[a-z]:", r"\bmkfs\b",
+        # process and shell spawning
+        r"\bsubprocess\b", r"os\.system", r"os\.popen",
+        r"os\.(execl|execv|execle|execlp|execvp|spawnl|spawnv)", r"pty\.spawn",
+        # dynamic code execution
+        r"\beval\s*\(", r"\bexec\s*\(", r"__import__", r"\bcompile\s*\(",
+        r"marshal\.loads",
+        # reverse shells and download-and-run
+        r"socket\.socket", r"/dev/tcp",
+        r"(?i)curl[^\n]*\|\s*(ba)?sh", r"(?i)wget[^\n]*\|\s*sh",
+        # encoded / obfuscated payloads
+        r"base64[^\n]*(b64decode|decode)[^\n]*(exec|eval)",
+        r"(?i)powershell[^\n]*-e(nc)?\b",
+        # native / in-memory execution
+        r"\bctypes\b", r"\bCDLL\b", r"\bwindll\b", r"VirtualAlloc", r"shellcode",
+        # credential and secrets access
+        r"/etc/(shadow|passwd)", r"id_rsa", r"\.ssh/", r"lsass", r"mimikatz",
+        # keylogging
+        r"\bpynput\b", r"keyboard\.Listener", r"keylog",
+        # cryptomining
+        r"\bxmrig\b", r"stratum\+tcp", r"minexmr",
+        # defence tampering
+        r"(?i)netsh\s+advfirewall", r"Set-MpPreference", r"iptables\s+-F",
+    ]
+
     @precondition
-    def no_dangerous_imports(self, action: ToolCall, state: AgentState) -> bool:
-        """Block dangerous imports."""
+    def no_dangerous_code(self, action: ToolCall, state: AgentState) -> bool:
+        """Block code that contains a dangerous primitive."""
         code = action.tool_args.get("code", "")
-        
-        dangerous_imports = [
-            "os.system", "subprocess", "shutil.rmtree",
-            "eval(", "exec(", "__import__",
-        ]
-        
-        for dangerous in dangerous_imports:
-            if dangerous in code:
+        if not isinstance(code, str):
+            code = str(code)
+
+        for pattern in self.DANGEROUS_PATTERNS:
+            if re.search(pattern, code):
                 raise ContractViolation(
-                    f"Dangerous code pattern detected: {dangerous}",
+                    f"Dangerous code pattern detected: {pattern}",
                     contract_name="CodeExecutionContract",
                     violation_type="DANGEROUS_CODE",
                 )
         return True
+
     
     @precondition
     def code_length_limit(self, action: ToolCall, state: AgentState) -> bool:
@@ -360,20 +396,63 @@ class CodeExecutionContract(BaseSmartContract):
         return True
 
 
+class AdminToolContract(BaseSmartContract):
+    """Smart contract for administrative operations.
+
+    The agent profiles that expose ``admin_tool`` scope it to read-only
+    administration: enumerating accounts, inspecting configuration, reporting
+    status. Every operation whose leading verb changes state, grants a
+    capability, alters a security control, or touches a credential or secret is
+    outside that grant and is rejected here as a contract violation. This is the
+    invariant the benchmark taxonomy assigns to the contract layer for the
+    direct-harm (F05), destructive (F07) and privilege-granting (F02) families,
+    so an irreversible admin operation is a hard block at stage three rather than
+    falling through to the escalation hedge. Unknown or empty actions fail closed,
+    consistent with the monitor's deny-by-default stance.
+    """
+
+    READ_VERBS = (
+        "list", "get", "read", "view", "describe", "show", "inspect",
+        "check", "search", "fetch", "enumerate", "count", "status", "report",
+        "query", "lookup", "browse", "monitor",
+    )
+
+    @precondition
+    def read_only_operation(self, action: ToolCall, state: AgentState) -> bool:
+        """Reject any admin action whose leading verb mutates state."""
+        op = str(action.tool_args.get("action", "")).strip().lower()
+        if not op:
+            raise ContractViolation(
+                "admin_tool call carries no action; refusing by default",
+                contract_name="AdminToolContract",
+                violation_type="MISSING_ADMIN_ACTION",
+            )
+        head = re.split(r"[_\-:\s/]+", op)[0]
+        if any(head == verb or head.startswith(verb) for verb in self.READ_VERBS):
+            return True
+        raise ContractViolation(
+            f"Non-read-only administrative operation: {op!r}",
+            contract_name="AdminToolContract",
+            violation_type="MUTATING_ADMIN_OPERATION",
+            operation=op[:120],
+        )
+
+
 class ContractRegistry:
     """Registry for smart contracts."""
-    
+
     def __init__(self) -> None:
         self._contracts: Dict[str, SmartContract] = {}
         self._register_default_contracts()
-    
+
     def _register_default_contracts(self) -> None:
         """Register default smart contracts."""
         self.register_contract("sql_query", SQLQueryContract())
         self.register_contract("http_request", HTTPRequestContract())
         self.register_contract("send_email", EmailSendContract())
         self.register_contract("code_execute", CodeExecutionContract())
-    
+        self.register_contract("admin_tool", AdminToolContract())
+
     def register_contract(self, tool_name: str, contract: SmartContract) -> None:
         """Register a contract for a tool."""
         self._contracts[tool_name] = contract
