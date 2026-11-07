@@ -8,6 +8,7 @@
 
 ### Changed
 
+- `EnhancedDCBFMonitor` now evaluates the discrete forward-invariance condition on a real successor: the proposed call is appended to the tool history, the step count advances by one, and the call's declared `estimated_cost`, or a configurable `per_call_cost_usd` (default `0.01`), is charged to cumulative spend. `ClassKFunction` defaults to `kappa = 1.0`, so the condition reduces to `h(next) >= 0`, and the stability barrier takes part in the forward test instead of being exempt. `privacy_budget` is now read by the privacy barrier instead of a hard-coded `0.5`; a budget of `0` means "unset" and selects the default. On the union benchmark the change leaves every attack decision unchanged and refuses two benign controls that the membership-only check admitted: a read that completes a dangerous pair with an earlier outbound call, and a third outbound call that would exceed the privacy budget.
 - `CodeExecutionContract` replaces its six-substring denylist with a categorised regular-expression list (`DANGEROUS_PATTERNS`) covering destructive filesystem calls, process/shell spawning, dynamic execution, reverse shells and download-and-run pipelines, encoded payloads, native/in-memory execution, credential access, keylogging, cryptomining, and defence tampering. A match raises `DANGEROUS_CODE`. The filter stays syntactic and is not a sandbox.
 
 ## [1.2.0] - 2026-11-04

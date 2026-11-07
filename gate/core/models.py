@@ -138,6 +138,8 @@ class SemanticScore:
     drift_to_safe: float
     decision: str  # "ALLOW", "BLOCK", "ESCALATE"
     details: Dict[str, float]
+    alignment_contradiction: Optional[float] = None
+    fused_harm: Optional[float] = None
     
     def is_safe(self) -> bool:
         """Check if the score indicates safety."""

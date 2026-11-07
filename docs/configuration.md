@@ -1,6 +1,6 @@
 # Configuration
 
-`gateConfig` is a dataclass. Only `agent_profile` is required. The defaults enable all five stages, which is a demanding configuration: the semantic firewall needs prototypes to be meaningful, and the default D-CBF barriers block repeated outbound actions. Start with the deterministic stages and add the others deliberately.
+`gateConfig` is a dataclass. Only `agent_profile` is required. The defaults enable all five stages, which is a demanding configuration: the semantic firewall needs prototypes to be meaningful, and the default D-CBF barriers block the third outbound action in a run. Start with the deterministic stages and add the others deliberately.
 
 ```python
 from gate import AgentProfile, ResourceBudget, gateConfig
@@ -141,7 +141,7 @@ config = gateConfig(
 )
 ```
 
-Only do this if the default barriers fit your tool set. They do not fit agents that send email or make multiple outbound HTTP requests; the privacy barrier becomes negative after the first such call. Custom barriers require building the monitor yourself.
+Only do this if the default barriers fit your tool set. They do not fit agents that send email or make many outbound HTTP requests; the privacy barrier permits two such calls and refuses the third. Custom barriers require building the monitor yourself.
 
 **Full stack with an approval queue:**
 

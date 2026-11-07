@@ -18,11 +18,28 @@ class LogLevel(str, Enum):
 
 @dataclass
 class SemanticThresholds:
-    """Thresholds for semantic safety scoring."""
+    """Thresholds for semantic safety scoring.
+
+    With intent-action alignment enabled the firewall also computes the fused
+    harmful score ``-log(SSS) + alignment_weight * P(contradiction)``, which
+    increases with harm, and refuses a call that exceeds
+    ``fused_block_threshold``. The term is one-sided by construction: it can
+    turn an escalation into a block, never an escalation into an allow. Both
+    inputs to the fusion are reachable by the attacker (the intent anchor is
+    written by the agent's caller and the cross-encoder reads the same text as
+    the embedding), so a low fused score is absence of evidence rather than
+    evidence of safety. ``fused_block_threshold`` is the midpoint of the gap
+    between the highest benign and the lowest attack fused score on the
+    GATE-Union calibration split. Set ``alignment_weight`` to 0 to ignore the
+    alignment term entirely.
+    """
     sss_safe_threshold: float = 0.7
     sss_block_threshold: float = 0.5
     drift_threshold: float = 0.8
     harm_threshold: float = 0.2
+    alignment_model_name: str = "cross-encoder/nli-MiniLM2-L6-H768"
+    alignment_weight: float = 0.5
+    fused_block_threshold: float = 0.9024
 
 
 @dataclass

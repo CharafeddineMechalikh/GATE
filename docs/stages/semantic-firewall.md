@@ -44,24 +44,26 @@ Default thresholds from `SemanticThresholds`:
 
 ```mermaid
 flowchart TD
-    A["Proposed ToolCall"] --> B["Action text from get_action_description()"]
+    A["Proposed ToolCall<br>(passed stages 1-4)"] --> B["Action text from get_action_description()"]
     B --> C["Embedding"]
-    C --> D["drift_to_harm: minimum cosine distance to harm prototypes"]
-    C --> E["drift_to_safe: Mahalanobis distance to the tool safe centroid"]
-    C --> F["drift_to_intent: EMA anchor and trajectory centroid"]
-    D --> G["SSS = (drift_to_harm + eps) / (drift_to_safe + drift_to_intent + eps)"]
+    C --> D["drift_to_harm: distance to harm prototypes"]
+    C --> E["drift_to_safe: distance to tool safe centroid"]
+    C --> F["drift_to_intent: EMA anchor and trajectory"]
+    D --> G["SSS ratio calculation"]
     E --> G
     F --> G
-    G --> H{"SSS thresholds"}
-    H -->|"SSS > 0.7"| I["ALLOW: continue to D-CBF"]
-    H -->|"0.5 <= SSS <= 0.7"| J["ESCALATE: withhold and request approval"]
+    G --> H{"SSS evaluation"}
+    H -->|"SSS > 0.7"| I["ALLOW: dispatch tool call"]
     H -->|"SSS < 0.5"| K["BLOCK (fail closed)"]
+    H -->|"0.5 <= SSS <= 0.7"| N{"Fused harm check<br>cross-encoder NLI"}
+    N -->|"h(a) >= 0.9024"| K
+    N -->|"h(a) < 0.9024"| J["ESCALATE: withhold for human review"]
     L["Embedding or scoring error"] --> K
 ```
 
-Both comparisons are strict. A score of exactly `0.7` escalates; exactly `0.5` escalates.
+Both comparisons are strict. A score of exactly `0.7` falls into the escalation band; exactly `0.5` falls into the escalation band.
 
-An `ALLOW` continues to the D-CBF stage. A `BLOCK` stops validation and raises `SemanticSafetyViolation`, which the guard converts to `ToolExecutionBlocked`. An `ESCALATE` returns immediately with `escalated=True` and `requires_approval=True`; it does **not** run the D-CBF stage and it does **not** dispatch. The guard sends it to the approval queue. With no queue, the call is refused.
+An `ALLOW` authorizes the tool call to dispatch. A `BLOCK` stops validation and raises `SemanticSafetyViolation`, which the guard converts to `ToolExecutionBlocked`. An `ESCALATE` returns immediately with `escalated=True` and `requires_approval=True`; the call is withheld and routed to the human approval queue. If no queue is configured or the SLA expires, the call fails closed and execution is refused.
 
 ## Why prototypes matter
 
@@ -156,6 +158,7 @@ The embedding call inside `check_semantic_safety` goes directly to `EmbeddingMod
 - Each check embeds one short string. On CPU this is typically a few milliseconds after the model is loaded, but it is still the slowest deterministic-path stage by a wide margin.
 - The action description includes raw argument values, which may be large. A megabyte-long document in a tool argument becomes a long embedding input; truncate or summarise at the tool boundary if that is a concern.
 - The intent anchor is set from the **run input**, not from a planner's stated goal. For LangGraph, the adapter uses the first of `input["input"]` or `input["messages"]` and stringifies it; for LangChain it stringifies the input. A message list becomes a Python repr. This is a usable anchor for short prompts, not a semantic summary of the task.
+- Because the run input is model-visible, the anchor is not a trust boundary. In a measured perturbation on GATE-Union, anchoring on the attack's own text released 52 of 167 semantic-stage attacks. Removing the intent term (`w = 0` in `(d_harm + eps) / (d_safe + w * d_intent + eps)`) does not fix this: it releases the same 52 permanently, because those cases are refused only for being off-intent, and it raises benign auto-allow to 186 of 189 at a 4.5% review rate. Partial weight trades the failure rather than removing it (2 releases at `w = 0.5`, 15 at `w = 0.25`). The remedy that removes it is provenance: mint the anchor where the user's goal enters the system, verify it before use, and refuse an unverified anchor. With a trusted anchor the perturbed cases return to their unperturbed outcomes (124 block, 43 escalate, none allowed).
 - The score is computed on the proposed action text, not on the tool result. A benign-looking tool that returns sensitive data still passes the semantic stage.
 - The stage is not adversarially robust. An attacker who can shape the tool name and arguments can also shape the embedding. Treat it as one signal among several, not as an authorization boundary.
 

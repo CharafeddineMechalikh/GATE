@@ -224,11 +224,13 @@ class gateMonitor(SecurityMonitor):
                 # it is not added to checks_failed and stays unattributed.
                 logger.info(
                     f"Semantic escalation: SSS={semantic_score.sss_value:.4f} "
+                    f"fused={semantic_score.fused_harm} "
                     "in escalate band; routing to HITL approval queue"
                 )
                 await self._log_violation(
                     action, state, "SEMANTIC_ESCALATION",
-                    f"SSS={semantic_score.sss_value:.4f} in escalate band; "
+                    f"SSS={semantic_score.sss_value:.4f} "
+                    f"fused_harm={semantic_score.fused_harm} in escalate band; "
                     "withheld pending human approval",
                 )
                 return ValidationResult(
@@ -396,10 +398,21 @@ class gateMonitor(SecurityMonitor):
         )
         
         if score.decision == "BLOCK":
+            fused = score.fused_harm is not None
+            threshold = (
+                self.config.semantic_thresholds.fused_block_threshold
+                if fused
+                else self.config.semantic_thresholds.sss_block_threshold
+            )
+            detail = (
+                f"fused harm={score.fused_harm:.3f} > {threshold:.3f}"
+                if fused
+                else f"SSS={score.sss_value:.3f} < {threshold:.3f}"
+            )
             raise SemanticSafetyViolation(
-                f"Action semantically unsafe: SSS={score.sss_value:.3f}",
+                f"Action semantically unsafe: {detail}",
                 sss_score=score.sss_value,
-                threshold=self.config.semantic_thresholds.sss_block_threshold,
+                threshold=threshold,
                 semantic_score=score,
             )
         

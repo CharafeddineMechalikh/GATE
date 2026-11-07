@@ -4,6 +4,7 @@ Enhanced implementation with proper class-K functions, state tracking,
 and forward invariance verification.
 """
 
+import copy
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
@@ -23,19 +24,22 @@ class ClassKFunction:
     - α is strictly increasing
     - α is continuous
     
-    We use α(h) = κ * h^p for κ ∈ (0, 1) and p ≥ 1.
+    We use α(h) = κ * h^p for κ ∈ (0, 1] and p ≥ 1. With κ = 1 the condition
+    h(x_{k+1}) - h(x_k) >= -α(h(x_k)) reduces to h(x_{k+1}) >= 0, i.e. the
+    successor must stay inside the safe set. Smaller κ demands a margin that
+    shrinks with distance from the boundary.
     """
     
-    def __init__(self, kappa: float = 0.5, power: float = 1.0) -> None:
+    def __init__(self, kappa: float = 1.0, power: float = 1.0) -> None:
         """
         Initialize class-K function.
         
         Args:
-            kappa: Scaling parameter (0 < kappa < 1).
+            kappa: Scaling parameter (0 < kappa <= 1).
             power: Power parameter (power >= 1).
         """
-        if not 0 < kappa < 1:
-            raise ValueError(f"kappa must be in (0, 1), got {kappa}")
+        if not 0 < kappa <= 1:
+            raise ValueError(f"kappa must be in (0, 1], got {kappa}")
         if power < 1:
             raise ValueError(f"power must be >= 1, got {power}")
         
@@ -92,10 +96,15 @@ class BarrierFunction:
 class EnhancedDCBFMonitor(DCBFMonitor):
     """
     Enhanced Discrete Control Barrier Function Monitor.
-    
+
+    The safe set is the intersection of the per-barrier superlevel sets. A
+    proposed call is admitted only if the current state is inside it and every
+    barrier satisfies the discrete forward-invariance condition on the successor
+    predicted by the executable-call model (see `_simulate_next_state`).
+
     Features:
     - Proper class-K functions for D-CBF condition
-    - State evolution tracking
+    - Explicit successor model over history, step count and declared cost
     - Forward invariance verification
     - Configurable barrier margins and weights
     - Support for custom barrier functions
@@ -110,6 +119,7 @@ class EnhancedDCBFMonitor(DCBFMonitor):
         max_drift: float = 0.8,
         step_budget: int = 50,
         enable_verification: bool = True,
+        per_call_cost_usd: float = 0.01,
     ) -> None:
         """
         Initialize enhanced D-CBF monitor.
@@ -122,10 +132,15 @@ class EnhancedDCBFMonitor(DCBFMonitor):
             max_drift: Maximum allowed semantic drift.
             step_budget: Maximum number of steps.
             enable_verification: Enable forward invariance verification.
+            per_call_cost_usd: Cost charged in the successor model when the
+                proposed action declares no `estimated_cost` metadata.
         """
-        self.alpha = alpha_function or ClassKFunction(kappa=0.5, power=1.0)
+        self.alpha = alpha_function or ClassKFunction(kappa=1.0, power=1.0)
         self.enable_verification = enable_verification
-        
+        # The corpus envelopes write 0.0 to mean "unset", not a zero budget.
+        self.privacy_budget = privacy_budget if privacy_budget > 0 else 0.5
+        self.per_call_cost_usd = per_call_cost_usd
+
         self.barriers: Dict[str, BarrierFunction] = {}
         self._state_history: List[Tuple[AgentState, float]] = []
         
@@ -155,7 +170,7 @@ class EnhancedDCBFMonitor(DCBFMonitor):
             "privacy",
             lambda state: self._h_privacy(state),
             weight=1.5,
-            margin=privacy_budget,
+            margin=0.0,
         )
         
         self.add_barrier(
@@ -253,7 +268,13 @@ class EnhancedDCBFMonitor(DCBFMonitor):
         if not self.enable_verification:
             return True, ""
 
-        # (b) Per-barrier discrete forward-invariance condition.
+        # (b) Per-barrier discrete forward-invariance condition on the successor
+        # predicted by the declared model: the proposed call is appended to the
+        # tool history, the step count advances by one, and the cost advances by
+        # the action's declared estimate (or the configured per-call cost). Every
+        # barrier is a function of these components, so the prediction is exact
+        # up to the cost estimate; at alpha(h) = h the condition reduces to
+        # h_i(x_{k+1}) >= 0.
         next_state = self._simulate_next_state(current_state, proposed_action)
         values_next = self.get_barrier_values(next_state)
 
@@ -277,24 +298,24 @@ class EnhancedDCBFMonitor(DCBFMonitor):
     def _simulate_next_state(
         self, current_state: AgentState, action: ToolCall
     ) -> AgentState:
-        """Simulate the next state after executing an action."""
-        from ..core.models import AgentState, ResourceMetrics
-        
-        next_state = AgentState(
-            agent_id=current_state.agent_id,
-            resource_usage=ResourceMetrics(
-                tokens_used=current_state.resource_usage.tokens_used + 100,
-                api_calls=current_state.resource_usage.api_calls + 1,
-                cost_usd=current_state.resource_usage.cost_usd + 0.01,
-            ),
-            step_count=current_state.step_count + 1,
-            current_phase="ACTING",
-            trust_level=current_state.trust_level,
-        )
-        
-        if current_state.context_embedding is not None:
-            next_state.context_embedding = current_state.context_embedding.copy()
-        
+        """Predict the successor state under the executable-call model.
+
+        The barriers depend on the tool history, the step count, the cumulative
+        cost and the embeddings. The model is exact on the first three: the call
+        is appended to the history, the step advances by one, and the cost
+        advances by the declared estimate (a call that declares none is charged
+        `per_call_cost_usd`). Embeddings are carried unchanged because the
+        outbound content is unknown before execution.
+        """
+        cost = float(action.metadata.get("estimated_cost", self.per_call_cost_usd))
+
+        next_state = copy.copy(current_state)
+        next_state.tool_history = list(current_state.tool_history) + [action]
+        next_state.resource_usage = copy.copy(current_state.resource_usage)
+        next_state.resource_usage.cost_usd = current_state.resource_usage.cost_usd + cost
+        next_state.step_count = current_state.step_count + 1
+        next_state.loop_count = dict(current_state.loop_count)
+        next_state.current_phase = "ACTING"
         return next_state
     
     def verify_forward_invariance(
@@ -317,20 +338,23 @@ class EnhancedDCBFMonitor(DCBFMonitor):
         
         violations = 0
         total_checks = 0
-        
+
         for state, action in zip(test_states, test_actions):
-            h_current = self.evaluate_state(state)
-            
-            if h_current < 0:
+            values_now = self.get_barrier_values(state)
+            # Only transitions starting inside the safe set are informative:
+            # a violated invariant cannot be "preserved" by the successor.
+            if any(v < 0 for v in values_now.values()):
                 continue
-            
-            next_state = self._simulate_next_state(state, action)
-            h_next = self.evaluate_state(next_state)
-            
-            alpha_h = self.alpha(h_current)
-            if h_next - h_current < -alpha_h:
+
+            values_next = self.get_barrier_values(
+                self._simulate_next_state(state, action)
+            )
+            if any(
+                values_next[name] - h < -self.alpha(h) - 1e-9
+                for name, h in values_now.items()
+            ):
                 violations += 1
-            
+
             total_checks += 1
         
         violation_rate = violations / total_checks if total_checks > 0 else 0.0
@@ -360,14 +384,20 @@ class EnhancedDCBFMonitor(DCBFMonitor):
         return 1.0 - risk
     
     def _h_privacy(self, state: AgentState) -> float:
-        """Privacy barrier: PII exposure risk."""
+        """Privacy barrier: PII exposure risk.
+
+        The budget is applied exactly once, here, and the barrier is registered
+        with a zero margin so it is not subtracted twice. Exposure is 0.2 per
+        outbound call, so with the default budget of 0.5 the first two outbound
+        actions are admitted and the third breaches.
+        """
         pii_exposure = 0.0
-        
+
         for tool_call in state.tool_history:
             if tool_call.tool_name in ["send_email", "http_request"]:
                 pii_exposure += 0.2
-        
-        return 0.5 - pii_exposure
+
+        return self.privacy_budget - pii_exposure
     
     def _h_resource(self, state: AgentState, resource_limit: float) -> float:
         """Resource barrier: budget remaining."""

@@ -88,7 +88,7 @@ GATE cannot detect these. Keep the tool object as the only handle, and do not ha
 | DFA | Phases are inferred from tool calls. The stage enforces step and loop budgets, not a task plan or tool ordering. |
 | Contracts | Exact tool-name matching. Built-in SQL rules are keyword and regex checks; the row limit is recorded but not applied to the dispatched query. Code-execution rules are substring checks that are easy to evade. |
 | Semantic | Embedding similarity with prototypes that are not shipped. It is not adversarially robust and can be shaped by the same arguments an attacker controls. |
-| D-CBF | Simulated next state omits tool history and embeddings. Default privacy and safety barriers can be overly restrictive rather than too permissive; the scope barrier is inert in the adapter path. |
+| D-CBF | The one-step successor model carries the proposed call, the next step count and the declared cost, but not the embeddings, because the outbound content is unknown before execution. Default privacy and safety barriers can be overly restrictive rather than too permissive; the scope barrier is inert in the adapter path. Calls dispatched as one concurrent batch all see the same pre-batch history, so accumulation is enforced for sequential dispatch only. |
 
 ### Postconditions are not transactions
 

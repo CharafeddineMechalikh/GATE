@@ -16,6 +16,7 @@ from ..core.exceptions import EmbeddingModelError, VectorStoreError
 from ..utils.embedding import EmbeddingModel
 from ..utils.vector_store import VectorStore
 from .circuit_breaker import CircuitBreaker, CircuitState
+from .intent_alignment import IntentActionAligner
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +121,7 @@ class DefaultSemanticFirewall(SemanticFirewall):
         embedding_circuit_breaker: Optional[CircuitBreaker] = None,
         vector_store_circuit_breaker: Optional[CircuitBreaker] = None,
         trajectory_ema_alpha: float = 0.3,
+        aligner: Optional[IntentActionAligner] = None,
     ) -> None:
         self.config = config
         self.embedding_model = EmbeddingModel(config.embedding_model_name)
@@ -127,6 +129,13 @@ class DefaultSemanticFirewall(SemanticFirewall):
         self.thresholds = config.semantic_thresholds
         
         self.trajectory_tracker = TrajectoryTracker(ema_alpha=trajectory_ema_alpha)
+        self.intent_text: Optional[str] = None
+        self.aligner = aligner
+        if self.aligner is None and self.thresholds.alignment_weight > 0:
+            self.aligner = IntentActionAligner(
+                self.thresholds.alignment_model_name,
+                self.thresholds.alignment_weight,
+            )
         
         self.embedding_cb = embedding_circuit_breaker or CircuitBreaker(
             name="embedding_model",
@@ -168,6 +177,7 @@ class DefaultSemanticFirewall(SemanticFirewall):
         try:
             embedding = self.embedding_model.embed(user_prompt)
             self.trajectory_tracker.set_initial_anchor(embedding)
+            self.intent_text = user_prompt
             logger.debug("Intent anchor set")
         except Exception as e:
             logger.error(f"Failed to set intent anchor: {e}")
@@ -206,14 +216,36 @@ class DefaultSemanticFirewall(SemanticFirewall):
             sss_value = (drift_to_harm + epsilon) / (
                 drift_to_safe + drift_to_intent + epsilon
             )
-            
+
             if sss_value > self.thresholds.sss_safe_threshold:
                 decision = "ALLOW"
             elif sss_value < self.thresholds.sss_block_threshold:
                 decision = "BLOCK"
             else:
                 decision = "ESCALATE"
-            
+
+            contradiction = None
+            entailment = None
+            fused_harm = None
+            if (
+                self.aligner is not None
+                and self.thresholds.alignment_weight != 0
+                and self.intent_text
+            ):
+                alignment = self.aligner.score(self.intent_text, action)
+                if alignment is not None:
+                    contradiction, entailment = alignment
+                    fused_harm = (
+                        -np.log(max(sss_value, 1e-9))
+                        + self.thresholds.alignment_weight * contradiction
+                    )
+                    # One-sided: alignment may add refusal, never grant it.
+                    if (
+                        fused_harm > self.thresholds.fused_block_threshold
+                        and decision != "ALLOW"
+                    ):
+                        decision = "BLOCK"
+
             score = SemanticScore(
                 sss_value=sss_value,
                 drift_to_intent=drift_to_intent,
@@ -226,13 +258,19 @@ class DefaultSemanticFirewall(SemanticFirewall):
                     "has_safe_centroid": tool_name in self.safe_centroids,
                     "trajectory_length": len(self.trajectory_tracker.trajectory),
                     "embedding_cb_state": self.embedding_cb.state.value,
+                    "alignment_contradiction": contradiction,
+                    "alignment_entailment": entailment,
+                    "fused_harm": fused_harm,
                 },
+                alignment_contradiction=contradiction,
+                fused_harm=fused_harm,
             )
             
             logger.debug(
                 f"Semantic check for {tool_name}: SSS={sss_value:.3f}, "
                 f"decision={decision}, drift_to_harm={drift_to_harm:.3f}, "
-                f"drift_to_safe={drift_to_safe:.3f}, drift_to_intent={drift_to_intent:.3f}"
+                f"drift_to_safe={drift_to_safe:.3f}, drift_to_intent={drift_to_intent:.3f}, "
+                f"contradiction={contradiction}, fused_harm={fused_harm}"
             )
             
             return score

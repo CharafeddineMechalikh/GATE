@@ -157,3 +157,107 @@ class TestEnhancedDCBFMonitor:
         action = ToolCall(tool_name="search", tool_args={}, call_id="ok")
         is_safe, _ = self.monitor.check_transition(healthy, action)
         assert is_safe is True
+
+    def test_successor_model_appends_call_without_mutating(self):
+        """The successor predicts history, step and cost; the input state is
+        left untouched so a rejected call leaves no trace."""
+        state = AgentState(
+            agent_id="test",
+            step_count=3,
+            tool_history=[ToolCall("search", {}, "h0")],
+        )
+        state.resource_usage.cost_usd = 1.0
+        action = ToolCall("http_request", {}, "probe")
+
+        nxt = self.monitor._simulate_next_state(state, action)
+
+        assert [tc.tool_name for tc in nxt.tool_history] == ["search", "http_request"]
+        assert nxt.step_count == 4
+        assert nxt.resource_usage.cost_usd == pytest.approx(1.01)
+        assert state.step_count == 3
+        assert len(state.tool_history) == 1
+        assert state.resource_usage.cost_usd == pytest.approx(1.0)
+
+    def test_successor_condition_blocks_third_outbound(self):
+        """Two outbound calls leave h_privacy = 0.1 > 0, so the state is inside
+        the safe set. The successor of a third outbound call has h = -0.1, which
+        violates h(x_{k+1}) - h(x_k) >= -alpha(h(x_k)); the call must be refused
+        by the forward test, not by the membership test."""
+        history = [
+            ToolCall(tool_name="send_email", tool_args={}, call_id=f"h{i}")
+            for i in range(2)
+        ]
+        state = AgentState(
+            agent_id="test",
+            step_count=2,
+            current_phase="PLANNING",
+            tool_history=history,
+        )
+        values = self.monitor.get_barrier_values(state)
+        assert values["privacy"] == pytest.approx(0.1)
+        assert all(v >= 0 for v in values.values())
+
+        is_safe, reason = self.monitor.check_transition(
+            state, ToolCall("send_email", {}, "probe")
+        )
+        assert is_safe is False
+        assert "privacy" in reason
+        assert "CBF condition" in reason
+
+    def test_successor_condition_blocks_completed_dangerous_pair(self):
+        """A history holding one half of a dangerous pair is safe; appending the
+        other half completes the pair in the successor and must be refused."""
+        state = AgentState(
+            agent_id="test",
+            step_count=1,
+            current_phase="PLANNING",
+            tool_history=[ToolCall("sql_query", {}, "h0")],
+        )
+        is_safe, reason = self.monitor.check_transition(
+            state, ToolCall("http_request", {}, "probe")
+        )
+        assert is_safe is False
+        assert "safety" in reason
+
+    def test_successor_condition_blocks_overrun(self):
+        """The forward condition refuses the call that crosses each budget."""
+        # Stability: one step past a three-step budget.
+        stability_state = AgentState(agent_id="test", step_count=3, current_phase="ACTING")
+        tight = EnhancedDCBFMonitor(step_budget=3)
+        is_safe, reason = tight.check_transition(
+            stability_state, ToolCall("search", {}, "probe")
+        )
+        assert is_safe is False
+        assert "stability" in reason
+
+        # Resource: a declared cost that exceeds the remaining budget.
+        resource_state = AgentState(agent_id="test", step_count=1, current_phase="ACTING")
+        resource_state.resource_usage.cost_usd = 9.9
+        action = ToolCall("search", {}, "probe", metadata={"estimated_cost": 0.2})
+        is_safe, reason = self.monitor.check_transition(resource_state, action)
+        assert is_safe is False
+        assert "resource" in reason
+
+    def test_forward_invariance_over_accepted_sequence(self):
+        """Any sequence the monitor admits stays inside the safe set, so the
+        forward-invariance property holds by construction of the check."""
+        state = AgentState(agent_id="test", current_phase="PLANNING", step_count=0,
+                           loop_count={})
+        proposals = [
+            ToolCall("sql_query", {}, "a"),
+            ToolCall("web_search", {}, "b"),
+            ToolCall("http_request", {}, "c"),
+            ToolCall("send_email", {}, "d"),
+            ToolCall("send_email", {}, "e"),
+        ]
+        accepted = 0
+        for action in proposals:
+            is_safe, _ = self.monitor.check_transition(state, action)
+            if is_safe:
+                accepted += 1
+                state.tool_history.append(action)
+                state.step_count += 1
+                assert all(
+                    v >= 0 for v in self.monitor.get_barrier_values(state).values()
+                )
+        assert accepted < len(proposals)

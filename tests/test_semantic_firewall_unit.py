@@ -54,6 +54,47 @@ def firewall():
     EmbeddingModel._MODEL_CACHE.pop(_CACHE_KEY, None)
 
 
+class _StubAligner:
+    """Returns a fixed (contradiction, entailment) pair, or None if unavailable."""
+
+    def __init__(self, contradiction=0.0, entailment=0.9, weight=0.5, available=True):
+        self.contradiction = contradiction
+        self.entailment = entailment
+        self.weight = weight
+        self.available = available
+        self.calls = []
+
+    def score(self, intent, action):
+        self.calls.append((intent, action))
+        if not self.available:
+            return None
+        return (self.contradiction, self.entailment)
+
+
+def _firewall_with_aligner(stub_aligner, weight=0.5, **thresholds):
+    EmbeddingModel._MODEL_CACHE[_CACHE_KEY] = _StubEncoder()
+    config = gateConfig(
+        agent_profile=AgentProfile(
+            agent_id="a1", role="r", allowed_tools={"search", "read"}
+        ),
+        embedding_model_name="all-MiniLM-L6-v2",
+        vector_store_path=None,
+    )
+    config.semantic_thresholds.alignment_weight = weight
+    for k, v in thresholds.items():
+        setattr(config.semantic_thresholds, k, v)
+    return DefaultSemanticFirewall(config, aligner=stub_aligner)
+
+
+@pytest.fixture
+def aligned():
+    def _make(aligner, weight=0.5, **thresholds):
+        return _firewall_with_aligner(aligner, weight, **thresholds)
+
+    yield _make
+    EmbeddingModel._MODEL_CACHE.pop(_CACHE_KEY, None)
+
+
 class TestTrajectoryTracker:
     def test_set_initial_anchor(self):
         tt = TrajectoryTracker()
@@ -170,3 +211,93 @@ class TestDefaultSemanticFirewall:
         vec = await fw.embed("harm")
         assert vec.shape == (384,)
         assert np.all(vec == 0.0)
+
+
+class TestIntentActionAlignment:
+    def test_intent_text_recorded(self, firewall):
+        fw, _ = firewall
+        fw.set_intent_anchor("summarise the tickets")
+        assert fw.intent_text == "summarise the tickets"
+
+    def test_low_contradiction_leaves_a_band_call_escalated(self, aligned):
+        # Harm prototype "mid" puts the SSS at ~0.65, an ESCALATE under SSS.
+        # Alignment is one-sided, so a low contradiction cannot lift it.
+        aligner = _StubAligner(contradiction=0.01, entailment=0.95)
+        fw = aligned(aligner)
+        fw.harm_prototypes = [_VECTORS["mid"].astype("float32")]
+        fw.set_intent_anchor("read the ticket")
+        score = fw.check_semantic_safety("act", "search", "a1")
+        assert score.details["alignment_contradiction"] == 0.01
+        assert 0.5 <= score.sss_value < 0.7
+        assert score.decision == "ESCALATE"
+
+    def test_high_contradiction_blocks_a_band_call(self, aligned):
+        aligner = _StubAligner(contradiction=0.99, entailment=0.0)
+        fw = aligned(aligner)
+        fw.harm_prototypes = [_VECTORS["mid"].astype("float32")]
+        fw.set_intent_anchor("read the ticket")
+        score = fw.check_semantic_safety("act", "search", "a1")
+        assert 0.5 <= score.sss_value < 0.7
+        assert score.fused_harm > fw.thresholds.fused_block_threshold
+        assert score.decision == "BLOCK"
+
+    def test_alignment_never_overrides_an_allow(self, aligned):
+        # Even with an absurdly low block bound, the term may not refuse a call
+        # the frozen SSS already cleared.
+        aligner = _StubAligner(contradiction=0.99, entailment=0.0)
+        fw = aligned(aligner, fused_block_threshold=-1.0)
+        fw.harm_prototypes = [np.array([-1.0, 0.0, 0.0, 0.0], dtype="float32")]
+        fw.set_intent_anchor("read the ticket")
+        score = fw.check_semantic_safety("act", "search", "a1")
+        assert score.sss_value > 0.7
+        assert score.fused_harm > fw.thresholds.fused_block_threshold
+        assert score.decision == "ALLOW"
+
+    def test_high_contradiction_blocks_a_low_sss_call(self, aligned):
+        aligner = _StubAligner(contradiction=0.99, entailment=0.0)
+        fw = aligned(aligner)
+        fw.harm_prototypes = [np.array([1.0, 0.0, 0.0, 0.0], dtype="float32")]
+        fw.set_intent_anchor("read the ticket")
+        # "act" embeds to the same x-axis, so the SSS is ~0 and already blocks;
+        # the assertion here is that the fused path still reports contradiction.
+        score = fw.check_semantic_safety("act", "search", "a1")
+        assert score.decision == "BLOCK"
+        assert score.fused_harm is not None
+
+    def test_unavailable_aligner_falls_back_to_sss(self, aligned):
+        aligner = _StubAligner(available=False)
+        fw = aligned(aligner)
+        fw.harm_prototypes = [_VECTORS["mid"].astype("float32")]
+        fw.set_intent_anchor("read the ticket")
+        score = fw.check_semantic_safety("act", "search", "a1")
+        assert score.alignment_contradiction is None
+        assert score.decision == "ESCALATE"
+
+    def test_zero_weight_skips_the_aligner(self, aligned):
+        aligner = _StubAligner(contradiction=0.99)
+        fw = aligned(aligner, weight=0.0)
+        fw.harm_prototypes = [_VECTORS["mid"].astype("float32")]
+        fw.set_intent_anchor("read the ticket")
+        score = fw.check_semantic_safety("act", "search", "a1")
+        assert aligner.calls == []
+        assert score.decision == "ESCALATE"
+
+    def test_no_intent_skips_the_aligner(self, aligned):
+        aligner = _StubAligner(contradiction=0.99)
+        fw = aligned(aligner)
+        fw.harm_prototypes = [_VECTORS["mid"].astype("float32")]
+        score = fw.check_semantic_safety("act", "search", "a1")
+        assert aligner.calls == []
+        assert score.decision == "ESCALATE"
+
+    def test_block_bound_sets_the_refusal_line(self, aligned):
+        # A wide bound keeps the band call escalated; a zero bound refuses it.
+        fw = aligned(_StubAligner(contradiction=0.5), fused_block_threshold=10.0)
+        fw.harm_prototypes = [_VECTORS["mid"].astype("float32")]
+        fw.set_intent_anchor("read the ticket")
+        assert fw.check_semantic_safety("act", "search", "a1").decision == "ESCALATE"
+
+        fw = aligned(_StubAligner(contradiction=0.5), fused_block_threshold=0.0)
+        fw.harm_prototypes = [_VECTORS["mid"].astype("float32")]
+        fw.set_intent_anchor("read the ticket")
+        assert fw.check_semantic_safety("act", "search", "a1").decision == "BLOCK"

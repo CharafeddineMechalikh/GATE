@@ -12,11 +12,11 @@ flowchart TD
     TE --> M["gateMonitor"]
     FW -->|dispatches| GT["guarded tool objects"]
     M -->|validates every call| GT
-    M --> P["Privilege enforcer"]
-    M --> D["DFA supervisor"]
-    M --> C["Smart contracts registry"]
-    M --> S["Semantic firewall"]
-    M --> B["D-CBF monitor"]
+    M --> P["1. Privilege enforcer"]
+    M --> D["2. DFA supervisor"]
+    M --> C["3. Smart contracts registry"]
+    M --> B["4. D-CBF monitor"]
+    M --> S["5. Semantic firewall"]
 ```
 
 | Component | Module | Responsibility |

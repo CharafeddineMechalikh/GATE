@@ -108,6 +108,70 @@ def test_langgraph_toolnode_executes_authorized_tool():
         secure.terminate()
 
 
+def test_langgraph_dcbf_forward_check_blocks_third_outbound_call():
+    """The live guarded path, one tool call per model turn inside a single run:
+    two sends execute and the third is refused by the D-CBF successor check,
+    because its successor would take the privacy potential below zero. The
+    refused call never reaches the body and never enters the recorded history."""
+    from langchain_core.messages import AIMessage
+    from langchain_core.tools import tool
+    from langgraph.graph import END, START, StateGraph
+    from langgraph.prebuilt import ToolNode
+
+    executed = []
+
+    @tool
+    def send_email(recipient: str) -> str:
+        """Send an email to one recipient."""
+        executed.append(recipient)
+        return "sent"
+
+    class LoopState(TypedDict):
+        messages: Annotated[list, lambda left, right: left + right]
+        issued: int
+
+    def agent(state):
+        issued = state.get("issued", 0)
+        if issued >= 3:
+            return {"messages": [AIMessage(content="done")]}
+        call = {
+            "name": "send_email",
+            "args": {"recipient": f"r{issued}@b.c"},
+            "id": f"send-{issued}",
+            "type": "tool_call",
+        }
+        return {"messages": [AIMessage(content="", tool_calls=[call])], "issued": issued + 1}
+
+    def route(state):
+        return "tools" if getattr(state["messages"][-1], "tool_calls", None) else END
+
+    builder = StateGraph(LoopState)
+    builder.add_node("agent", agent)
+    builder.add_node("tools", ToolNode([send_email]))
+    builder.add_edge(START, "agent")
+    builder.add_conditional_edges("agent", route, {"tools": "tools", END: END})
+    builder.add_edge("tools", "agent")
+    graph = builder.compile()
+
+    config = make_config(
+        allowed=("send_email",), checks=("privilege", "dfa", "dcbf")
+    )
+    secure = LangGraphAdapter().wrap_agent(graph, config)
+    try:
+        with pytest.raises(ToolExecutionBlocked) as excinfo:
+            secure.invoke({"messages": []})
+
+        result = excinfo.value.result
+        assert result.checks_failed == ["dcbf"]
+        assert "privacy" in result.reason
+        assert "CBF condition" in result.reason
+        assert len(executed) == 2
+        state = secure.get_state()
+        assert [call.tool_name for call in state.tool_history] == ["send_email"] * 2
+    finally:
+        secure.terminate()
+
+
 def test_langgraph_toolnode_blocks_unauthorized_tool():
     executed, blocked = [], []
     add, delete = _make_langchain_tools(executed, blocked)

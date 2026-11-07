@@ -385,8 +385,9 @@ EnhancedDCBFMonitor(
     max_drift=0.8,
     step_budget=50,
     enable_verification=True,
+    per_call_cost_usd=0.01,
 )
-ClassKFunction(kappa=0.5, power=1.0)
+ClassKFunction(kappa=1.0, power=1.0)
 BarrierFunction(name, func, weight=1.0, margin=0.0)
 ```
 

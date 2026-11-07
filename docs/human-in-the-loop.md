@@ -110,6 +110,16 @@ for request in queue.get_pending_requests():
 
 A denial raises `ToolExecutionBlocked` with `stage="hitl"` and the original semantic result attached. The semantic score is available on `exc.result.semantic_score`.
 
+## Behaviour under load
+
+Saturation is fail-closed. In a measured burst against the shipped queue, with no notification channel configured and a two-second SLA standing in for the default, the first 100 requests were accepted in 52 ms, the 101st was rejected in 0.35 ms with `justification="Approval queue full"`, and every accepted request expired at the SLA and was denied. Containment therefore survives a full queue; what saturation costs is availability, because legitimate ambiguous calls are refused along with the rest.
+
+The queue bound is the only control against this. Circuit breakers observe stage failures, not queue depth, so they do not trip on a full approval queue.
+
+Capacity follows from reviewer service time. With `N` reviewers and mean service time `s`, approvals drain at `N / s`, so a workload that escalates a share `r` of its calls is sustainable below `N / (s * r)` calls per second. At the GATE-Union stress benchmark escalation rate of 2.7% (48 of 1803 calls), one reviewer serving a call per minute supports 0.62 calls per second. In standard production workloads where tool calls are predominantly routine, the escalation share `r` will be substantially lower, increasing the sustainable throughput accordingly. An adversary that can deliberately push calls into the escalation band converts reviewers into a denial of service without executing a single call.
+
+A refused request is not written to `get_audit_log()`: only resolved and expired requests appear there. If you need a record of saturation events, log the `Approval queue full` denial from the `ToolExecutionBlocked` exception in host code.
+
 ## Notification channels
 
 Two channels are provided:

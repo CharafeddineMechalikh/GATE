@@ -19,7 +19,7 @@ The monitor admits a transition only when:
 h_i(next) - h_i(current) >= -alpha(h_i(current))
 ```
 
-where `alpha(h) = kappa * h` with `kappa = 0.5` and `power = 1`. The condition allows a barrier to decrease, but not faster than the class-K function permits. A single breached barrier denies the action regardless of the other barriers.
+where `alpha(h) = kappa * h^power`. The default is `kappa = 1.0` and `power = 1`, so the condition reduces to `h_i(next) >= 0`: the call is refused if it would take any barrier out of the safe set. `kappa < 1` demands a proportional margin instead of mere non-negativity. A single breached barrier denies the action regardless of the other barriers.
 
 `enable_forward_invariance_verification=False` skips step 2 and checks only that the current state is inside the safe set. `gateConfig.enable_forward_invariance_verification` defaults to `True`.
 
@@ -30,7 +30,7 @@ The monitor is constructed with these five barriers unless you build your own:
 | Barrier | Weight | Margin | Raw value | Effective `h` |
 |---|---|---|---|---|
 | `safety` | 1.0 | 0.1 | `1.0 - risk`, where risk counts dangerous tool combinations in the last five calls | `raw - 0.1` |
-| `privacy` | 1.5 | 0.5 | `0.5 - 0.2 * count(send_email, http_request)` over the whole history | `raw - 0.5` |
+| `privacy` | 1.5 | 0.0 | `privacy_budget - 0.2 * count(send_email, http_request)` over the whole history, with `privacy_budget` defaulting to `0.5` | `raw` |
 | `resource` | 1.0 | 0.0 | `10.0 - cost_usd` | `raw` |
 | `scope` | 1.2 | 0.0 | `0.8 - L2(action_embedding, context_embedding)`, or `0.8` if either embedding is unset | `raw` |
 | `stability` | 1.0 | 0.0 | `50 - step_count` | `raw` |
@@ -45,17 +45,17 @@ Dangerous combinations for the safety barrier:
 
 A barrier that raises during evaluation returns `-1.0`, which is treated as unsafe.
 
-The barrier values are **not** configurable through `gateConfig` in the adapter path. The monitor constructs `EnhancedDCBFMonitor(enable_verification=...)` and accepts its defaults of `safety_margin=0.1`, `privacy_budget=0.5`, `resource_limit=10.0`, `max_drift=0.8`, and `step_budget=50`. `resource_budget.max_cost_usd` and `resource_budget.max_steps` do not feed these bars.
+The barrier values are **not** configurable through `gateConfig` in the adapter path. The monitor constructs `EnhancedDCBFMonitor(enable_verification=...)` and accepts its defaults of `safety_margin=0.1`, `privacy_budget=0.5`, `resource_limit=10.0`, `max_drift=0.8`, `step_budget=50`, and `per_call_cost_usd=0.01`. `resource_budget.max_cost_usd` and `resource_budget.max_steps` do not feed these bars.
 
 ## What the defaults do in practice
 
 Two consequences are easy to miss:
 
-**The privacy barrier is terminal after one email or HTTP call.** Its effective value is `-0.2 * count`. The first `send_email` or `http_request` in the history takes it to `-0.2` on the next check, which violates the current-state condition. Every later tool call in that run is denied. Because the history never loses entries, a successful email blocks the rest of the run; a denied call does not add history, so the run cannot recover. If your agent sends mail or makes outbound requests, replace this barrier or use a custom monitor before enabling D-CBF.
+**The privacy barrier permits two outbound calls and refuses the third.** Its value is `0.5 - 0.2 * count`, so a history with two `send_email` or `http_request` calls sits at `0.1` and the forward check refuses the next one, which would take it to `-0.1`. Because the history never loses entries, the refusal is permanent for that run; a denied call does not add history, so the run cannot recover. If your agent sends mail or makes many outbound requests, replace this barrier or use a custom monitor before enabling D-CBF.
 
-**The stability barrier stops the run before the DFA step budget does.** With `step_budget=50` and `alpha(h) = 0.5h`, the call after 48 executed calls sees `h = 2`, a next value of `1`, and a drop of `1`, which is exactly the allowed `alpha(2) = 1`. The next call sees `h = 1`, a next value of `0`, and a drop of `1`, which exceeds `alpha(1) = 0.5`, so it is denied. The default D-CBF therefore admits 49 executed calls, one fewer than a `max_steps=50` DFA budget would allow. The limits are independent; whichever is stricter wins.
+**The stability barrier matches the DFA step budget rather than anticipating it.** With `alpha(h) = h` the forward condition asks only that the next step stay inside the budget, so the last admitted call is the one that brings `step_count` to `step_budget`. When both budgets are 50 the two stages admit the same call; the D-CBF budget matters only when it is set lower than `max_steps`, as the benchmark's per-case envelopes do (6, 12 and 20 steps).
 
-The resource barrier is inert in the adapter path because `after_call` never increments `state.resource_usage.cost_usd`. The simulated next state does increment cost by `0.01`, so the forward-invariance check sees a small decrease, but the actual state stays at zero.
+The resource barrier charges the declared `estimated_cost` metadata, or `per_call_cost_usd` when the call declares none, in the simulated next state. The adapter path never increments `state.resource_usage.cost_usd` after a call, so the real spend stays at zero and the forward check is conservative: it can refuse a call the runtime would not have charged for, never the reverse.
 
 The scope barrier is inert unless something populates `state.context_embedding` and `state.action_embedding`. The adapters do not.
 
@@ -63,21 +63,19 @@ The safety barrier can also be terminal: once a run has both tools of a dangerou
 
 ## Next-state simulation
 
-For the forward-invariance test, `_simulate_next_state` builds a fresh `AgentState` with:
+For the forward-invariance test, `_simulate_next_state` copies the current state and changes exactly the components the barriers read:
 
-- `tokens_used + 100`
-- `api_calls + 1`
-- `cost_usd + 0.01`
+- appends the proposed `ToolCall` to a copy of `tool_history`
+- `cost_usd` plus the call's `estimated_cost` metadata, or `per_call_cost_usd` (default `0.01`)
 - `step_count + 1`
+- a copy of `loop_count`
 - phase `ACTING`
-- the same `trust_level`
-- a copy of `context_embedding` if present
 
-It does not copy `tool_history`, `action_embedding`, or `loop_count`. The simulated safety barrier therefore sees no recent tools, the simulated privacy barrier sees an empty history, and the simulated scope barrier sees no action embedding. Only resource and stability change meaningfully in the lookahead.
+`context_embedding` and `action_embedding` are carried unchanged, because the outbound content is unknown before execution. The safety and privacy barriers therefore see the proposed call in the history, which is what makes the check a real one-step lookahead rather than a fixed increment.
 
 ## Composite value
 
-`evaluate_state(state)` returns the weighted **average** of the barrier values, despite its docstring saying "weighted minimum". That composite is used by `check_state_invariants` and by `verify_forward_invariance`; it does not drive `check_transition`, which evaluates each barrier separately. A positive composite therefore does not imply a safe state. Use `get_barrier_values(state)` when you need the per-barrier picture.
+`evaluate_state(state)` returns the weighted **average** of the barrier values, despite its docstring saying "weighted minimum". That composite is used by `check_state_invariants`; it does not drive `check_transition`, which evaluates each barrier separately. A positive composite therefore does not imply a safe state, and `verify_forward_invariance` now tests each barrier separately too. Use `get_barrier_values(state)` when you need the per-barrier picture.
 
 `check_state_invariants` calls `evaluate_state` and tests `>= 0`. Because this is an average, a negative privacy or safety barrier can be masked by healthy resource and stability barriers.
 
@@ -114,7 +112,7 @@ report = dcbf.verify_forward_invariance(states, actions)
 # {"total_checks": ..., "violations": ..., "violation_rate": ..., "forward_invariant": bool}
 ```
 
-It skips states whose composite value is already negative, then simulates the next state and compares the composite values. This is a diagnostic for barrier design, not a runtime check. Because it uses the composite average, it can miss a single-barrier violation that `check_transition` would catch.
+It skips states that are already outside the safe set (any barrier negative), then simulates the next state and tests the same per-barrier condition `check_transition` applies. A transition is counted as a violation if any barrier fails. This is a diagnostic for barrier design, not a runtime check.
 
 ## Neural CBF
 
@@ -138,6 +136,7 @@ With `enabled=True` and the `dcbf` stage enabled, the monitor builds `NeuralCBF`
 - A D-CBF denial raises `DCBFViolation`; the monitor records `checks_failed=["dcbf"]` and the guard raises `ToolExecutionBlocked`.
 - An unexpected exception outside a barrier's own try block propagates out of `validate_action` and prevents dispatch without producing a `ValidationResult`.
 - A semantic escalation returns before D-CBF, so the barrier check is skipped for escalated calls.
+- A framework that dispatches several tool calls as one concurrent batch checks each call against the same pre-batch history, because history is recorded when a call returns. A batch of outbound calls can therefore pass the per-call successor test together even though the batch as a whole would leave the safe set. Sequential dispatch, the common one-call-per-turn loop, accumulates normally. With LangGraph's `ToolNode`, a batch of tool calls in a single `AIMessage` is dispatched concurrently, so use one call per message when the stateful barriers matter.
 
 ## Related pages
 
