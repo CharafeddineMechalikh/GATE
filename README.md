@@ -91,17 +91,34 @@ GATE installs a guard on the live tool objects the framework already dispatches 
 5. after execution, calls `monitor.validate_result` and withholds the output if a contract postcondition fails.
 
 ```mermaid
-flowchart LR
-    A["Agent proposes a tool call"] --> B["GATE guard"]
-    B --> C{"Monitor stages"}
-    C -->|ALLOW| D["Tool body executes"]
-    C -->|BLOCK| E["ToolExecutionBlocked"]
-    C -->|ESCALATE| F["Human approval queue"]
-    F -->|approved| D
-    F -->|rejected, expired, or no queue| E
-    D --> G{"Postconditions"}
-    G -->|pass| H["Output returned to agent"]
-    G -->|fail| E
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffffff', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#f4f6fb'}}}%%
+flowchart TD
+    subgraph Host["Host Agent Framework (Untrusted Plant)"]
+        direction LR
+        OA["OpenAI Agents"] ~~~ LC["LangChain"] ~~~ LG["LangGraph"] ~~~ CW["CrewAI"]
+    end
+
+    subgraph Wrapper["GATE Runtime Wrapper (Trusted Reference Boundary)"]
+        direction TB
+        M["GATE Reference Monitor (5 Sequential Stages)<br><b>Privilege ➔ DFA ➔ Contracts ➔ D-CBF ➔ Semantic</b>"]
+    end
+
+    Host -->|"Tool Call Proposed"| M
+    M -->|"BLOCK (Violation)"| N["ToolExecutionBlocked<br>(Hard Denial)"]
+    M -->|"ALLOW"| A["Safe Tool Execution<br>(External Tool Body)"]
+    M -->|"ESCALATE (Uncertainty)"| E["Human Approval Queue<br>(Withheld by Default)"]
+
+    E -->|"Approved"| A
+    E -->|"Rejected / SLA Expired"| N
+    A -->|"Sanitized Result"| Host
+    N -->|"Exception / Context"| Host
+
+    style Host fill:#f0fbf7,stroke:#2eb85c,stroke-width:1.5px,stroke-dasharray: 4 4
+    style Wrapper fill:#fbfbfe,stroke:#4a6fa5,stroke-width:2px
+    style M fill:#ffffff,stroke:#1e3d59,stroke-width:2px
+    style N fill:#fde2e2,stroke:#d62728,stroke-width:2px,color:#990000
+    style A fill:#e6f9ed,stroke:#2eb85c,stroke-width:2px,color:#006622
+    style E fill:#fff3e0,stroke:#f59f00,stroke-width:2px,color:#995c00
 ```
 
 | Decision | What happens |
