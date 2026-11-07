@@ -4,6 +4,46 @@ The contract stage attaches application-specific rules to tools. Preconditions r
 
 Contracts are looked up by **exact tool name**. There is no pattern matching, no wildcard, and no fallback contract. A tool with no registered contract passes this stage.
 
+## Evaluation flow
+
+```mermaid
+flowchart TD
+    A["Tool call received
+(passed stages 1-2)"] --> B{"Contracts stage
+enabled?"}
+    B -->|No| Z["ALLOW
+(skip stage)"]
+    B -->|Yes| C{"Contract registered
+for this exact tool name?"}
+    C -->|No| Z
+    C -->|Yes| D["Evaluate preconditions
+(attribute-name order)"]
+    D --> E{"Any precondition
+returns False or raises?"}
+    E -->|Yes| F["BLOCK
+(ContractViolation)"]
+    E -->|No| G["ALLOW: dispatch tool body"]
+    G --> H["Tool executes
+(side effects happen)"]
+    H --> I{"Postconditions
+registered?"}
+    I -->|No| K["Output to agent"]
+    I -->|Yes| J{"Any postcondition
+returns False or raises?"}
+    J -->|No| K
+    J -->|Yes| L["Output WITHHELD
+(ToolExecutionBlocked,
+post_execution=True)"]
+
+    style Z fill:#e6f9ed,stroke:#2eb85c,color:#006622
+    style F fill:#fde2e2,stroke:#d62728,color:#990000
+    style G fill:#e6f9ed,stroke:#2eb85c,color:#006622
+    style K fill:#e6f9ed,stroke:#2eb85c,color:#006622
+    style L fill:#fff3e0,stroke:#f59f00,color:#995c00
+    style H fill:#f8fafc,stroke:#64748b
+```
+
+
 ## Defining a contract
 
 ```python

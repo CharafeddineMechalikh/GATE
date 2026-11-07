@@ -2,6 +2,24 @@
 
 This page wraps a compiled LangGraph and shows what happens on each decision. The same pattern applies to the other frameworks; only the object passed to `wrap_agent` and the framework key change.
 
+```mermaid
+flowchart LR
+    A["wrap_agent()"] --> B["Agent invokes tool"]
+    B --> C["GATE guard intercepts"]
+    C --> D{"All 5 stages pass?"}
+    D -->|Yes| E["ALLOW
+Tool runs normally"]
+    D -->|No| F["BLOCK
+ToolExecutionBlocked raised"]
+    D -->|Uncertain| G["ESCALATE
+Held for human review"]
+
+    style E fill:#e6f9ed,stroke:#2eb85c,color:#006622
+    style F fill:#fde2e2,stroke:#d62728,color:#990000
+    style G fill:#fff3e0,stroke:#f59f00,color:#995c00
+```
+
+
 ## A guarded LangGraph
 
 ```python

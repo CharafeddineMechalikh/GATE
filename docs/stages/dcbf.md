@@ -23,6 +23,35 @@ where `alpha(h) = kappa * h^power`. The default is `kappa = 1.0` and `power = 1`
 
 `enable_forward_invariance_verification=False` skips step 2 and checks only that the current state is inside the safe set. `gateConfig.enable_forward_invariance_verification` defaults to `True`.
 
+## Evaluation flow
+
+```mermaid
+flowchart TD
+    A["Tool call received
+(passed stages 1-3)"] --> B["Compute h_i for each barrier
+on current state"]
+    B --> C{"Any h_i(current) < 0?"}
+    C -->|Yes| D["BLOCK
+(already outside safe set)"]
+    C -->|No| E{"Forward invariance
+verification enabled?"}
+    E -->|No| K["ALLOW"]
+    E -->|Yes| F["Simulate next state
+(append call, step+1, cost+est)"]
+    F --> G["Compute h_i for each barrier
+on simulated next state"]
+    G --> H{"Any barrier fails
+h_i(next) - h_i(cur) < -α(h_i(cur))?"}
+    H -->|Yes| I["BLOCK
+(DCBFViolation)"]
+    H -->|No| K
+
+    style D fill:#fde2e2,stroke:#d62728,color:#990000
+    style I fill:#fde2e2,stroke:#d62728,color:#990000
+    style K fill:#e6f9ed,stroke:#2eb85c,color:#006622
+```
+
+
 ## Default barriers
 
 The monitor is constructed with these five barriers unless you build your own:

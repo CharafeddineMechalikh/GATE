@@ -2,6 +2,27 @@
 
 GATE wraps the framework you already use. The adapter does not rebuild the graph, re-register the tools, or change how the planner works. It finds the live tool objects and installs a guard on each one.
 
+## Wrapping pipeline
+
+```mermaid
+flowchart LR
+    A["wrap_agent(agent, key, config)"] --> B["Select adapter
+by framework key"]
+    B --> C["Discover tool objects
+(framework-specific)"]
+    C --> D["Build gateMonitor(config)"]
+    D --> E["Build ToolEnforcement
+(monitor, config, queue)"]
+    E --> F["For each tool:
+install_tool_guard()"]
+    F --> G["Return SecureAgent"]
+
+    style A fill:#f8fafc,stroke:#1e3d59,stroke-width:2px
+    style F fill:#fff3e0,stroke:#f59f00
+    style G fill:#e6f9ed,stroke:#2eb85c,color:#006622
+```
+
+
 | Framework | Key | Adapter | Accepted object | Extra |
 |---|---|---|---|---|
 | LangChain | `langchain` | `LangChainAdapter` | `AgentExecutor` or a compiled LangChain agent graph | `langchain` |

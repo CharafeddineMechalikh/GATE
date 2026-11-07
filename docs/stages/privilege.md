@@ -8,6 +8,43 @@ The privilege stage answers three questions before any other check runs:
 
 It is the cheapest stage and the first line of defence. When it denies, `checks_failed` is `["privilege"]` and no later stage runs.
 
+## Decision flow
+
+```mermaid
+flowchart TD
+    A["Tool call received"] --> B{"Profile registered
+for agent?"}
+    B -->|No| C["DENY
+(no_profile)"]
+    B -->|Yes| D{"Tool in
+forbidden_tools?"}
+    D -->|Yes| E["DENY
+(forbidden)"]
+    D -->|No| F{"Tool in
+allowed_tools?"}
+    F -->|No| G["DENY
+(not_allowed)"]
+    F -->|Yes| H{"Argument looks like
+data resource?
+(has dot, no space, no @)"}
+    H -->|No| L["ALLOW"]
+    H -->|Yes| I{"Matches
+forbidden_patterns?"}
+    I -->|Yes| J["DENY
+(DataScopeViolation)"]
+    I -->|No| K{"Matches allowed
+endpoints or db.table?"}
+    K -->|Yes| L
+    K -->|No| J
+
+    style C fill:#fde2e2,stroke:#d62728,color:#990000
+    style E fill:#fde2e2,stroke:#d62728,color:#990000
+    style G fill:#fde2e2,stroke:#d62728,color:#990000
+    style J fill:#fde2e2,stroke:#d62728,color:#990000
+    style L fill:#e6f9ed,stroke:#2eb85c,color:#006622
+```
+
+
 ## Configuration
 
 ```python

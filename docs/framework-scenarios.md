@@ -1,5 +1,29 @@
 # The same GATE scenario in LangGraph, LangChain, OpenAI Agents, and CrewAI
 
+```mermaid
+flowchart TD
+    subgraph Frameworks["Any Host Framework"]
+        direction LR
+        LG["LangGraph"] ~~~ LC["LangChain"] ~~~ OA["OpenAI Agents"] ~~~ CW["CrewAI"]
+    end
+
+    Frameworks -->|"tool call"| G["GATE Guard
+(same enforcement for all)"]
+    G --> M["gateMonitor
+Privilege → DFA → Contracts → D-CBF → Semantic"]
+    M -->|"ALLOW"| T["Tool executes"]
+    M -->|"BLOCK"| B["ToolExecutionBlocked
+raised into framework"]
+    M -->|"ESCALATE"| E["Human approval queue"]
+
+    style Frameworks fill:#f0fbf7,stroke:#2eb85c,stroke-width:1.5px
+    style G fill:#fdfaff,stroke:#a855f7,stroke-width:2px
+    style T fill:#e6f9ed,stroke:#2eb85c,color:#006622
+    style B fill:#fde2e2,stroke:#d62728,color:#990000
+    style E fill:#fff3e0,stroke:#f59f00,color:#995c00
+```
+
+
 This page runs one scenario through all four adapters with the same configuration. It shows the object each adapter expects, how to run a full agent, and a keyless driver that exercises the framework's real tool-dispatch entry point. Use the keyless driver to verify enforcement without a model or API key; use the full-agent path for a real run.
 
 ## The scenario
