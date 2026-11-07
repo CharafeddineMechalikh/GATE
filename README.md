@@ -98,7 +98,11 @@ flowchart TD
 
         subgraph Host["Host Agent Framework"]
             direction LR
-            OA["OpenAI Agents"] ~~~ LC["LangChain"] ~~~ LG["LangGraph"] ~~~ CW["CrewAI"]
+            OA["OpenAI Agents"]
+            LC["LangChain"]
+            LG["LangGraph"]
+            CW["CrewAI"]
+            OA --- LC --- LG --- CW
         end
 
         M["GATE Reference Monitor (5 Sequential Stages)<br><b>Privilege ➔ DFA ➔ Contracts ➔ D-CBF ➔ Semantic</b>"]
