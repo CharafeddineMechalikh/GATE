@@ -93,31 +93,46 @@ GATE installs a guard on the live tool objects the framework already dispatches 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffffff', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#f4f6fb'}}}%%
 flowchart TD
-    subgraph Wrapper["GATE Wrapper (Trusted Boundary)"]
+    subgraph GATE_Boundary["GATE Wrapper (Trusted Execution Boundary)"]
         direction TB
+
         subgraph Host["Host Agent Framework"]
             direction LR
             OA["OpenAI Agents"] ~~~ LC["LangChain"] ~~~ LG["LangGraph"] ~~~ CW["CrewAI"]
         end
 
-        Host -->|"Tool Call Proposed"| M["GATE Reference Monitor (5 Stages)<br><b>Privilege ➔ DFA ➔ Contracts ➔ D-CBF ➔ Semantic</b>"]
-        M -->|"BLOCK (Violation)"| N["ToolExecutionBlocked<br>(Hard Denial)"]
-        N -->|"Exception / Context"| Host
+        M["GATE Reference Monitor (5 Sequential Stages)<br><b>Privilege ➔ DFA ➔ Contracts ➔ D-CBF ➔ Semantic</b>"]
+        
+        B_NODE["BLOCK Decision<br><code>ToolExecutionBlocked</code>"]
+        E_NODE["ESCALATE Decision<br><code>Human Approval Queue</code>"]
+
+        Host -->|"1. Proposes Tool Call"| M
+        M -->|"Hard Violation"| B_NODE
+        M -->|"Uncertainty Band"| E_NODE
+
+        B_NODE -->|"Blocked Notification"| Host
+        E_NODE -->|"Rejected / SLA Expired"| B_NODE
     end
 
-    M -->|"ALLOW"| A["ALLOW<br>(External Execution)"]
-    M -->|"ESCALATE (Uncertainty)"| E["ESCALATE<br>(Human Intervention)"]
+    %% External World (Outside GATE Boundary)
+    subgraph External["External World (Side Effects)"]
+        EXT["ALLOW: External Tool Execution<br>(APIs, SQL DB, Shell, Web)"]
+        RES["Result / Output Payload"]
+    end
 
-    E -->|"Approved"| A
-    E -->|"Rejected / SLA Expired"| N
-    A -->|"Sanitized Result"| Host
+    M -->|"Pass (ALLOW)"| EXT
+    E_NODE -->|"Human Approved"| EXT
+    EXT -->|"Executes Tool Body"| RES
+    RES -->|"Validated Result Returned"| Host
 
-    style Wrapper fill:#fbfbfe,stroke:#c054c0,stroke-width:2px
-    style Host fill:#f0fbf7,stroke:#2eb85c,stroke-width:1.5px
-    style M fill:#ffffff,stroke:#1e3d59,stroke-width:2px
-    style N fill:#fde2e2,stroke:#d62728,stroke-width:2px,color:#990000
-    style A fill:#e6f9ed,stroke:#2eb85c,stroke-width:2px,color:#006622
-    style E fill:#fff3e0,stroke:#f59f00,stroke-width:2px,color:#995c00
+    style GATE_Boundary fill:#fdfaff,stroke:#a855f7,stroke-width:2.5px
+    style Host fill:#f0fbf7,stroke:#2eb85c,stroke-width:1.8px
+    style M fill:#ffffff,stroke:#1e3d59,stroke-width:2px,font-weight:bold
+    style B_NODE fill:#fde2e2,stroke:#d62728,stroke-width:2px,color:#990000
+    style E_NODE fill:#fff3e0,stroke:#f59f00,stroke-width:2px,color:#995c00
+    style External fill:#f8fafc,stroke:#64748b,stroke-width:1.5px,stroke-dasharray: 4 4
+    style EXT fill:#e6f9ed,stroke:#2eb85c,stroke-width:2px,color:#006622,font-weight:bold
+    style RES fill:#ffffff,stroke:#3b82f6,stroke-width:1.5px
 ```
 
 | Decision | What happens |
