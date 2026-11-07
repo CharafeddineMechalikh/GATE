@@ -20,8 +20,8 @@ The pages below form a guided path from "what it does" to "how it is built" to "
    1. [Privilege](stages/privilege.md) — tool allow-lists, data scope, budget checks
    2. [DFA supervision](stages/dfa.md) — phases, transitions, step and loop budgets
    3. [Smart contracts](stages/contracts.md) — preconditions and postconditions
-   4. [Semantic firewall](stages/semantic-firewall.md) — SSS scoring, intent anchor, thresholds
-   5. [D-CBF monitor](stages/dcbf.md) — barrier functions and forward invariance
+   4. [D-CBF monitor](stages/dcbf.md) — barrier functions and forward invariance
+   5. [Semantic firewall](stages/semantic-firewall.md) — SSS scoring, intent anchor, thresholds
 6. [Enforcement plumbing](enforcement.md) — `ToolEnforcement`, guards, argument marshalling, timeouts
 7. [Configuration](configuration.md) — every field and whether the runtime uses it
 8. Adapters — what complete mediation means per framework:
@@ -34,8 +34,9 @@ The pages below form a guided path from "what it does" to "how it is built" to "
 10. [Audit](audit.md) — encrypted log, PII masking, KMS backends, retention
 11. [Security model](security-model.md) — threat model, guarantees, known gaps
 12. [Standalone utilities](standalone-utilities.md) — tenant isolation, irreversibility, circuit breaker, Neural CBF
-13. [Testing](testing.md) — test layout and how to run the real-framework integration tests
-14. [FAQ](faq.md) — common questions and pitfalls
+13. [Empirical Evaluation](evaluation.md) — benchmark results, layer attribution, ablation studies, and adversarial analysis
+14. [Testing](testing.md) — test layout and how to run the real-framework integration tests
+15. [FAQ](faq.md) — common questions and pitfalls
 
 ## Documentation map
 

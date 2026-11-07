@@ -245,6 +245,7 @@ The rendered documentation is at <https://charafeddinemechalikh.github.io/GATE/>
 - [Security stages](docs/stages/privilege.md): privilege, DFA, contracts, D-CBF, and the semantic firewall.
 - [Framework adapters](docs/adapters/README.md): what complete mediation means for each framework.
 - [Human-in-the-loop](docs/human-in-the-loop.md) and [Audit](docs/audit.md): approvals, SLA, encrypted audit log.
+- [Empirical evaluation](docs/evaluation.md): benchmark results, layer attribution, ablation study, and adversarial analysis.
 - [Security model](docs/security-model.md): guarantees, known gaps, and deployment guidance.
 - [API reference](docs/api-reference.md), [Configuration](docs/configuration.md), and [FAQ](docs/faq.md).
 
