@@ -102,36 +102,39 @@ flowchart TD
         end
 
         M["GATE Reference Monitor (5 Sequential Stages)<br><b>Privilege ➔ DFA ➔ Contracts ➔ D-CBF ➔ Semantic</b>"]
-        
-        B_NODE["BLOCK Decision<br><code>ToolExecutionBlocked</code>"]
-        E_NODE["ESCALATE Decision<br><code>Human Approval Queue</code>"]
 
-        Host -->|"1. Proposes Tool Call"| M
+        B_NODE["BLOCK<br><code>ToolExecutionBlocked</code>"]
+        E_NODE["ESCALATE<br><code>Human Approval Queue</code>"]
+        A_NODE["ALLOW<br><code>Call Approved</code>"]
+
+        Host -->|"Proposes Tool Call"| M
         M -->|"Hard Violation"| B_NODE
         M -->|"Uncertainty Band"| E_NODE
+        M -->|"Pass All Stages"| A_NODE
 
         B_NODE -->|"Blocked Notification"| Host
         E_NODE -->|"Rejected / SLA Expired"| B_NODE
+        E_NODE -->|"Human Approved"| A_NODE
     end
 
     %% External World (Outside GATE Boundary)
     subgraph External["External World (Side Effects)"]
-        EXT["ALLOW: External Tool Execution<br>(APIs, SQL DB, Shell, Web)"]
+        EXT["Tool Execution<br>(APIs, SQL DB, Shell, Web)"]
         RES["Result / Output Payload"]
     end
 
-    M -->|"Pass (ALLOW)"| EXT
-    E_NODE -->|"Human Approved"| EXT
-    EXT -->|"Executes Tool Body"| RES
-    RES -->|"Validated Result Returned"| Host
+    A_NODE -->|"Execute"| EXT
+    EXT --> RES
+    RES -->|"Sanitized Result"| Host
 
     style GATE_Boundary fill:#fdfaff,stroke:#a855f7,stroke-width:2.5px
     style Host fill:#f0fbf7,stroke:#2eb85c,stroke-width:1.8px
     style M fill:#ffffff,stroke:#1e3d59,stroke-width:2px,font-weight:bold
     style B_NODE fill:#fde2e2,stroke:#d62728,stroke-width:2px,color:#990000
     style E_NODE fill:#fff3e0,stroke:#f59f00,stroke-width:2px,color:#995c00
+    style A_NODE fill:#e6f9ed,stroke:#2eb85c,stroke-width:2px,color:#006622
     style External fill:#f8fafc,stroke:#64748b,stroke-width:1.5px,stroke-dasharray: 4 4
-    style EXT fill:#e6f9ed,stroke:#2eb85c,stroke-width:2px,color:#006622,font-weight:bold
+    style EXT fill:#ffffff,stroke:#64748b,stroke-width:1.5px
     style RES fill:#ffffff,stroke:#3b82f6,stroke-width:1.5px
 ```
 
