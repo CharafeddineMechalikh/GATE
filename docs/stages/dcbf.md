@@ -164,11 +164,11 @@ With `enabled=True` and the `dcbf` stage enabled, the monitor builds `NeuralCBF`
 - A barrier exception becomes `-1.0` and denies the transition.
 - A D-CBF denial raises `DCBFViolation`; the monitor records `checks_failed=["dcbf"]` and the guard raises `ToolExecutionBlocked`.
 - An unexpected exception outside a barrier's own try block propagates out of `validate_action` and prevents dispatch without producing a `ValidationResult`.
-- A semantic escalation returns before D-CBF, so the barrier check is skipped for escalated calls.
+- D-CBF runs before the semantic stage, so barrier violations are blocked outright before escalation can be considered.
 - A framework that dispatches several tool calls as one concurrent batch checks each call against the same pre-batch history, because history is recorded when a call returns. A batch of outbound calls can therefore pass the per-call successor test together even though the batch as a whole would leave the safe set. Sequential dispatch, the common one-call-per-turn loop, accumulates normally. With LangGraph's `ToolNode`, a batch of tool calls in a single `AIMessage` is dispatched concurrently, so use one call per message when the stateful barriers matter.
 
 ## Related pages
 
-- [Semantic firewall](semantic-firewall.md) for the preceding stage.
+- [Semantic firewall](semantic-firewall.md) for the subsequent stage.
 - [Architecture](../architecture.md) for the full validation order.
 - [Standalone utilities](../standalone-utilities.md) for Neural CBF and the circuit breaker.

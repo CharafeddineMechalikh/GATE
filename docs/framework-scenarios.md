@@ -386,7 +386,7 @@ assert delete_records.calls == []
 
 The following are the same for all four frameworks:
 
-- Stage order and decisions: privilege, DFA, contracts, semantic firewall, D-CBF.
+- Stage order and decisions: privilege, DFA, contracts, D-CBF, semantic firewall.
 - `approval_queue=` on every `wrap_agent` call for handling `ESCALATE`.
 - Contract lookup by exact tool name, registered on `secure.monitor.contract_registry`.
 - `ToolExecutionBlocked` carries the same `ValidationResult` fields.

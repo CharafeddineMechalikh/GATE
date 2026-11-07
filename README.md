@@ -153,8 +153,8 @@ The default configuration enables all five stages. They run in a fixed order and
 | Privilege | `privilege` | Tool allow-list, data scope, and resource budget. | [Privilege](docs/stages/privilege.md) |
 | DFA supervision | `dfa` | Execution phases, legal transitions, step and loop budgets. | [DFA supervision](docs/stages/dfa.md) |
 | Smart contracts | `contracts` | Preconditions before dispatch and postconditions after execution. | [Smart contracts](docs/stages/contracts.md) |
-| Semantic firewall | `semantic` | Semantic drift from the run's intent anchor and known harm prototypes. | [Semantic firewall](docs/stages/semantic-firewall.md) |
 | D-CBF monitor | `dcbf` | Discrete control barrier functions over the agent state. | [D-CBF monitor](docs/stages/dcbf.md) |
+| Semantic firewall | `semantic` | Semantic drift from the run's intent anchor and known harm prototypes. | [Semantic firewall](docs/stages/semantic-firewall.md) |
 
 The quick-start example enables only the deterministic stages so it runs without downloading an embedding model.
 

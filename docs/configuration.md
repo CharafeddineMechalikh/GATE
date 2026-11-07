@@ -193,5 +193,6 @@ There is no configuration field for a per-tool or per-approval timeout. The appr
 - [Installation](installation.md)
 - [Privilege](stages/privilege.md)
 - [DFA supervision](stages/dfa.md)
-- [Semantic firewall](stages/semantic-firewall.md)
+- [Smart contracts](stages/contracts.md)
 - [D-CBF monitor](stages/dcbf.md)
+- [Semantic firewall](stages/semantic-firewall.md)

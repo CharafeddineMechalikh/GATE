@@ -191,6 +191,6 @@ The adapters do not accept a firewall argument; they call `gateMonitor(config)` 
 
 ## Related pages
 
-- [D-CBF monitor](dcbf.md) for the next stage after a semantic ALLOW.
+- [D-CBF monitor](dcbf.md) for the preceding barrier stage.
 - [Human-in-the-loop](../human-in-the-loop.md) for handling ESCALATE.
 - [Configuration](../configuration.md) for the threshold and vector-store fields.
