@@ -93,28 +93,27 @@ GATE installs a guard on the live tool objects the framework already dispatches 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffffff', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#f4f6fb'}}}%%
 flowchart TD
-    subgraph Host["Host Agent Framework (Untrusted Plant)"]
-        direction LR
-        OA["OpenAI Agents"] ~~~ LC["LangChain"] ~~~ LG["LangGraph"] ~~~ CW["CrewAI"]
-    end
-
-    subgraph Wrapper["GATE Runtime Wrapper (Trusted Reference Boundary)"]
+    subgraph Wrapper["GATE Wrapper (Trusted Boundary)"]
         direction TB
-        M["GATE Reference Monitor (5 Sequential Stages)<br><b>Privilege ➔ DFA ➔ Contracts ➔ D-CBF ➔ Semantic</b>"]
+        subgraph Host["Host Agent Framework"]
+            direction LR
+            OA["OpenAI Agents"] ~~~ LC["LangChain"] ~~~ LG["LangGraph"] ~~~ CW["CrewAI"]
+        end
+
+        Host -->|"Tool Call Proposed"| M["GATE Reference Monitor (5 Stages)<br><b>Privilege ➔ DFA ➔ Contracts ➔ D-CBF ➔ Semantic</b>"]
+        M -->|"BLOCK (Violation)"| N["ToolExecutionBlocked<br>(Hard Denial)"]
+        N -->|"Exception / Context"| Host
     end
 
-    Host -->|"Tool Call Proposed"| M
-    M -->|"BLOCK (Violation)"| N["ToolExecutionBlocked<br>(Hard Denial)"]
-    M -->|"ALLOW"| A["Safe Tool Execution<br>(External Tool Body)"]
-    M -->|"ESCALATE (Uncertainty)"| E["Human Approval Queue<br>(Withheld by Default)"]
+    M -->|"ALLOW"| A["ALLOW<br>(External Execution)"]
+    M -->|"ESCALATE (Uncertainty)"| E["ESCALATE<br>(Human Intervention)"]
 
     E -->|"Approved"| A
     E -->|"Rejected / SLA Expired"| N
     A -->|"Sanitized Result"| Host
-    N -->|"Exception / Context"| Host
 
-    style Host fill:#f0fbf7,stroke:#2eb85c,stroke-width:1.5px,stroke-dasharray: 4 4
-    style Wrapper fill:#fbfbfe,stroke:#4a6fa5,stroke-width:2px
+    style Wrapper fill:#fbfbfe,stroke:#c054c0,stroke-width:2px
+    style Host fill:#f0fbf7,stroke:#2eb85c,stroke-width:1.5px
     style M fill:#ffffff,stroke:#1e3d59,stroke-width:2px
     style N fill:#fde2e2,stroke:#d62728,stroke-width:2px,color:#990000
     style A fill:#e6f9ed,stroke:#2eb85c,stroke-width:2px,color:#006622
