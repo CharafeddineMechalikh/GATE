@@ -2,6 +2,35 @@
 
 The OpenAI Agents adapter wraps an `agents.Agent`, guards every local `FunctionTool`, and follows handoffs so tools on specialist agents are guarded too.
 
+
+```mermaid
+flowchart TD
+    subgraph AgentEnv["OpenAI Agents SDK"]
+        AG["Primary Agent"]
+        HO["Handoff Specialist Agent"]
+        AG -.->|"handoff"| HO
+    end
+
+    subgraph Mediation["GATE Complete Mediation"]
+        FT1["FunctionTool Guard"]
+        FT2["FunctionTool Guard"]
+        MON["gateMonitor"]
+    end
+
+    AG -->|"on_invoke_tool"| FT1
+    HO -->|"on_invoke_tool"| FT2
+    FT1 --> MON
+    FT2 --> MON
+    MON -->|"ALLOW"| RUN["Tool Function Executed"]
+    MON -->|"BLOCK"| STOP["ToolExecutionBlocked Raised"]
+
+    style AgentEnv fill:#f0fbf7,stroke:#2eb85c,stroke-width:1.5px
+    style Mediation fill:#fdfaff,stroke:#a855f7,stroke-width:2px
+    style STOP fill:#fde2e2,stroke:#d62728,color:#990000
+    style RUN fill:#e6f9ed,stroke:#2eb85c,color:#006622
+```
+
+
 ## Example
 
 ```python

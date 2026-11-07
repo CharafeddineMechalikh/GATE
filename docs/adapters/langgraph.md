@@ -2,6 +2,29 @@
 
 The LangGraph adapter wraps a compiled `StateGraph` whose tools execute in a `ToolNode`. It guards each tool on the node in place, so every node that reaches those tools is mediated.
 
+
+```mermaid
+flowchart TD
+    subgraph Graph["LangGraph StateGraph"]
+        START((START)) --> AGENT["Agent Node (LLM)"]
+        AGENT -->|"AIMessage with tool_calls"| TN["ToolNode"]
+        TN --> END((END))
+    end
+
+    subgraph Guarded["Guarded ToolNode Execution"]
+        TN --> G["GATE Guard (_run/_arun)"]
+        G --> M["gateMonitor (5 Stages)"]
+        M -->|"ALLOW"| EXEC["Actual Tool Body"]
+        M -->|"BLOCK"| ERR["ToolExecutionBlocked"]
+    end
+
+    style Graph fill:#f0fbf7,stroke:#2eb85c,stroke-width:1.5px
+    style Guarded fill:#fdfaff,stroke:#a855f7,stroke-width:2px
+    style ERR fill:#fde2e2,stroke:#d62728,color:#990000
+    style EXEC fill:#e6f9ed,stroke:#2eb85c,color:#006622
+```
+
+
 ## Example
 
 ```python

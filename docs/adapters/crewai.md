@@ -2,6 +2,28 @@
 
 The CrewAI adapter wraps a `Crew` and guards every tool attached to its agents and tasks. CrewAI dispatches tool calls through `BaseTool._run`, which the adapter shadows in place.
 
+
+```mermaid
+flowchart TD
+    subgraph CrewEnv["CrewAI Hierarchy"]
+        CRW["Crew"] --> TSK["Tasks"]
+        TSK --> AGT["Agents"]
+    end
+
+    subgraph Interception["GATE In-Place Mediation"]
+        AGT -->|"dispatches tool"| GRD["Guarded BaseTool._run"]
+        GRD --> MON["gateMonitor (5 Stages)"]
+        MON -->|"ALLOW"| TOOL["Tool Execution"]
+        MON -->|"BLOCK"| BLK["ToolExecutionBlocked Exception"]
+    end
+
+    style CrewEnv fill:#f0fbf7,stroke:#2eb85c,stroke-width:1.5px
+    style Interception fill:#fdfaff,stroke:#a855f7,stroke-width:2px
+    style BLK fill:#fde2e2,stroke:#d62728,color:#990000
+    style TOOL fill:#e6f9ed,stroke:#2eb85c,color:#006622
+```
+
+
 ## Example
 
 ```python

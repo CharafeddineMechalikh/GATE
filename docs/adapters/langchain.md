@@ -2,6 +2,35 @@
 
 The LangChain adapter wraps either a legacy `AgentExecutor` or a compiled LangChain 1.x agent graph, such as the object returned by `langchain.agents.create_agent`.
 
+
+```mermaid
+flowchart TD
+    subgraph Host["LangChain Context"]
+        AE["AgentExecutor / Compiled Graph"]
+        T1["search (BaseTool)"]
+        T2["delete_records (BaseTool)"]
+    end
+
+    subgraph GATE["GATE Protection"]
+        G1["GATE Tool Guard"]
+        G2["GATE Tool Guard"]
+        MON["gateMonitor"]
+    end
+
+    AE -->|"calls ._run()"| G1
+    AE -->|"calls ._run()"| G2
+    G1 -->|"inspects"| MON
+    G2 -->|"inspects"| MON
+    MON -->|"ALLOW"| T1
+    MON -->|"BLOCK"| BLK["ToolExecutionBlocked Exception"]
+
+    style Host fill:#f0fbf7,stroke:#2eb85c,stroke-width:1.5px
+    style GATE fill:#fdfaff,stroke:#a855f7,stroke-width:2px
+    style BLK fill:#fde2e2,stroke:#d62728,color:#990000
+    style T1 fill:#e6f9ed,stroke:#2eb85c,color:#006622
+```
+
+
 ## Wrap an `AgentExecutor`
 
 ```python
