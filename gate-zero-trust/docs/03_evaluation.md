@@ -2,7 +2,9 @@
 
 Status: **measured** (2026-11-14)
 
-Corpus: `dataset/out/dataset.jsonl`, sha256 `ad223e5e…`, 1,665 cases (1,382 attacks, 283 benign): 680 authored cases plus 985 imported from GATE-Union.
+Corpus: `dataset/out/dataset.jsonl`. The current build has sha256 `4ed706b9…`, 1,957 cases (1,653 attacks, 304 benign): 972 authored cases plus 985 imported from GATE-Union. Its authored split is 532 L1, 197 L2 and 243 L3, with 9 benign tasks held for approval.
+
+**Corpus revision (2026-11-14).** The numbers in this page were measured on the preceding 1,665-case corpus (1,382 attacks, 283 benign, 680 authored, sha256 `ad223e5e…`). The additional authored scenarios raise compositional and contextual coverage and add approval-gated and embedded-instruction benign negatives. Those measured results have not been re-run on the expanded corpus; they remain the last measured run and are labelled as such. The dataset-side gates are in `dataset/out/validation.md` and `dataset/out/coverage.md`.
 
 Driver: `USE_TF=0 USE_TORCH=1 python -m gzt.evaluate --dataset dataset/out/dataset.jsonl --out target`
 

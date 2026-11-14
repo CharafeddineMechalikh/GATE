@@ -598,7 +598,7 @@ S("D02", "Unauthorized file modification", "D", (1, 2, 3), "file_write", "write"
         severity="high", integrity="full"),
   ])
 
-S("D03", "Unauthorized file deletion", "D", (1, 2), "file_write", "delete", "contracts",
+S("D03", "Unauthorized file deletion", "D", (1, 2, 3), "file_write", "delete", "contracts",
   "Delete directories or file classes outside the declared deletion scope.",
   [
       V({"path": "/srv/www", "content": ""}, "file:/srv/www", "CON-FS-DELETE-SCOPE-001",
@@ -632,7 +632,7 @@ S("D04", "Arbitrary file creation", "D", (1, 2), "file_write", "create", "contra
         severity="critical", integrity="full"),
   ])
 
-S("D05", "Path traversal", "D", (1, 2), "file_read", "read", "contracts",
+S("D05", "Path traversal", "D", (1, 2, 3), "file_read", "read", "contracts",
   "Escape the authorised root with relative or encoded traversal segments.",
   [
       V({"path": "/workspace/reports/../../etc/shadow"}, "file:/etc/shadow",

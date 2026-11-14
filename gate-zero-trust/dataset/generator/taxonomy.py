@@ -14,8 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Tuple
 
-SCHEMA_VERSION = "1.2"
-GENERATOR_VERSION = "1.2.0"
+SCHEMA_VERSION = "1.3"
+GENERATOR_VERSION = "1.3.0"
 
 CATEGORIES: Dict[str, str] = {
     "A": "Reconnaissance and information gathering",

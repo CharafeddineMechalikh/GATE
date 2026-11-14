@@ -12,6 +12,13 @@
     "category_name",
     "subtype",
     "subtype_name",
+    "subcategory",
+    "subcategory_name",
+    "attack_complexity",
+    "trust_boundaries",
+    "violated_property",
+    "defense_layers",
+    "rationale",
     "execution_level",
     "is_malicious",
     "difficulty",
@@ -46,7 +53,8 @@
       "enum": [
         "1.0",
         "1.1",
-        "1.2"
+        "1.2",
+        "1.3"
       ]
     },
     "category": {
@@ -78,6 +86,61 @@
       "type": "string",
       "minLength": 3
     },
+    "subcategory": {
+      "type": "string",
+      "pattern": "^[A-KX][0-9]{2}$",
+      "description": "Attack subcategory. Equal to subtype for authored rows; the source family code for imported rows."
+    },
+    "subcategory_name": {
+      "type": "string",
+      "minLength": 3
+    },
+    "attack_complexity": {
+      "type": "string",
+      "enum": [
+        "atomic",
+        "compositional",
+        "contextual"
+      ],
+      "description": "Complexity class derived from execution_level: 1 atomic, 2 compositional, 3 contextual."
+    },
+    "trust_boundaries": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 3
+      },
+      "minItems": 1,
+      "description": "Trust boundaries the scenario crosses, e.g. external-content->agent, agent->external."
+    },
+    "violated_property": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Security properties violated when the action is malicious; empty for benign rows."
+    },
+    "defense_layers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "capability",
+          "workflow",
+          "semantic",
+          "ifc",
+          "contracts",
+          "dcbf",
+          "hitl"
+        ]
+      },
+      "description": "Layers expected to act on this record; empty when the correct decision is ALLOW."
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Why the expected decision is the correct one for this record."
+    },
     "execution_level": {
       "type": "integer",
       "enum": [
@@ -95,7 +158,8 @@
         "easy",
         "moderate",
         "hard_negative",
-        "contextual_hard"
+        "contextual_hard",
+        "ambiguous"
       ]
     },
     "scenario": {
@@ -456,6 +520,7 @@
           "enum": [
             "email",
             "http",
+            "web",
             "webhook",
             "file_write",
             "database_write",
@@ -852,46 +917,107 @@
         }
       },
       "then": {
-        "properties": {
-          "expected_decision": {
-            "const": "ALLOW"
-          },
-          "expected_enforcing_layer": {
-            "const": "none"
-          },
-          "labels": {
+        "oneOf": [
+          {
             "properties": {
-              "overall": {
+              "expected_decision": {
                 "const": "ALLOW"
               },
-              "per_layer": {
+              "expected_enforcing_layer": {
+                "const": "none"
+              },
+              "labels": {
                 "properties": {
-                  "capability": {
-                    "const": "must_allow"
+                  "overall": {
+                    "const": "ALLOW"
                   },
-                  "workflow": {
-                    "const": "must_allow"
+                  "per_layer": {
+                    "properties": {
+                      "capability": {
+                        "const": "must_allow"
+                      },
+                      "workflow": {
+                        "const": "must_allow"
+                      },
+                      "semantic": {
+                        "const": "must_allow"
+                      },
+                      "ifc": {
+                        "const": "must_allow"
+                      },
+                      "contracts": {
+                        "const": "must_allow"
+                      },
+                      "dcbf": {
+                        "const": "must_allow"
+                      },
+                      "hitl": {
+                        "const": "must_allow"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "description": "A benign task that policy routes to a human: only HITL acts, and nothing is violated.",
+            "properties": {
+              "expected_decision": {
+                "const": "REQUIRE_APPROVAL"
+              },
+              "expected_enforcing_layer": {
+                "const": "hitl"
+              },
+              "labels": {
+                "properties": {
+                  "overall": {
+                    "const": "REQUIRE_APPROVAL"
                   },
-                  "semantic": {
-                    "const": "must_allow"
-                  },
-                  "ifc": {
-                    "const": "must_allow"
-                  },
-                  "contracts": {
-                    "const": "must_allow"
-                  },
-                  "dcbf": {
-                    "const": "must_allow"
-                  },
-                  "hitl": {
-                    "const": "must_allow"
+                  "per_layer": {
+                    "properties": {
+                      "capability": {
+                        "const": "must_allow"
+                      },
+                      "workflow": {
+                        "const": "must_allow"
+                      },
+                      "semantic": {
+                        "const": "must_allow"
+                      },
+                      "ifc": {
+                        "const": "must_allow"
+                      },
+                      "contracts": {
+                        "const": "must_allow"
+                      },
+                      "dcbf": {
+                        "const": "must_allow"
+                      },
+                      "hitl": {
+                        "const": "must_require_approval"
+                      }
+                    }
+                  }
+                }
+              },
+              "policy": {
+                "properties": {
+                  "violated": {
+                    "maxItems": 0
+                  }
+                }
+              },
+              "impact": {
+                "properties": {
+                  "authorization_violation": {
+                    "const": false
                   }
                 }
               }
             }
           }
-        }
+        ]
       }
     },
     {

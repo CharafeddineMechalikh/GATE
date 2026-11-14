@@ -1,6 +1,6 @@
 """Validation and reporting for the GATE Zero-Trust benchmark dataset.
 
-Runs the twelve checks required by the Phase-1 completion gate and writes both a
+Runs the structural, coverage and separation checks required by the Phase-1 completion gate and writes both a
 machine-readable report (``out/validation.json``) and a human-readable one
 (``out/validation.md``). Exit code 1 if any hard check fails.
 
@@ -200,6 +200,14 @@ def check_label_consistency(rows, rep: Report) -> None:
             others = [k for k in LAYERS if k != r["expected_enforcing_layer"] and per[k] != "not_required"]
             if others:
                 bad.append({"case_id": r["case_id"], "error": f"additional layers required: {others}"})
+        elif r["expected_decision"] == "REQUIRE_APPROVAL":
+            # A benign task that policy routes to a human: HITL must hold it and
+            # every other layer must let it through.
+            if r["expected_enforcing_layer"] != "hitl":
+                bad.append({"case_id": r["case_id"], "error": "gated benign task not raised by HITL"})
+            others = [k for k in LAYERS if k != "hitl" and per[k] != "must_allow"]
+            if per["hitl"] != "must_require_approval" or others:
+                bad.append({"case_id": r["case_id"], "error": "gated benign row has the wrong per-layer labels"})
         else:
             if set(per.values()) != {"must_allow"}:
                 bad.append({"case_id": r["case_id"], "error": "benign row requires a layer to deny"})
@@ -235,7 +243,14 @@ def check_outcomes(rows, rep: Report) -> None:
             if decision == "REQUIRE_APPROVAL" and not state.get("pending_approval"):
                 bad.append({"case_id": r["case_id"], "error": "approval case not marked pending"})
         else:
-            if decision != "ALLOW" or layer != "none":
+            if decision == "REQUIRE_APPROVAL":
+                if layer != "hitl":
+                    bad.append({"case_id": r["case_id"], "error": f"gated benign row raised by {layer}"})
+                if not r["expected_state_after"]["agent_state"].get("pending_approval"):
+                    bad.append({"case_id": r["case_id"], "error": "gated benign row not marked pending"})
+                if r["impact"]["authorization_violation"]:
+                    bad.append({"case_id": r["case_id"], "error": "gated benign row claims an authorisation violation"})
+            elif decision != "ALLOW" or layer != "none":
                 bad.append({"case_id": r["case_id"], "error": f"benign row {decision}/{layer}"})
             if r["policy"]["violated"]:
                 bad.append({"case_id": r["case_id"], "error": "benign row violates a policy"})
@@ -264,7 +279,13 @@ def check_sequences(rows, rep: Report) -> None:
             if last["decision"] != r["expected_decision"] or last["enforcing_layer"] != r["expected_enforcing_layer"]:
                 bad.append({"case_id": r["case_id"], "error": "final step decision/layer differs from the case"})
         else:
-            if any(s["decision"] != "ALLOW" for s in seq):
+            gated = r["expected_decision"] == "REQUIRE_APPROVAL"
+            earlier = seq[:-1] if gated else seq
+            if any(s["decision"] != "ALLOW" for s in earlier):
+                bad.append({"case_id": r["case_id"], "error": "benign sequence contains a denial"})
+            if gated and (last["decision"] != "REQUIRE_APPROVAL" or last["enforcing_layer"] != "hitl"):
+                bad.append({"case_id": r["case_id"], "error": "gated benign final step is not held by HITL"})
+            if not gated and any(s["decision"] != "ALLOW" for s in seq):
                 bad.append({"case_id": r["case_id"], "error": "benign sequence contains a denial"})
         if level == 2:
             initial = r["environment"]["initial_state"]
@@ -410,12 +431,262 @@ def check_manifest(rows, rep: Report) -> None:
         "by_category": dict(sorted(Counter(r["category"] for r in rows).items())),
         "by_subtype": dict(sorted(Counter(r["subtype"] for r in rows).items())),
         "by_enforcing_layer": dict(sorted(Counter(r["expected_enforcing_layer"] for r in rows if r["is_malicious"]).items())),
+        "by_complexity": dict(sorted(Counter(r["attack_complexity"] for r in rows).items())),
+        "approval_gated_benign": sum(
+            1 for r in rows if not r["is_malicious"] and r["expected_decision"] == "REQUIRE_APPROVAL"
+        ),
         "schema_version": SCHEMA_VERSION,
         "generator_version": GENERATOR_VERSION,
     }
     drift = {k: {"manifest": manifest.get(k), "computed": v} for k, v in computed.items() if manifest.get(k) != v}
     rep.add("manifest_matches_dataset", not drift, f"{len(computed)} manifest fields compared; {len(drift)} drift",
             {"drift": drift})
+
+
+AUTHORED_CATEGORIES = "ABCDEFGHIJK"
+COMPLEXITY_BY_LEVEL = {1: "atomic", 2: "compositional", 3: "contextual"}
+COMPLEXITIES = ("atomic", "compositional", "contextual")
+COVERAGE_MIN = {"atomic": 20, "compositional": 15, "contextual": 15}
+MAX_SUBTYPE_SHARE = 0.4
+MIN_CONTEXTUAL_SUBTYPES = 4
+
+COVERAGE_JSON = ROOT / "out" / "coverage.json"
+COVERAGE_CSV = ROOT / "out" / "coverage.csv"
+COVERAGE_MD = ROOT / "out" / "coverage.md"
+
+
+def _authored_malicious(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    return [r for r in rows if r["is_malicious"] and r["category"] in AUTHORED_CATEGORIES]
+
+
+def check_coverage(rows, rep: Report) -> dict:
+    """Every authored category must meet the atomic/compositional/contextual floors."""
+    counts: Dict[str, Counter] = defaultdict(Counter)
+    for r in _authored_malicious(rows):
+        counts[r["category"]][r["attack_complexity"]] += 1
+    short = []
+    for cat in AUTHORED_CATEGORIES:
+        for comp in COMPLEXITIES:
+            have = counts[cat].get(comp, 0)
+            if have < COVERAGE_MIN[comp]:
+                short.append({"category": cat, "complexity": comp, "count": have,
+                              "minimum": COVERAGE_MIN[comp]})
+    rep.add("coverage_requirements", not short,
+            f"{len(AUTHORED_CATEGORIES)} authored categories against "
+            f"{COVERAGE_MIN['atomic']}/{COVERAGE_MIN['compositional']}/{COVERAGE_MIN['contextual']}; "
+            f"{len(short)} below floor",
+            {"below_floor": short,
+             "by_category": {c: {k: counts[c].get(k, 0) for k in COMPLEXITIES}
+                             for c in AUTHORED_CATEGORIES}})
+    return counts
+
+
+def check_spread(rows, rep: Report) -> dict:
+    """No single subcategory may dominate a category at one complexity."""
+    by: Dict[Tuple[str, str], Counter] = defaultdict(Counter)
+    names: Dict[str, str] = {}
+    for r in _authored_malicious(rows):
+        by[(r["category"], r["attack_complexity"])][r["subcategory"]] += 1
+        names[r["subcategory"]] = r["subcategory_name"]
+    concentrated, thin = [], []
+    for (cat, comp), counter in sorted(by.items()):
+        total = sum(counter.values())
+        top, hits = counter.most_common(1)[0]
+        share = hits / total
+        if share > MAX_SUBTYPE_SHARE:
+            concentrated.append({"category": cat, "complexity": comp, "subcategory": top,
+                                 "count": hits, "total": total, "share": round(share, 3)})
+    for cat in AUTHORED_CATEGORIES:
+        for comp in ("compositional", "contextual"):
+            n = len(by.get((cat, comp), {}))
+            if n < MIN_CONTEXTUAL_SUBTYPES:
+                thin.append({"category": cat, "complexity": comp, "distinct_subtypes": n,
+                             "minimum": MIN_CONTEXTUAL_SUBTYPES})
+    ok = not concentrated and not thin
+    rep.add("subcategory_spread", ok,
+            f"max subcategory share {MAX_SUBTYPE_SHARE:.0%} per category/complexity and "
+            f">= {MIN_CONTEXTUAL_SUBTYPES} distinct subcategories at levels 2-3; "
+            f"{len(concentrated)} concentrated, {len(thin)} thin",
+            {"concentrated": concentrated, "thin": thin,
+             "matrix": {f"{c}/{k}": dict(sorted(v.items())) for (c, k), v in sorted(by.items())}})
+    return by
+
+
+def check_record_metadata(rows, rep: Report) -> None:
+    """The derived acceptance fields must agree with the record they describe."""
+    bad = []
+    for r in rows:
+        level = int(r["execution_level"])
+        if r["attack_complexity"] != COMPLEXITY_BY_LEVEL[level]:
+            bad.append({"case_id": r["case_id"], "error": "attack_complexity != execution_level"})
+        if r["subcategory"] != r["subtype"]:
+            bad.append({"case_id": r["case_id"], "error": "subcategory != subtype"})
+        if r["subcategory_name"] != r["subtype_name"]:
+            bad.append({"case_id": r["case_id"], "error": "subcategory_name != subtype_name"})
+        if not r["trust_boundaries"]:
+            bad.append({"case_id": r["case_id"], "error": "no trust boundary declared"})
+        if r["violated_property"] != r["policy"]["violated"]:
+            bad.append({"case_id": r["case_id"], "error": "violated_property != policy.violated"})
+        layer = r["expected_enforcing_layer"]
+        if r["defense_layers"] != ([layer] if layer != "none" else []):
+            bad.append({"case_id": r["case_id"], "error": "defense_layers != enforcing layer"})
+        if not r["rationale"] or r["rationale"] != r["expected_reason"]:
+            bad.append({"case_id": r["case_id"], "error": "rationale missing or differs from reason"})
+        if r["difficulty"] not in ("easy", "moderate", "hard_negative", "contextual_hard", "ambiguous"):
+            bad.append({"case_id": r["case_id"], "error": f"unknown difficulty {r['difficulty']}"})
+    rep.add("record_metadata", not bad,
+            f"{len(rows)} records carry consistent complexity, boundary, property, layer and rationale fields; "
+            f"{len(bad)} inconsistencies", {"violations": bad[:20]})
+
+
+def check_separability(rows, rep: Report) -> None:
+    """Attacks must violate something; benign rows must not. Identical calls are
+    allowed only when the context that makes them different is recorded."""
+    authored = [r for r in rows if r["category"] != "X"]
+    bad = []
+    for r in authored:
+        violates = bool(r["violated_property"])
+        decision = r["expected_decision"]
+        if r["is_malicious"]:
+            if decision == "ALLOW" or not violates:
+                bad.append({"case_id": r["case_id"], "error": "attack without a non-ALLOW decision or violated property"})
+        else:
+            if decision == "DENY" or violates:
+                bad.append({"case_id": r["case_id"], "error": "benign row denies or violates a property"})
+    attack_tools = {r["proposed_action"]["tool"] for r in rows if r["is_malicious"]}
+    benign_tools = {r["proposed_action"]["tool"] for r in rows if not r["is_malicious"]}
+    unexercised = sorted(attack_tools - benign_tools)
+
+    def call(r):
+        return (r["proposed_action"]["tool"],
+                json.dumps(r["proposed_action"]["args"], sort_keys=True))
+
+    attacks: Dict[Any, List[Dict[str, Any]]] = defaultdict(list)
+    benign: Dict[Any, List[Dict[str, Any]]] = defaultdict(list)
+    for r in authored:
+        (attacks if r["is_malicious"] else benign)[call(r)].append(r)
+    shared = sorted(set(attacks) & set(benign), key=str)
+    indistinguishable = []
+    for key in shared:
+        for a in attacks[key]:
+            for b in benign[key]:
+                same_objective = a["user_objective"]["text"] == b["user_objective"]["text"]
+                same_state = a["environment"]["initial_state"] == b["environment"]["initial_state"]
+                if same_objective and same_state:
+                    indistinguishable.append({"attack": a["case_id"], "benign": b["case_id"]})
+    ok = not bad and not unexercised and not indistinguishable
+    rep.add("attack_benign_separation", ok,
+            f"{len(authored)} authored rows; {len(bad)} label errors, "
+            f"{len(unexercised)} tools with no benign exercise, "
+            f"{len(shared)} shared call shapes ({len(indistinguishable)} without differing context)",
+            {"label_errors": bad[:20], "unexercised_tools": unexercised,
+             "shared_call_shapes": len(shared), "indistinguishable": indistinguishable[:10]})
+
+
+def coverage_matrix(rows) -> Dict[str, Any]:
+    """Per-category and per-subcategory counts across complexity and layer."""
+    matrix: Dict[str, Any] = {}
+    for r in rows:
+        cat = r["category"]
+        entry = matrix.setdefault(cat, {
+            "category_name": r["category_name"],
+            "total": 0, "malicious": 0, "benign": 0,
+            "by_complexity": {k: 0 for k in COMPLEXITIES},
+            "by_decision": Counter(), "by_layer": Counter(),
+            "subcategories": {},
+        })
+        entry["total"] += 1
+        if r["is_malicious"]:
+            entry["malicious"] += 1
+            entry["by_complexity"][r["attack_complexity"]] += 1
+            entry["by_layer"][r["expected_enforcing_layer"]] += 1
+        else:
+            entry["benign"] += 1
+        entry["by_decision"][r["expected_decision"]] += 1
+        sub = entry["subcategories"].setdefault(
+            r["subcategory"], {"subcategory_name": r["subcategory_name"], "malicious": 0,
+                               "benign": 0, "by_complexity": {k: 0 for k in COMPLEXITIES},
+                               "layers": set()})
+        if r["is_malicious"]:
+            sub["malicious"] += 1
+            sub["by_complexity"][r["attack_complexity"]] += 1
+            sub["layers"].add(r["expected_enforcing_layer"])
+        else:
+            sub["benign"] += 1
+    out: Dict[str, Any] = {}
+    for cat, entry in matrix.items():
+        e = dict(entry)
+        e["by_decision"] = dict(sorted(entry["by_decision"].items()))
+        e["by_layer"] = dict(sorted(entry["by_layer"].items()))
+        e["subcategories"] = {}
+        for code, sub in sorted(entry["subcategories"].items()):
+            s = dict(sub)
+            s["layers"] = sorted(sub["layers"])
+            e["subcategories"][code] = s
+        out[cat] = e
+    return out
+
+
+def write_coverage(rows, rep: Report) -> Dict[str, Any]:
+    matrix = coverage_matrix(rows)
+    authored = {c: matrix[c] for c in AUTHORED_CATEGORIES if c in matrix}
+    requirements = {
+        "atomic_min": COVERAGE_MIN["atomic"],
+        "compositional_min": COVERAGE_MIN["compositional"],
+        "contextual_min": COVERAGE_MIN["contextual"],
+        "max_subtype_share": MAX_SUBTYPE_SHARE,
+        "min_distinct_contextual_subtypes": MIN_CONTEXTUAL_SUBTYPES,
+    }
+    payload = {
+        "schema_version": SCHEMA_VERSION,
+        "generator_version": GENERATOR_VERSION,
+        "requirements": requirements,
+        "authored_categories": authored,
+        "imported_category_X": matrix.get("X"),
+        "categories": matrix,
+    }
+    COVERAGE_JSON.write_text(json.dumps(payload, indent=2, default=str) + "\n",
+                             encoding="utf-8", newline="\n")
+
+    csv_lines = ["category,category_name,subcategory,subcategory_name,atomic,compositional,contextual,total_malicious,benign,layers"]
+    for cat, entry in matrix.items():
+        for code, sub in entry["subcategories"].items():
+            b = sub["by_complexity"]
+            csv_lines.append(",".join([
+                cat, f"\"{entry['category_name']}\"", code, f"\"{sub['subcategory_name']}\"",
+                str(b["atomic"]), str(b["compositional"]), str(b["contextual"]),
+                str(sub["malicious"]), str(sub["benign"]), '"' + "|".join(sub["layers"]) + '"',
+            ]))
+    COVERAGE_CSV.write_text("\n".join(csv_lines) + "\n", encoding="utf-8", newline="\n")
+
+    md = ["# Coverage matrix", "",
+          f"Schema `{SCHEMA_VERSION}`, generator `{GENERATOR_VERSION}`. "
+          f"Floors: {COVERAGE_MIN['atomic']} atomic, {COVERAGE_MIN['compositional']} compositional, "
+          f"{COVERAGE_MIN['contextual']} contextual per authored category.", "",
+          "## Authored categories", "",
+          "| Cat | Name | Atomic | Compositional | Contextual | Malicious | Benign | Layers |",
+          "|---|---|---|---|---|---|---|---|"]
+    for cat, e in authored.items():
+        b = e["by_complexity"]
+        md.append(f"| {cat} | {e['category_name']} | {b['atomic']} | {b['compositional']} | "
+                  f"{b['contextual']} | {e['malicious']} | {e['benign']} | "
+                  f"{', '.join(e['by_layer'])} |")
+    imported = matrix.get("X")
+    if imported:
+        b = imported["by_complexity"]
+        md.append(f"| X | {imported['category_name']} (imported) | {b['atomic']} | "
+                  f"{b['compositional']} | {b['contextual']} | {imported['malicious']} | "
+                  f"{imported['benign']} | {', '.join(imported['by_layer'])} |")
+    md += ["", "## Subcategory matrix", "",
+           "| Category | Subcategory | Name | Atomic | Comp | Ctx | Layers |",
+           "|---|---|---|---|---|---|---|"]
+    for cat, entry in matrix.items():
+        for code, sub in entry["subcategories"].items():
+            b = sub["by_complexity"]
+            md.append(f"| {cat} | {code} | {sub['subcategory_name']} | {b['atomic']} | "
+                      f"{b['compositional']} | {b['contextual']} | {', '.join(sub['layers']) or '-'} |")
+    COVERAGE_MD.write_text("\n".join(md) + "\n", encoding="utf-8", newline="\n")
+    return payload
 
 
 def render_markdown(rep: Report, dist: dict) -> str:
@@ -453,8 +724,9 @@ def render_markdown(rep: Report, dist: dict) -> str:
 
     failures = rep.failures
     lines += ["## Verdict", "",
-              "All twelve checks pass." if not failures else
-              f"{len(failures)} of {len(rep.checks)} checks fail: " + ", ".join(f["check"] for f in failures) + "."]
+              f"All {len(rep.checks)} checks pass." if not failures else
+              f"{len(failures)} of {len(rep.checks)} checks fail: " + ", ".join(f["check"] for f in failures) + ".",
+              "", f"Coverage matrix: `{COVERAGE_MD.name}`, `{COVERAGE_CSV.name}`, `{COVERAGE_JSON.name}`."]
     return "\n".join(lines) + "\n"
 
 
@@ -477,8 +749,14 @@ def main() -> int:
     check_duplicates(rows, rep)
     check_reproducibility(rows, rep)
     check_manifest(rows, rep)
+    check_coverage(rows, rep)
+    check_spread(rows, rep)
+    check_record_metadata(rows, rep)
+    check_separability(rows, rep)
+    coverage = write_coverage(rows, rep)
 
-    payload = {"checks": rep.checks, "distributions": dist, "passed": not rep.failures}
+    payload = {"checks": rep.checks, "distributions": dist, "coverage": coverage,
+               "passed": not rep.failures}
     REPORT_JSON.write_text(json.dumps(payload, indent=2, default=str) + "\n", encoding="utf-8", newline="\n")
     REPORT_MD.write_text(render_markdown(rep, dist), encoding="utf-8", newline="\n")
 

@@ -3,7 +3,7 @@
     {
       "check": "schema_correctness",
       "passed": true,
-      "detail": "1665 rows checked against attack_case.schema.json; 0 violations",
+      "detail": "1957 rows checked against attack_case.schema.json; 0 violations",
       "evidence": {
         "violations": []
       }
@@ -11,7 +11,7 @@
     {
       "check": "unique_ids",
       "passed": true,
-      "detail": "1665 ids, 1665 distinct, 0 duplicated",
+      "detail": "1957 ids, 1957 distinct, 0 duplicated",
       "evidence": {
         "duplicates": []
       }
@@ -19,7 +19,7 @@
     {
       "check": "id_encoding",
       "passed": true,
-      "detail": "1665 ids decoded; 0 inconsistent",
+      "detail": "1957 ids decoded; 0 inconsistent",
       "evidence": {
         "violations": []
       }
@@ -27,7 +27,7 @@
     {
       "check": "mandatory_fields",
       "passed": true,
-      "detail": "28 required fields; 0 missing, 0 null",
+      "detail": "35 required fields; 0 missing, 0 null",
       "evidence": {
         "missing": {},
         "null": []
@@ -36,7 +36,7 @@
     {
       "check": "category_and_subtype_assignments",
       "passed": true,
-      "detail": "120 declared subtypes; 1382 malicious rows; 0 violations",
+      "detail": "120 declared subtypes; 1653 malicious rows; 0 violations",
       "evidence": {
         "violations": []
       }
@@ -46,15 +46,15 @@
       "passed": true,
       "detail": "levels present [1, 2, 3]; 0 invalid",
       "evidence": {
-        "1": 1511,
-        "2": 88,
-        "3": 66
+        "1": 1517,
+        "2": 197,
+        "3": 243
       }
     },
     {
       "check": "ground_truth_labels",
       "passed": true,
-      "detail": "1665 rows; 0 label inconsistencies",
+      "detail": "1957 rows; 0 label inconsistencies",
       "evidence": {
         "violations": []
       }
@@ -62,7 +62,7 @@
     {
       "check": "expected_outcomes",
       "passed": true,
-      "detail": "1665 rows; 0 outcome inconsistencies",
+      "detail": "1957 rows; 0 outcome inconsistencies",
       "evidence": {
         "violations": []
       }
@@ -70,7 +70,7 @@
     {
       "check": "sequence_consistency",
       "passed": true,
-      "detail": "1665 sequences; 0 violations",
+      "detail": "1957 sequences; 0 violations",
       "evidence": {
         "violations": []
       }
@@ -78,30 +78,32 @@
     {
       "check": "benign_and_hard_negatives",
       "passed": true,
-      "detail": "283 benign (38 hard negatives) across 16 tools and levels [1, 2, 3]",
+      "detail": "304 benign (50 hard negatives) across 18 tools and levels [1, 2, 3]",
       "evidence": {
         "by_tool": {
+          "admin_tool": 1,
           "agent_delegate": 17,
+          "calendar_api": 1,
           "ci_pipeline": 12,
-          "cloud_api": 1,
-          "code_execute": 9,
+          "cloud_api": 3,
+          "code_execute": 10,
           "data_analysis": 2,
-          "database_query": 44,
-          "file_read": 20,
-          "file_write": 33,
+          "database_query": 45,
+          "file_read": 21,
+          "file_write": 35,
           "format_template": 3,
-          "http_request": 35,
-          "k8s_api": 9,
-          "memory_write": 19,
-          "payment_api": 22,
-          "send_email": 33,
+          "http_request": 37,
+          "k8s_api": 12,
+          "memory_write": 20,
+          "payment_api": 26,
+          "send_email": 35,
           "sql_query": 8,
           "web_search": 16
         },
         "by_level": {
-          "1": 249,
+          "1": 255,
           "2": 28,
-          "3": 6
+          "3": 21
         }
       }
     },
@@ -125,7 +127,7 @@
     {
       "check": "duplicates",
       "passed": true,
-      "detail": "0 copy pairs, 0 near-duplicate description pairs (Jaccard >= 0.9); 4581 cross-level/cross-subtype payload reuses (allowed)",
+      "detail": "0 copy pairs, 0 near-duplicate description pairs (Jaccard >= 0.9); 4597 cross-level/cross-subtype payload reuses (allowed)",
       "evidence": {
         "exact": [],
         "near": [],
@@ -136,6 +138,66 @@
             "subtypes": [
               "A01",
               "A01"
+            ],
+            "levels": [
+              1,
+              3
+            ]
+          },
+          {
+            "a": "ZT-A02-L2-0002",
+            "b": "ZT-A02-L3-0003",
+            "subtypes": [
+              "A02",
+              "A02"
+            ],
+            "levels": [
+              2,
+              3
+            ]
+          },
+          {
+            "a": "ZT-A09-L2-0001",
+            "b": "ZT-E07-L3-0002",
+            "subtypes": [
+              "A09",
+              "E07"
+            ],
+            "levels": [
+              2,
+              3
+            ]
+          },
+          {
+            "a": "ZT-A09-L2-0001",
+            "b": "ZT-F07-L2-0001",
+            "subtypes": [
+              "A09",
+              "F07"
+            ],
+            "levels": [
+              2,
+              2
+            ]
+          },
+          {
+            "a": "ZT-E07-L3-0002",
+            "b": "ZT-F07-L2-0001",
+            "subtypes": [
+              "E07",
+              "F07"
+            ],
+            "levels": [
+              3,
+              2
+            ]
+          },
+          {
+            "a": "ZT-B01-L1-0001",
+            "b": "ZT-D01-L3-0002",
+            "subtypes": [
+              "B01",
+              "D01"
             ],
             "levels": [
               1,
@@ -189,66 +251,6 @@
               1,
               2
             ]
-          },
-          {
-            "a": "ZT-B10-L1-0002",
-            "b": "ZT-BEN-L1-0192",
-            "subtypes": [
-              "B10",
-              "B10"
-            ],
-            "levels": [
-              1,
-              1
-            ]
-          },
-          {
-            "a": "ZT-B10-L2-0001",
-            "b": "ZT-BEN-L1-0192",
-            "subtypes": [
-              "B10",
-              "B10"
-            ],
-            "levels": [
-              2,
-              1
-            ]
-          },
-          {
-            "a": "ZT-BEN-L1-0005",
-            "b": "ZT-BEN-L3-0001",
-            "subtypes": [
-              "D01",
-              "K02"
-            ],
-            "levels": [
-              1,
-              3
-            ]
-          },
-          {
-            "a": "ZT-BEN-L1-0052",
-            "b": "ZT-BEN-L3-0005",
-            "subtypes": [
-              "C04",
-              "C02"
-            ],
-            "levels": [
-              1,
-              3
-            ]
-          },
-          {
-            "a": "ZT-BEN-L1-0153",
-            "b": "ZT-BEN-L1-0162",
-            "subtypes": [
-              "H01",
-              "H02"
-            ],
-            "levels": [
-              1,
-              1
-            ]
           }
         ]
       }
@@ -258,141 +260,584 @@
       "passed": true,
       "detail": "rebuild matches the committed dataset",
       "evidence": {
-        "rebuild_sha256": "ad223e5e30a5f4d0176fc634ae2a31019bc523ecbf89687f9c2954a06d5149b7",
-        "file_sha256": "ad223e5e30a5f4d0176fc634ae2a31019bc523ecbf89687f9c2954a06d5149b7",
-        "manifest_sha256": "ad223e5e30a5f4d0176fc634ae2a31019bc523ecbf89687f9c2954a06d5149b7",
-        "rebuild_rows": 1665,
-        "file_rows": 1665
+        "rebuild_sha256": "4ed706b94a09a9b8c3d1ec6660e1cab73e26179b9e30488bf89e1153cf7d400f",
+        "file_sha256": "4ed706b94a09a9b8c3d1ec6660e1cab73e26179b9e30488bf89e1153cf7d400f",
+        "manifest_sha256": "4ed706b94a09a9b8c3d1ec6660e1cab73e26179b9e30488bf89e1153cf7d400f",
+        "rebuild_rows": 1957,
+        "file_rows": 1957
       }
     },
     {
       "check": "manifest_matches_dataset",
       "passed": true,
-      "detail": "9 manifest fields compared; 0 drift",
+      "detail": "11 manifest fields compared; 0 drift",
       "evidence": {
         "drift": {}
+      }
+    },
+    {
+      "check": "coverage_requirements",
+      "passed": true,
+      "detail": "11 authored categories against 20/15/15; 0 below floor",
+      "evidence": {
+        "below_floor": [],
+        "by_category": {
+          "A": {
+            "atomic": 30,
+            "compositional": 15,
+            "contextual": 16
+          },
+          "B": {
+            "atomic": 28,
+            "compositional": 15,
+            "contextual": 15
+          },
+          "C": {
+            "atomic": 30,
+            "compositional": 15,
+            "contextual": 15
+          },
+          "D": {
+            "atomic": 30,
+            "compositional": 15,
+            "contextual": 19
+          },
+          "E": {
+            "atomic": 30,
+            "compositional": 15,
+            "contextual": 38
+          },
+          "F": {
+            "atomic": 29,
+            "compositional": 15,
+            "contextual": 15
+          },
+          "G": {
+            "atomic": 27,
+            "compositional": 15,
+            "contextual": 15
+          },
+          "H": {
+            "atomic": 30,
+            "compositional": 15,
+            "contextual": 15
+          },
+          "I": {
+            "atomic": 29,
+            "compositional": 15,
+            "contextual": 15
+          },
+          "J": {
+            "atomic": 30,
+            "compositional": 15,
+            "contextual": 23
+          },
+          "K": {
+            "atomic": 32,
+            "compositional": 19,
+            "contextual": 36
+          }
+        }
+      }
+    },
+    {
+      "check": "subcategory_spread",
+      "passed": true,
+      "detail": "max subcategory share 40% per category/complexity and >= 4 distinct subcategories at levels 2-3; 0 concentrated, 0 thin",
+      "evidence": {
+        "concentrated": [],
+        "thin": [],
+        "matrix": {
+          "A/atomic": {
+            "A01": 3,
+            "A02": 3,
+            "A03": 3,
+            "A04": 3,
+            "A05": 3,
+            "A06": 3,
+            "A07": 3,
+            "A08": 3,
+            "A09": 3,
+            "A10": 3
+          },
+          "A/compositional": {
+            "A02": 2,
+            "A03": 2,
+            "A04": 2,
+            "A07": 2,
+            "A08": 2,
+            "A09": 2,
+            "A10": 3
+          },
+          "A/contextual": {
+            "A01": 5,
+            "A02": 4,
+            "A04": 4,
+            "A10": 3
+          },
+          "B/atomic": {
+            "B01": 3,
+            "B02": 2,
+            "B03": 2,
+            "B04": 3,
+            "B05": 3,
+            "B06": 3,
+            "B07": 3,
+            "B08": 3,
+            "B09": 3,
+            "B10": 3
+          },
+          "B/compositional": {
+            "B01": 3,
+            "B02": 2,
+            "B03": 1,
+            "B04": 1,
+            "B05": 1,
+            "B06": 2,
+            "B07": 1,
+            "B08": 1,
+            "B09": 1,
+            "B10": 2
+          },
+          "B/contextual": {
+            "B05": 3,
+            "B07": 4,
+            "B08": 4,
+            "B10": 4
+          },
+          "C/atomic": {
+            "C01": 3,
+            "C02": 3,
+            "C03": 3,
+            "C04": 3,
+            "C05": 3,
+            "C06": 3,
+            "C07": 3,
+            "C08": 3,
+            "C09": 3,
+            "C10": 3
+          },
+          "C/compositional": {
+            "C01": 3,
+            "C02": 2,
+            "C03": 2,
+            "C04": 1,
+            "C05": 2,
+            "C07": 2,
+            "C08": 1,
+            "C09": 1,
+            "C10": 1
+          },
+          "C/contextual": {
+            "C01": 4,
+            "C03": 4,
+            "C07": 1,
+            "C09": 3,
+            "C10": 3
+          },
+          "D/atomic": {
+            "D01": 3,
+            "D02": 3,
+            "D03": 3,
+            "D04": 3,
+            "D05": 3,
+            "D06": 3,
+            "D07": 3,
+            "D08": 3,
+            "D09": 3,
+            "D10": 3
+          },
+          "D/compositional": {
+            "D01": 3,
+            "D02": 3,
+            "D03": 1,
+            "D05": 2,
+            "D06": 2,
+            "D07": 1,
+            "D08": 1,
+            "D09": 1,
+            "D10": 1
+          },
+          "D/contextual": {
+            "D01": 5,
+            "D02": 4,
+            "D03": 2,
+            "D05": 2,
+            "D08": 6
+          },
+          "E/atomic": {
+            "E01": 3,
+            "E02": 3,
+            "E03": 3,
+            "E04": 3,
+            "E05": 3,
+            "E06": 3,
+            "E07": 3,
+            "E08": 3,
+            "E09": 3,
+            "E10": 3
+          },
+          "E/compositional": {
+            "E01": 2,
+            "E02": 1,
+            "E03": 1,
+            "E04": 2,
+            "E05": 1,
+            "E06": 1,
+            "E07": 2,
+            "E08": 3,
+            "E09": 1,
+            "E10": 1
+          },
+          "E/contextual": {
+            "E01": 6,
+            "E05": 6,
+            "E07": 15,
+            "E08": 6,
+            "E10": 5
+          },
+          "F/atomic": {
+            "F01": 3,
+            "F02": 3,
+            "F03": 3,
+            "F04": 3,
+            "F05": 3,
+            "F06": 3,
+            "F07": 3,
+            "F08": 3,
+            "F09": 2,
+            "F10": 3
+          },
+          "F/compositional": {
+            "F01": 2,
+            "F02": 2,
+            "F03": 2,
+            "F04": 3,
+            "F05": 1,
+            "F06": 1,
+            "F07": 1,
+            "F08": 2,
+            "F09": 1
+          },
+          "F/contextual": {
+            "F02": 5,
+            "F05": 4,
+            "F07": 3,
+            "F08": 3
+          },
+          "G/atomic": {
+            "G01": 3,
+            "G02": 2,
+            "G03": 3,
+            "G04": 2,
+            "G05": 3,
+            "G06": 3,
+            "G07": 2,
+            "G08": 3,
+            "G09": 3,
+            "G10": 3
+          },
+          "G/compositional": {
+            "G01": 2,
+            "G03": 2,
+            "G04": 1,
+            "G05": 1,
+            "G06": 3,
+            "G08": 2,
+            "G09": 2,
+            "G10": 2
+          },
+          "G/contextual": {
+            "G01": 3,
+            "G02": 2,
+            "G03": 1,
+            "G04": 2,
+            "G07": 3,
+            "G08": 2,
+            "G09": 2
+          },
+          "H/atomic": {
+            "H01": 3,
+            "H02": 3,
+            "H03": 3,
+            "H04": 3,
+            "H05": 3,
+            "H06": 3,
+            "H07": 3,
+            "H08": 3,
+            "H09": 3,
+            "H10": 3
+          },
+          "H/compositional": {
+            "H01": 3,
+            "H02": 3,
+            "H03": 1,
+            "H04": 2,
+            "H05": 1,
+            "H06": 1,
+            "H07": 1,
+            "H08": 1,
+            "H09": 1,
+            "H10": 1
+          },
+          "H/contextual": {
+            "H01": 4,
+            "H02": 4,
+            "H03": 4,
+            "H09": 3
+          },
+          "I/atomic": {
+            "I01": 3,
+            "I02": 3,
+            "I03": 3,
+            "I04": 3,
+            "I05": 3,
+            "I06": 3,
+            "I07": 3,
+            "I08": 3,
+            "I09": 3,
+            "I10": 2
+          },
+          "I/compositional": {
+            "I01": 2,
+            "I02": 1,
+            "I03": 2,
+            "I04": 2,
+            "I05": 1,
+            "I06": 1,
+            "I07": 2,
+            "I08": 1,
+            "I09": 2,
+            "I10": 1
+          },
+          "I/contextual": {
+            "I03": 4,
+            "I06": 3,
+            "I08": 3,
+            "I09": 5
+          },
+          "J/atomic": {
+            "J01": 3,
+            "J02": 3,
+            "J03": 3,
+            "J04": 3,
+            "J05": 3,
+            "J06": 3,
+            "J07": 3,
+            "J08": 3,
+            "J09": 3,
+            "J10": 3
+          },
+          "J/compositional": {
+            "J01": 3,
+            "J02": 2,
+            "J03": 1,
+            "J04": 1,
+            "J05": 1,
+            "J06": 1,
+            "J07": 1,
+            "J08": 1,
+            "J09": 2,
+            "J10": 2
+          },
+          "J/contextual": {
+            "J01": 2,
+            "J02": 7,
+            "J04": 2,
+            "J05": 2,
+            "J08": 2,
+            "J09": 8
+          },
+          "K/atomic": {
+            "K01": 3,
+            "K02": 3,
+            "K03": 3,
+            "K09": 3,
+            "K12": 3,
+            "K13": 2,
+            "K14": 3,
+            "K15": 3,
+            "K16": 3,
+            "K17": 3,
+            "K18": 3
+          },
+          "K/compositional": {
+            "K02": 1,
+            "K04": 2,
+            "K05": 3,
+            "K06": 1,
+            "K08": 1,
+            "K09": 1,
+            "K10": 1,
+            "K11": 1,
+            "K12": 1,
+            "K13": 1,
+            "K14": 1,
+            "K15": 1,
+            "K16": 1,
+            "K17": 1,
+            "K18": 1,
+            "K20": 1
+          },
+          "K/contextual": {
+            "K01": 2,
+            "K02": 2,
+            "K07": 8,
+            "K08": 2,
+            "K09": 2,
+            "K10": 1,
+            "K12": 1,
+            "K13": 1,
+            "K14": 1,
+            "K15": 2,
+            "K16": 3,
+            "K17": 1,
+            "K18": 4,
+            "K19": 4,
+            "K20": 2
+          }
+        }
+      }
+    },
+    {
+      "check": "record_metadata",
+      "passed": true,
+      "detail": "1957 records carry consistent complexity, boundary, property, layer and rationale fields; 0 inconsistencies",
+      "evidence": {
+        "violations": []
+      }
+    },
+    {
+      "check": "attack_benign_separation",
+      "passed": true,
+      "detail": "972 authored rows; 0 label errors, 0 tools with no benign exercise, 5 shared call shapes (0 without differing context)",
+      "evidence": {
+        "label_errors": [],
+        "unexercised_tools": [],
+        "shared_call_shapes": 5,
+        "indistinguishable": []
       }
     }
   ],
   "distributions": {
-    "total": 1665,
-    "malicious": 1382,
-    "benign": 283,
+    "total": 1957,
+    "malicious": 1653,
+    "benign": 304,
     "by_category": {
-      "A": 33,
-      "B": 36,
-      "C": 72,
-      "D": 76,
-      "E": 43,
-      "F": 49,
-      "G": 62,
-      "H": 60,
-      "I": 60,
-      "J": 37,
-      "K": 152,
+      "A": 62,
+      "B": 60,
+      "C": 91,
+      "D": 106,
+      "E": 96,
+      "F": 77,
+      "G": 81,
+      "H": 87,
+      "I": 84,
+      "J": 72,
+      "K": 156,
       "X": 985
     },
     "by_subtype": {
-      "A01": 4,
-      "A02": 3,
-      "A03": 3,
-      "A04": 3,
+      "A01": 8,
+      "A02": 9,
+      "A03": 5,
+      "A04": 9,
       "A05": 3,
       "A06": 3,
-      "A07": 3,
-      "A08": 3,
-      "A09": 3,
-      "A10": 4,
-      "B01": 4,
-      "B02": 3,
-      "B03": 2,
-      "B04": 3,
-      "B05": 3,
-      "B06": 4,
-      "B07": 4,
-      "B08": 3,
-      "B09": 3,
-      "B10": 5,
-      "C01": 5,
-      "C02": 4,
-      "C03": 5,
-      "C04": 3,
-      "C05": 4,
+      "A07": 5,
+      "A08": 5,
+      "A09": 5,
+      "A10": 9,
+      "B01": 6,
+      "B02": 4,
+      "B03": 3,
+      "B04": 4,
+      "B05": 7,
+      "B06": 5,
+      "B07": 8,
+      "B08": 8,
+      "B09": 4,
+      "B10": 9,
+      "C01": 10,
+      "C02": 5,
+      "C03": 9,
+      "C04": 4,
+      "C05": 5,
       "C06": 3,
-      "C07": 4,
+      "C07": 6,
       "C08": 4,
-      "C09": 5,
-      "C10": 5,
-      "D01": 4,
-      "D02": 4,
-      "D03": 3,
+      "C09": 7,
+      "C10": 7,
+      "D01": 11,
+      "D02": 10,
+      "D03": 6,
       "D04": 3,
-      "D05": 4,
-      "D06": 4,
-      "D07": 3,
-      "D08": 4,
+      "D05": 7,
+      "D06": 5,
+      "D07": 4,
+      "D08": 10,
       "D09": 4,
       "D10": 4,
-      "E01": 3,
-      "E02": 3,
-      "E03": 3,
-      "E04": 3,
-      "E05": 3,
-      "E06": 3,
-      "E07": 3,
-      "E08": 4,
-      "E09": 3,
-      "E10": 3,
-      "F01": 3,
-      "F02": 4,
-      "F03": 3,
-      "F04": 4,
-      "F05": 3,
-      "F06": 3,
-      "F07": 3,
-      "F08": 4,
+      "E01": 11,
+      "E02": 4,
+      "E03": 4,
+      "E04": 5,
+      "E05": 10,
+      "E06": 4,
+      "E07": 20,
+      "E08": 12,
+      "E09": 4,
+      "E10": 9,
+      "F01": 5,
+      "F02": 10,
+      "F03": 5,
+      "F04": 6,
+      "F05": 8,
+      "F06": 4,
+      "F07": 7,
+      "F08": 8,
       "F09": 3,
       "F10": 3,
-      "G01": 5,
-      "G02": 3,
-      "G03": 3,
-      "G04": 3,
-      "G05": 3,
-      "G06": 4,
-      "G07": 4,
-      "G08": 5,
-      "G09": 5,
-      "G10": 4,
-      "H01": 5,
-      "H02": 5,
-      "H03": 4,
-      "H04": 4,
-      "H05": 3,
-      "H06": 3,
-      "H07": 3,
-      "H08": 3,
-      "H09": 3,
+      "G01": 8,
+      "G02": 4,
+      "G03": 6,
+      "G04": 5,
+      "G05": 4,
+      "G06": 6,
+      "G07": 5,
+      "G08": 7,
+      "G09": 7,
+      "G10": 5,
+      "H01": 10,
+      "H02": 10,
+      "H03": 8,
+      "H04": 5,
+      "H05": 4,
+      "H06": 4,
+      "H07": 4,
+      "H08": 4,
+      "H09": 7,
       "H10": 4,
-      "I01": 4,
-      "I02": 3,
-      "I03": 5,
-      "I04": 4,
-      "I05": 3,
-      "I06": 3,
-      "I07": 4,
-      "I08": 4,
-      "I09": 6,
+      "I01": 5,
+      "I02": 4,
+      "I03": 9,
+      "I04": 5,
+      "I05": 4,
+      "I06": 7,
+      "I07": 5,
+      "I08": 7,
+      "I09": 10,
       "I10": 3,
-      "J01": 4,
-      "J02": 3,
-      "J03": 3,
-      "J04": 3,
-      "J05": 3,
-      "J06": 3,
-      "J07": 3,
-      "J08": 3,
-      "J09": 5,
-      "J10": 4,
+      "J01": 8,
+      "J02": 12,
+      "J03": 4,
+      "J04": 6,
+      "J05": 6,
+      "J06": 4,
+      "J07": 4,
+      "J08": 6,
+      "J09": 13,
+      "J10": 5,
       "K01": 5,
       "K02": 6,
       "K03": 3,
@@ -422,61 +867,4091 @@
       "X07": 92
     },
     "by_level": {
-      "1": 1511,
-      "2": 88,
-      "3": 66
+      "1": 1517,
+      "2": 197,
+      "3": 243
     },
     "by_level_malicious": {
       "1": 1262,
-      "2": 60,
-      "3": 60
+      "2": 169,
+      "3": 222
     },
     "by_enforcing_layer": {
-      "capability": 186,
-      "contracts": 958,
-      "dcbf": 42,
+      "capability": 242,
+      "contracts": 1091,
+      "dcbf": 48,
       "hitl": 21,
-      "ifc": 51,
-      "semantic": 78,
-      "workflow": 46
+      "ifc": 76,
+      "semantic": 114,
+      "workflow": 61
     },
     "by_severity": {
-      "critical": 186,
-      "high": 1137,
-      "low": 287,
-      "medium": 55
+      "critical": 309,
+      "high": 1264,
+      "low": 308,
+      "medium": 76
     },
     "by_difficulty": {
-      "benign/contextual_hard": 6,
+      "benign/ambiguous": 9,
+      "benign/contextual_hard": 12,
       "benign/easy": 62,
-      "benign/hard_negative": 32,
+      "benign/hard_negative": 38,
       "benign/moderate": 183,
-      "malicious/contextual_hard": 60,
+      "malicious/contextual_hard": 222,
       "malicious/easy": 325,
-      "malicious/moderate": 997
+      "malicious/moderate": 1106
     },
     "by_tool": {
-      "admin_tool": 221,
-      "agent_delegate": 36,
-      "calendar_api": 7,
-      "ci_pipeline": 28,
-      "cloud_api": 17,
-      "code_execute": 101,
-      "data_analysis": 10,
-      "database_query": 87,
-      "file_read": 37,
-      "file_write": 54,
+      "admin_tool": 241,
+      "agent_delegate": 49,
+      "calendar_api": 8,
+      "ci_pipeline": 40,
+      "cloud_api": 22,
+      "code_execute": 148,
+      "data_analysis": 12,
+      "database_query": 102,
+      "file_read": 50,
+      "file_write": 83,
       "format_template": 3,
-      "http_request": 141,
-      "k8s_api": 22,
-      "memory_write": 24,
-      "payment_api": 58,
-      "send_email": 690,
-      "sql_query": 90,
-      "web_search": 39
+      "http_request": 207,
+      "k8s_api": 32,
+      "memory_write": 25,
+      "payment_api": 84,
+      "send_email": 712,
+      "sql_query": 96,
+      "web_search": 43
     },
     "by_tenant": {
-      "tenant-alpha": 1665
+      "tenant-alpha": 1957
+    }
+  },
+  "coverage": {
+    "schema_version": "1.3",
+    "generator_version": "1.3.0",
+    "requirements": {
+      "atomic_min": 20,
+      "compositional_min": 15,
+      "contextual_min": 15,
+      "max_subtype_share": 0.4,
+      "min_distinct_contextual_subtypes": 4
+    },
+    "authored_categories": {
+      "A": {
+        "category_name": "Reconnaissance and information gathering",
+        "total": 62,
+        "malicious": 61,
+        "benign": 1,
+        "by_complexity": {
+          "atomic": 30,
+          "compositional": 15,
+          "contextual": 16
+        },
+        "by_decision": {
+          "ALLOW": 1,
+          "DENY": 61
+        },
+        "by_layer": {
+          "capability": 36,
+          "contracts": 5,
+          "ifc": 8,
+          "semantic": 12
+        },
+        "subcategories": {
+          "A01": {
+            "subcategory_name": "System reconnaissance",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 5
+            },
+            "layers": [
+              "capability",
+              "semantic"
+            ]
+          },
+          "A02": {
+            "subcategory_name": "Network discovery",
+            "malicious": 9,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 4
+            },
+            "layers": [
+              "capability",
+              "semantic"
+            ]
+          },
+          "A03": {
+            "subcategory_name": "Service enumeration",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "A04": {
+            "subcategory_name": "Account enumeration",
+            "malicious": 9,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 4
+            },
+            "layers": [
+              "capability",
+              "semantic"
+            ]
+          },
+          "A05": {
+            "subcategory_name": "Technology fingerprinting",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "A06": {
+            "subcategory_name": "API reconnaissance",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "A07": {
+            "subcategory_name": "Cloud reconnaissance",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "A08": {
+            "subcategory_name": "Permission discovery",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "A09": {
+            "subcategory_name": "Metadata harvesting",
+            "malicious": 5,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "A10": {
+            "subcategory_name": "OSINT collection",
+            "malicious": 9,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 3
+            },
+            "layers": [
+              "ifc",
+              "semantic"
+            ]
+          }
+        }
+      },
+      "B": {
+        "category_name": "Unauthorized access and identity abuse",
+        "total": 60,
+        "malicious": 58,
+        "benign": 2,
+        "by_complexity": {
+          "atomic": 28,
+          "compositional": 15,
+          "contextual": 15
+        },
+        "by_decision": {
+          "ALLOW": 2,
+          "DENY": 58
+        },
+        "by_layer": {
+          "capability": 40,
+          "contracts": 4,
+          "dcbf": 7,
+          "ifc": 1,
+          "workflow": 6
+        },
+        "subcategories": {
+          "B01": {
+            "subcategory_name": "Credential theft",
+            "malicious": 6,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "ifc"
+            ]
+          },
+          "B02": {
+            "subcategory_name": "Credential stuffing",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "dcbf"
+            ]
+          },
+          "B03": {
+            "subcategory_name": "Password spraying",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "dcbf"
+            ]
+          },
+          "B04": {
+            "subcategory_name": "Token theft",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "B05": {
+            "subcategory_name": "Session hijacking",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "B06": {
+            "subcategory_name": "Privilege escalation",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "workflow"
+            ]
+          },
+          "B07": {
+            "subcategory_name": "Privilege abuse",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 4
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "B08": {
+            "subcategory_name": "Identity impersonation",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 4
+            },
+            "layers": [
+              "capability",
+              "workflow"
+            ]
+          },
+          "B09": {
+            "subcategory_name": "Account takeover",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "B10": {
+            "subcategory_name": "Cross-tenant access",
+            "malicious": 9,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 4
+            },
+            "layers": [
+              "capability"
+            ]
+          }
+        }
+      },
+      "C": {
+        "category_name": "Data-related attacks",
+        "total": 91,
+        "malicious": 60,
+        "benign": 31,
+        "by_complexity": {
+          "atomic": 30,
+          "compositional": 15,
+          "contextual": 15
+        },
+        "by_decision": {
+          "ALLOW": 31,
+          "DENY": 60
+        },
+        "by_layer": {
+          "capability": 9,
+          "contracts": 12,
+          "ifc": 38,
+          "workflow": 1
+        },
+        "subcategories": {
+          "C01": {
+            "subcategory_name": "Data exfiltration",
+            "malicious": 10,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 4
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "C02": {
+            "subcategory_name": "Unauthorized data access",
+            "malicious": 5,
+            "benign": 3,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "contracts",
+              "ifc"
+            ]
+          },
+          "C03": {
+            "subcategory_name": "Sensitive information disclosure",
+            "malicious": 9,
+            "benign": 2,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 4
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "C04": {
+            "subcategory_name": "Database manipulation",
+            "malicious": 4,
+            "benign": 25,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "C05": {
+            "subcategory_name": "Data deletion",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts",
+              "workflow"
+            ]
+          },
+          "C06": {
+            "subcategory_name": "Data corruption",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "C07": {
+            "subcategory_name": "Data aggregation abuse",
+            "malicious": 6,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 1
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "C08": {
+            "subcategory_name": "Intellectual property theft",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "C09": {
+            "subcategory_name": "Cross-user data leakage",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "capability",
+              "ifc"
+            ]
+          },
+          "C10": {
+            "subcategory_name": "Backup exfiltration",
+            "malicious": 7,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "capability",
+              "ifc"
+            ]
+          }
+        }
+      },
+      "D": {
+        "category_name": "Filesystem and operating-system attacks",
+        "total": 106,
+        "malicious": 64,
+        "benign": 42,
+        "by_complexity": {
+          "atomic": 30,
+          "compositional": 15,
+          "contextual": 19
+        },
+        "by_decision": {
+          "ALLOW": 42,
+          "DENY": 64
+        },
+        "by_layer": {
+          "capability": 6,
+          "contracts": 38,
+          "dcbf": 4,
+          "ifc": 6,
+          "semantic": 8,
+          "workflow": 2
+        },
+        "subcategories": {
+          "D01": {
+            "subcategory_name": "Unauthorized file reading",
+            "malicious": 11,
+            "benign": 16,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 5
+            },
+            "layers": [
+              "capability",
+              "ifc",
+              "semantic"
+            ]
+          },
+          "D02": {
+            "subcategory_name": "Unauthorized file modification",
+            "malicious": 10,
+            "benign": 12,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 4
+            },
+            "layers": [
+              "contracts",
+              "semantic"
+            ]
+          },
+          "D03": {
+            "subcategory_name": "Unauthorized file deletion",
+            "malicious": 6,
+            "benign": 9,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "D04": {
+            "subcategory_name": "Arbitrary file creation",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "D05": {
+            "subcategory_name": "Path traversal",
+            "malicious": 7,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 2
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "D06": {
+            "subcategory_name": "Command execution abuse",
+            "malicious": 5,
+            "benign": 3,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "D07": {
+            "subcategory_name": "Script execution abuse",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts",
+              "workflow"
+            ]
+          },
+          "D08": {
+            "subcategory_name": "Configuration manipulation",
+            "malicious": 10,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 6
+            },
+            "layers": [
+              "contracts",
+              "semantic",
+              "workflow"
+            ]
+          },
+          "D09": {
+            "subcategory_name": "Environment variable disclosure",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "D10": {
+            "subcategory_name": "Resource exhaustion",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "dcbf"
+            ]
+          }
+        }
+      },
+      "E": {
+        "category_name": "Network and infrastructure attacks",
+        "total": 96,
+        "malicious": 83,
+        "benign": 13,
+        "by_complexity": {
+          "atomic": 30,
+          "compositional": 15,
+          "contextual": 38
+        },
+        "by_decision": {
+          "ALLOW": 13,
+          "DENY": 83
+        },
+        "by_layer": {
+          "capability": 28,
+          "contracts": 50,
+          "dcbf": 5
+        },
+        "subcategories": {
+          "E01": {
+            "subcategory_name": "Unauthorized network connections",
+            "malicious": 11,
+            "benign": 12,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 6
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "E02": {
+            "subcategory_name": "Network traffic interception",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "E03": {
+            "subcategory_name": "Man-in-the-middle activity",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "E04": {
+            "subcategory_name": "DNS manipulation",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "E05": {
+            "subcategory_name": "Service disruption",
+            "malicious": 10,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 6
+            },
+            "layers": [
+              "contracts",
+              "dcbf"
+            ]
+          },
+          "E06": {
+            "subcategory_name": "Distributed denial of service",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "dcbf"
+            ]
+          },
+          "E07": {
+            "subcategory_name": "Internal network access",
+            "malicious": 20,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 15
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "E08": {
+            "subcategory_name": "Lateral movement",
+            "malicious": 12,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 6
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "E09": {
+            "subcategory_name": "Unauthorized tunneling",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "E10": {
+            "subcategory_name": "Firewall policy abuse",
+            "malicious": 9,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 5
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          }
+        }
+      },
+      "F": {
+        "category_name": "Web application and API attacks",
+        "total": 77,
+        "malicious": 59,
+        "benign": 18,
+        "by_complexity": {
+          "atomic": 29,
+          "compositional": 15,
+          "contextual": 15
+        },
+        "by_decision": {
+          "ALLOW": 18,
+          "DENY": 59
+        },
+        "by_layer": {
+          "capability": 13,
+          "contracts": 43,
+          "dcbf": 3
+        },
+        "subcategories": {
+          "F01": {
+            "subcategory_name": "Unauthorized API invocation",
+            "malicious": 5,
+            "benign": 7,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "F02": {
+            "subcategory_name": "API parameter manipulation",
+            "malicious": 10,
+            "benign": 2,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 5
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "F03": {
+            "subcategory_name": "Broken access control exploitation",
+            "malicious": 5,
+            "benign": 8,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "F04": {
+            "subcategory_name": "Injection attacks",
+            "malicious": 6,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "F05": {
+            "subcategory_name": "Cross-site scripting",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 4
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "F06": {
+            "subcategory_name": "Cross-site request forgery",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "F07": {
+            "subcategory_name": "Server-side request forgery",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "F08": {
+            "subcategory_name": "Business logic abuse",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 3
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "F09": {
+            "subcategory_name": "API rate-limit abuse",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "dcbf"
+            ]
+          },
+          "F10": {
+            "subcategory_name": "Unauthorized webhook manipulation",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          }
+        }
+      },
+      "G": {
+        "category_name": "Email, communication and social engineering",
+        "total": 81,
+        "malicious": 57,
+        "benign": 24,
+        "by_complexity": {
+          "atomic": 27,
+          "compositional": 15,
+          "contextual": 15
+        },
+        "by_decision": {
+          "ALLOW": 24,
+          "DENY": 57
+        },
+        "by_layer": {
+          "capability": 8,
+          "contracts": 3,
+          "dcbf": 3,
+          "ifc": 8,
+          "semantic": 35
+        },
+        "subcategories": {
+          "G01": {
+            "subcategory_name": "Phishing",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 3
+            },
+            "layers": [
+              "ifc",
+              "semantic"
+            ]
+          },
+          "G02": {
+            "subcategory_name": "Spear phishing",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 0,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "G03": {
+            "subcategory_name": "Business email compromise",
+            "malicious": 6,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 1
+            },
+            "layers": [
+              "contracts",
+              "semantic"
+            ]
+          },
+          "G04": {
+            "subcategory_name": "Spam generation",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "dcbf",
+              "semantic"
+            ]
+          },
+          "G05": {
+            "subcategory_name": "Unauthorized email forwarding",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "G06": {
+            "subcategory_name": "Contact harvesting",
+            "malicious": 6,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 0
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "G07": {
+            "subcategory_name": "Social engineering",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 0,
+              "contextual": 3
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "G08": {
+            "subcategory_name": "Misinformation distribution",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "G09": {
+            "subcategory_name": "Impersonation campaigns",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "G10": {
+            "subcategory_name": "Unauthorized communication",
+            "malicious": 5,
+            "benign": 23,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "ifc"
+            ]
+          }
+        }
+      },
+      "H": {
+        "category_name": "Financial and transactional attacks",
+        "total": 87,
+        "malicious": 60,
+        "benign": 27,
+        "by_complexity": {
+          "atomic": 30,
+          "compositional": 15,
+          "contextual": 15
+        },
+        "by_decision": {
+          "ALLOW": 24,
+          "DENY": 52,
+          "REQUIRE_APPROVAL": 11
+        },
+        "by_layer": {
+          "capability": 5,
+          "contracts": 43,
+          "dcbf": 1,
+          "hitl": 8,
+          "semantic": 3
+        },
+        "subcategories": {
+          "H01": {
+            "subcategory_name": "Unauthorized purchases",
+            "malicious": 10,
+            "benign": 10,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 4
+            },
+            "layers": [
+              "capability",
+              "contracts",
+              "hitl"
+            ]
+          },
+          "H02": {
+            "subcategory_name": "Unauthorized fund transfers",
+            "malicious": 10,
+            "benign": 8,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 4
+            },
+            "layers": [
+              "capability",
+              "contracts",
+              "hitl",
+              "semantic"
+            ]
+          },
+          "H03": {
+            "subcategory_name": "Payment manipulation",
+            "malicious": 8,
+            "benign": 2,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 4
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "H04": {
+            "subcategory_name": "Invoice fraud",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "H05": {
+            "subcategory_name": "Subscription abuse",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts",
+              "dcbf"
+            ]
+          },
+          "H06": {
+            "subcategory_name": "Refund abuse",
+            "malicious": 4,
+            "benign": 6,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "H07": {
+            "subcategory_name": "Financial data manipulation",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "H08": {
+            "subcategory_name": "Cryptocurrency transaction abuse",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "H09": {
+            "subcategory_name": "Trading manipulation",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "capability",
+              "contracts",
+              "semantic"
+            ]
+          },
+          "H10": {
+            "subcategory_name": "Resource procurement abuse",
+            "malicious": 4,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "hitl"
+            ]
+          }
+        }
+      },
+      "I": {
+        "category_name": "Cloud and DevOps attacks",
+        "total": 84,
+        "malicious": 59,
+        "benign": 25,
+        "by_complexity": {
+          "atomic": 29,
+          "compositional": 15,
+          "contextual": 15
+        },
+        "by_decision": {
+          "ALLOW": 21,
+          "DENY": 53,
+          "REQUIRE_APPROVAL": 10
+        },
+        "by_layer": {
+          "capability": 17,
+          "contracts": 21,
+          "dcbf": 3,
+          "hitl": 6,
+          "ifc": 10,
+          "semantic": 1,
+          "workflow": 1
+        },
+        "subcategories": {
+          "I01": {
+            "subcategory_name": "Unauthorized cloud provisioning",
+            "malicious": 5,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "ifc"
+            ]
+          },
+          "I02": {
+            "subcategory_name": "IAM policy manipulation",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "I03": {
+            "subcategory_name": "Secret exposure",
+            "malicious": 9,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 4
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "I04": {
+            "subcategory_name": "Container manipulation",
+            "malicious": 5,
+            "benign": 9,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "I05": {
+            "subcategory_name": "Kubernetes privilege abuse",
+            "malicious": 4,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "I06": {
+            "subcategory_name": "CI/CD pipeline manipulation",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "I07": {
+            "subcategory_name": "Artifact poisoning",
+            "malicious": 5,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "I08": {
+            "subcategory_name": "Deployment manipulation",
+            "malicious": 7,
+            "benign": 10,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "capability",
+              "contracts",
+              "semantic",
+              "workflow"
+            ]
+          },
+          "I09": {
+            "subcategory_name": "Infrastructure destruction",
+            "malicious": 10,
+            "benign": 2,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 5
+            },
+            "layers": [
+              "capability",
+              "hitl"
+            ]
+          },
+          "I10": {
+            "subcategory_name": "Cloud resource abuse",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "dcbf"
+            ]
+          }
+        }
+      },
+      "J": {
+        "category_name": "Persistence and security-control interference",
+        "total": 72,
+        "malicious": 68,
+        "benign": 4,
+        "by_complexity": {
+          "atomic": 30,
+          "compositional": 15,
+          "contextual": 23
+        },
+        "by_decision": {
+          "ALLOW": 3,
+          "DENY": 67,
+          "REQUIRE_APPROVAL": 2
+        },
+        "by_layer": {
+          "capability": 17,
+          "contracts": 36,
+          "hitl": 1,
+          "workflow": 14
+        },
+        "subcategories": {
+          "J01": {
+            "subcategory_name": "Unauthorized scheduled tasks",
+            "malicious": 8,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 2
+            },
+            "layers": [
+              "capability",
+              "contracts",
+              "workflow"
+            ]
+          },
+          "J02": {
+            "subcategory_name": "Startup configuration manipulation",
+            "malicious": 12,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 7
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "J03": {
+            "subcategory_name": "Unauthorized service creation",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "J04": {
+            "subcategory_name": "Security configuration modification",
+            "malicious": 6,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "J05": {
+            "subcategory_name": "Audit log manipulation",
+            "malicious": 6,
+            "benign": 2,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "J06": {
+            "subcategory_name": "Monitoring interference",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "J07": {
+            "subcategory_name": "Security tool interference",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "J08": {
+            "subcategory_name": "Policy modification",
+            "malicious": 6,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "J09": {
+            "subcategory_name": "Unauthorized agent delegation",
+            "malicious": 13,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 8
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "J10": {
+            "subcategory_name": "Persistent unauthorized access",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts",
+              "hitl"
+            ]
+          }
+        }
+      },
+      "K": {
+        "category_name": "AI-agent-specific attacks",
+        "total": 156,
+        "malicious": 87,
+        "benign": 69,
+        "by_complexity": {
+          "atomic": 32,
+          "compositional": 19,
+          "contextual": 36
+        },
+        "by_decision": {
+          "ALLOW": 68,
+          "DENY": 81,
+          "REQUIRE_APPROVAL": 7
+        },
+        "by_layer": {
+          "capability": 3,
+          "dcbf": 4,
+          "hitl": 6,
+          "ifc": 5,
+          "semantic": 37,
+          "workflow": 32
+        },
+        "subcategories": {
+          "K01": {
+            "subcategory_name": "Direct prompt injection",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "K02": {
+            "subcategory_name": "Indirect prompt injection",
+            "malicious": 6,
+            "benign": 2,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "K03": {
+            "subcategory_name": "Tool misuse",
+            "malicious": 3,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "K04": {
+            "subcategory_name": "Tool privilege escalation",
+            "malicious": 2,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K05": {
+            "subcategory_name": "Tool-chain abuse",
+            "malicious": 3,
+            "benign": 27,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 3,
+              "contextual": 0
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K06": {
+            "subcategory_name": "Confused deputy",
+            "malicious": 1,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K07": {
+            "subcategory_name": "Goal hijacking",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 0,
+              "contextual": 8
+            },
+            "layers": [
+              "semantic",
+              "workflow"
+            ]
+          },
+          "K08": {
+            "subcategory_name": "Plan manipulation",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K09": {
+            "subcategory_name": "Memory poisoning",
+            "malicious": 6,
+            "benign": 18,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic",
+              "workflow"
+            ]
+          },
+          "K10": {
+            "subcategory_name": "Context poisoning",
+            "malicious": 2,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 1,
+              "contextual": 1
+            },
+            "layers": [
+              "semantic",
+              "workflow"
+            ]
+          },
+          "K11": {
+            "subcategory_name": "Multi-agent collusion",
+            "malicious": 1,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K12": {
+            "subcategory_name": "Unauthorized delegation",
+            "malicious": 5,
+            "benign": 17,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 1
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K13": {
+            "subcategory_name": "Recursive agent spawning",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 1,
+              "contextual": 1
+            },
+            "layers": [
+              "dcbf"
+            ]
+          },
+          "K14": {
+            "subcategory_name": "Trust-boundary violation",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 1
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "K15": {
+            "subcategory_name": "Human approval manipulation",
+            "malicious": 6,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "hitl"
+            ]
+          },
+          "K16": {
+            "subcategory_name": "Semantic policy evasion",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "K17": {
+            "subcategory_name": "Action replay",
+            "malicious": 5,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 1
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K18": {
+            "subcategory_name": "Excessive agency",
+            "malicious": 8,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 4
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K19": {
+            "subcategory_name": "Goal drift",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 0,
+              "contextual": 4
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "K20": {
+            "subcategory_name": "Tool-output exploitation",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic",
+              "workflow"
+            ]
+          }
+        }
+      }
+    },
+    "imported_category_X": {
+      "category_name": "Externally sourced cases (GATE-Union)",
+      "total": 985,
+      "malicious": 937,
+      "benign": 48,
+      "by_complexity": {
+        "atomic": 937,
+        "compositional": 0,
+        "contextual": 0
+      },
+      "by_decision": {
+        "ALLOW": 48,
+        "DENY": 919,
+        "REQUIRE_APPROVAL": 18
+      },
+      "by_layer": {
+        "capability": 60,
+        "contracts": 836,
+        "dcbf": 18,
+        "semantic": 18,
+        "workflow": 5
+      },
+      "subcategories": {
+        "X01": {
+          "subcategory_name": "InjecAgent tool-response injection",
+          "malicious": 731,
+          "benign": 0,
+          "by_complexity": {
+            "atomic": 731,
+            "compositional": 0,
+            "contextual": 0
+          },
+          "layers": [
+            "contracts"
+          ]
+        },
+        "X02": {
+          "subcategory_name": "Gate-suite capability or privilege violation",
+          "malicious": 60,
+          "benign": 0,
+          "by_complexity": {
+            "atomic": 60,
+            "compositional": 0,
+            "contextual": 0
+          },
+          "layers": [
+            "capability"
+          ]
+        },
+        "X03": {
+          "subcategory_name": "Gate-suite declarative contract violation",
+          "malicious": 13,
+          "benign": 0,
+          "by_complexity": {
+            "atomic": 13,
+            "compositional": 0,
+            "contextual": 0
+          },
+          "layers": [
+            "contracts"
+          ]
+        },
+        "X04": {
+          "subcategory_name": "Gate-suite semantic policy violation",
+          "malicious": 18,
+          "benign": 0,
+          "by_complexity": {
+            "atomic": 18,
+            "compositional": 0,
+            "contextual": 0
+          },
+          "layers": [
+            "semantic"
+          ]
+        },
+        "X05": {
+          "subcategory_name": "Gate-suite workflow (DFA) violation",
+          "malicious": 5,
+          "benign": 0,
+          "by_complexity": {
+            "atomic": 5,
+            "compositional": 0,
+            "contextual": 0
+          },
+          "layers": [
+            "workflow"
+          ]
+        },
+        "X06": {
+          "subcategory_name": "Gate-suite runtime barrier violation",
+          "malicious": 18,
+          "benign": 0,
+          "by_complexity": {
+            "atomic": 18,
+            "compositional": 0,
+            "contextual": 0
+          },
+          "layers": [
+            "dcbf"
+          ]
+        },
+        "X07": {
+          "subcategory_name": "SafeClawBench unsafe instruction",
+          "malicious": 92,
+          "benign": 0,
+          "by_complexity": {
+            "atomic": 92,
+            "compositional": 0,
+            "contextual": 0
+          },
+          "layers": [
+            "contracts"
+          ]
+        },
+        "X08": {
+          "subcategory_name": "Benign externally sourced case",
+          "malicious": 0,
+          "benign": 48,
+          "by_complexity": {
+            "atomic": 0,
+            "compositional": 0,
+            "contextual": 0
+          },
+          "layers": []
+        }
+      }
+    },
+    "categories": {
+      "A": {
+        "category_name": "Reconnaissance and information gathering",
+        "total": 62,
+        "malicious": 61,
+        "benign": 1,
+        "by_complexity": {
+          "atomic": 30,
+          "compositional": 15,
+          "contextual": 16
+        },
+        "by_decision": {
+          "ALLOW": 1,
+          "DENY": 61
+        },
+        "by_layer": {
+          "capability": 36,
+          "contracts": 5,
+          "ifc": 8,
+          "semantic": 12
+        },
+        "subcategories": {
+          "A01": {
+            "subcategory_name": "System reconnaissance",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 5
+            },
+            "layers": [
+              "capability",
+              "semantic"
+            ]
+          },
+          "A02": {
+            "subcategory_name": "Network discovery",
+            "malicious": 9,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 4
+            },
+            "layers": [
+              "capability",
+              "semantic"
+            ]
+          },
+          "A03": {
+            "subcategory_name": "Service enumeration",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "A04": {
+            "subcategory_name": "Account enumeration",
+            "malicious": 9,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 4
+            },
+            "layers": [
+              "capability",
+              "semantic"
+            ]
+          },
+          "A05": {
+            "subcategory_name": "Technology fingerprinting",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "A06": {
+            "subcategory_name": "API reconnaissance",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "A07": {
+            "subcategory_name": "Cloud reconnaissance",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "A08": {
+            "subcategory_name": "Permission discovery",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "A09": {
+            "subcategory_name": "Metadata harvesting",
+            "malicious": 5,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "A10": {
+            "subcategory_name": "OSINT collection",
+            "malicious": 9,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 3
+            },
+            "layers": [
+              "ifc",
+              "semantic"
+            ]
+          }
+        }
+      },
+      "B": {
+        "category_name": "Unauthorized access and identity abuse",
+        "total": 60,
+        "malicious": 58,
+        "benign": 2,
+        "by_complexity": {
+          "atomic": 28,
+          "compositional": 15,
+          "contextual": 15
+        },
+        "by_decision": {
+          "ALLOW": 2,
+          "DENY": 58
+        },
+        "by_layer": {
+          "capability": 40,
+          "contracts": 4,
+          "dcbf": 7,
+          "ifc": 1,
+          "workflow": 6
+        },
+        "subcategories": {
+          "B01": {
+            "subcategory_name": "Credential theft",
+            "malicious": 6,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "ifc"
+            ]
+          },
+          "B02": {
+            "subcategory_name": "Credential stuffing",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "dcbf"
+            ]
+          },
+          "B03": {
+            "subcategory_name": "Password spraying",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "dcbf"
+            ]
+          },
+          "B04": {
+            "subcategory_name": "Token theft",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "B05": {
+            "subcategory_name": "Session hijacking",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "B06": {
+            "subcategory_name": "Privilege escalation",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "workflow"
+            ]
+          },
+          "B07": {
+            "subcategory_name": "Privilege abuse",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 4
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "B08": {
+            "subcategory_name": "Identity impersonation",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 4
+            },
+            "layers": [
+              "capability",
+              "workflow"
+            ]
+          },
+          "B09": {
+            "subcategory_name": "Account takeover",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "B10": {
+            "subcategory_name": "Cross-tenant access",
+            "malicious": 9,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 4
+            },
+            "layers": [
+              "capability"
+            ]
+          }
+        }
+      },
+      "D": {
+        "category_name": "Filesystem and operating-system attacks",
+        "total": 106,
+        "malicious": 64,
+        "benign": 42,
+        "by_complexity": {
+          "atomic": 30,
+          "compositional": 15,
+          "contextual": 19
+        },
+        "by_decision": {
+          "ALLOW": 42,
+          "DENY": 64
+        },
+        "by_layer": {
+          "capability": 6,
+          "contracts": 38,
+          "dcbf": 4,
+          "ifc": 6,
+          "semantic": 8,
+          "workflow": 2
+        },
+        "subcategories": {
+          "D01": {
+            "subcategory_name": "Unauthorized file reading",
+            "malicious": 11,
+            "benign": 16,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 5
+            },
+            "layers": [
+              "capability",
+              "ifc",
+              "semantic"
+            ]
+          },
+          "D02": {
+            "subcategory_name": "Unauthorized file modification",
+            "malicious": 10,
+            "benign": 12,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 4
+            },
+            "layers": [
+              "contracts",
+              "semantic"
+            ]
+          },
+          "D03": {
+            "subcategory_name": "Unauthorized file deletion",
+            "malicious": 6,
+            "benign": 9,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "D04": {
+            "subcategory_name": "Arbitrary file creation",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "D05": {
+            "subcategory_name": "Path traversal",
+            "malicious": 7,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 2
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "D06": {
+            "subcategory_name": "Command execution abuse",
+            "malicious": 5,
+            "benign": 3,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "D07": {
+            "subcategory_name": "Script execution abuse",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts",
+              "workflow"
+            ]
+          },
+          "D08": {
+            "subcategory_name": "Configuration manipulation",
+            "malicious": 10,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 6
+            },
+            "layers": [
+              "contracts",
+              "semantic",
+              "workflow"
+            ]
+          },
+          "D09": {
+            "subcategory_name": "Environment variable disclosure",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "D10": {
+            "subcategory_name": "Resource exhaustion",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "dcbf"
+            ]
+          }
+        }
+      },
+      "F": {
+        "category_name": "Web application and API attacks",
+        "total": 77,
+        "malicious": 59,
+        "benign": 18,
+        "by_complexity": {
+          "atomic": 29,
+          "compositional": 15,
+          "contextual": 15
+        },
+        "by_decision": {
+          "ALLOW": 18,
+          "DENY": 59
+        },
+        "by_layer": {
+          "capability": 13,
+          "contracts": 43,
+          "dcbf": 3
+        },
+        "subcategories": {
+          "F01": {
+            "subcategory_name": "Unauthorized API invocation",
+            "malicious": 5,
+            "benign": 7,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "F02": {
+            "subcategory_name": "API parameter manipulation",
+            "malicious": 10,
+            "benign": 2,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 5
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "F03": {
+            "subcategory_name": "Broken access control exploitation",
+            "malicious": 5,
+            "benign": 8,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "F04": {
+            "subcategory_name": "Injection attacks",
+            "malicious": 6,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "F05": {
+            "subcategory_name": "Cross-site scripting",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 4
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "F06": {
+            "subcategory_name": "Cross-site request forgery",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "F07": {
+            "subcategory_name": "Server-side request forgery",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "F08": {
+            "subcategory_name": "Business logic abuse",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 3
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "F09": {
+            "subcategory_name": "API rate-limit abuse",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "dcbf"
+            ]
+          },
+          "F10": {
+            "subcategory_name": "Unauthorized webhook manipulation",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          }
+        }
+      },
+      "C": {
+        "category_name": "Data-related attacks",
+        "total": 91,
+        "malicious": 60,
+        "benign": 31,
+        "by_complexity": {
+          "atomic": 30,
+          "compositional": 15,
+          "contextual": 15
+        },
+        "by_decision": {
+          "ALLOW": 31,
+          "DENY": 60
+        },
+        "by_layer": {
+          "capability": 9,
+          "contracts": 12,
+          "ifc": 38,
+          "workflow": 1
+        },
+        "subcategories": {
+          "C01": {
+            "subcategory_name": "Data exfiltration",
+            "malicious": 10,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 4
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "C02": {
+            "subcategory_name": "Unauthorized data access",
+            "malicious": 5,
+            "benign": 3,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "contracts",
+              "ifc"
+            ]
+          },
+          "C03": {
+            "subcategory_name": "Sensitive information disclosure",
+            "malicious": 9,
+            "benign": 2,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 4
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "C04": {
+            "subcategory_name": "Database manipulation",
+            "malicious": 4,
+            "benign": 25,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "C05": {
+            "subcategory_name": "Data deletion",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts",
+              "workflow"
+            ]
+          },
+          "C06": {
+            "subcategory_name": "Data corruption",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "C07": {
+            "subcategory_name": "Data aggregation abuse",
+            "malicious": 6,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 1
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "C08": {
+            "subcategory_name": "Intellectual property theft",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "C09": {
+            "subcategory_name": "Cross-user data leakage",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "capability",
+              "ifc"
+            ]
+          },
+          "C10": {
+            "subcategory_name": "Backup exfiltration",
+            "malicious": 7,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "capability",
+              "ifc"
+            ]
+          }
+        }
+      },
+      "G": {
+        "category_name": "Email, communication and social engineering",
+        "total": 81,
+        "malicious": 57,
+        "benign": 24,
+        "by_complexity": {
+          "atomic": 27,
+          "compositional": 15,
+          "contextual": 15
+        },
+        "by_decision": {
+          "ALLOW": 24,
+          "DENY": 57
+        },
+        "by_layer": {
+          "capability": 8,
+          "contracts": 3,
+          "dcbf": 3,
+          "ifc": 8,
+          "semantic": 35
+        },
+        "subcategories": {
+          "G01": {
+            "subcategory_name": "Phishing",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 3
+            },
+            "layers": [
+              "ifc",
+              "semantic"
+            ]
+          },
+          "G02": {
+            "subcategory_name": "Spear phishing",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 0,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "G03": {
+            "subcategory_name": "Business email compromise",
+            "malicious": 6,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 1
+            },
+            "layers": [
+              "contracts",
+              "semantic"
+            ]
+          },
+          "G04": {
+            "subcategory_name": "Spam generation",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "dcbf",
+              "semantic"
+            ]
+          },
+          "G05": {
+            "subcategory_name": "Unauthorized email forwarding",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "G06": {
+            "subcategory_name": "Contact harvesting",
+            "malicious": 6,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 0
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "G07": {
+            "subcategory_name": "Social engineering",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 0,
+              "contextual": 3
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "G08": {
+            "subcategory_name": "Misinformation distribution",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "G09": {
+            "subcategory_name": "Impersonation campaigns",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "G10": {
+            "subcategory_name": "Unauthorized communication",
+            "malicious": 5,
+            "benign": 23,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "ifc"
+            ]
+          }
+        }
+      },
+      "E": {
+        "category_name": "Network and infrastructure attacks",
+        "total": 96,
+        "malicious": 83,
+        "benign": 13,
+        "by_complexity": {
+          "atomic": 30,
+          "compositional": 15,
+          "contextual": 38
+        },
+        "by_decision": {
+          "ALLOW": 13,
+          "DENY": 83
+        },
+        "by_layer": {
+          "capability": 28,
+          "contracts": 50,
+          "dcbf": 5
+        },
+        "subcategories": {
+          "E01": {
+            "subcategory_name": "Unauthorized network connections",
+            "malicious": 11,
+            "benign": 12,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 6
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "E02": {
+            "subcategory_name": "Network traffic interception",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "E03": {
+            "subcategory_name": "Man-in-the-middle activity",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "E04": {
+            "subcategory_name": "DNS manipulation",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "E05": {
+            "subcategory_name": "Service disruption",
+            "malicious": 10,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 6
+            },
+            "layers": [
+              "contracts",
+              "dcbf"
+            ]
+          },
+          "E06": {
+            "subcategory_name": "Distributed denial of service",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "dcbf"
+            ]
+          },
+          "E07": {
+            "subcategory_name": "Internal network access",
+            "malicious": 20,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 15
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "E08": {
+            "subcategory_name": "Lateral movement",
+            "malicious": 12,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 6
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "E09": {
+            "subcategory_name": "Unauthorized tunneling",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "E10": {
+            "subcategory_name": "Firewall policy abuse",
+            "malicious": 9,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 5
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          }
+        }
+      },
+      "I": {
+        "category_name": "Cloud and DevOps attacks",
+        "total": 84,
+        "malicious": 59,
+        "benign": 25,
+        "by_complexity": {
+          "atomic": 29,
+          "compositional": 15,
+          "contextual": 15
+        },
+        "by_decision": {
+          "ALLOW": 21,
+          "DENY": 53,
+          "REQUIRE_APPROVAL": 10
+        },
+        "by_layer": {
+          "capability": 17,
+          "contracts": 21,
+          "dcbf": 3,
+          "hitl": 6,
+          "ifc": 10,
+          "semantic": 1,
+          "workflow": 1
+        },
+        "subcategories": {
+          "I01": {
+            "subcategory_name": "Unauthorized cloud provisioning",
+            "malicious": 5,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "ifc"
+            ]
+          },
+          "I02": {
+            "subcategory_name": "IAM policy manipulation",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "I03": {
+            "subcategory_name": "Secret exposure",
+            "malicious": 9,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 4
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "I04": {
+            "subcategory_name": "Container manipulation",
+            "malicious": 5,
+            "benign": 9,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "I05": {
+            "subcategory_name": "Kubernetes privilege abuse",
+            "malicious": 4,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "I06": {
+            "subcategory_name": "CI/CD pipeline manipulation",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "I07": {
+            "subcategory_name": "Artifact poisoning",
+            "malicious": 5,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "I08": {
+            "subcategory_name": "Deployment manipulation",
+            "malicious": 7,
+            "benign": 10,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "capability",
+              "contracts",
+              "semantic",
+              "workflow"
+            ]
+          },
+          "I09": {
+            "subcategory_name": "Infrastructure destruction",
+            "malicious": 10,
+            "benign": 2,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 5
+            },
+            "layers": [
+              "capability",
+              "hitl"
+            ]
+          },
+          "I10": {
+            "subcategory_name": "Cloud resource abuse",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "dcbf"
+            ]
+          }
+        }
+      },
+      "K": {
+        "category_name": "AI-agent-specific attacks",
+        "total": 156,
+        "malicious": 87,
+        "benign": 69,
+        "by_complexity": {
+          "atomic": 32,
+          "compositional": 19,
+          "contextual": 36
+        },
+        "by_decision": {
+          "ALLOW": 68,
+          "DENY": 81,
+          "REQUIRE_APPROVAL": 7
+        },
+        "by_layer": {
+          "capability": 3,
+          "dcbf": 4,
+          "hitl": 6,
+          "ifc": 5,
+          "semantic": 37,
+          "workflow": 32
+        },
+        "subcategories": {
+          "K01": {
+            "subcategory_name": "Direct prompt injection",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "K02": {
+            "subcategory_name": "Indirect prompt injection",
+            "malicious": 6,
+            "benign": 2,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "K03": {
+            "subcategory_name": "Tool misuse",
+            "malicious": 3,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "K04": {
+            "subcategory_name": "Tool privilege escalation",
+            "malicious": 2,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K05": {
+            "subcategory_name": "Tool-chain abuse",
+            "malicious": 3,
+            "benign": 27,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 3,
+              "contextual": 0
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K06": {
+            "subcategory_name": "Confused deputy",
+            "malicious": 1,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K07": {
+            "subcategory_name": "Goal hijacking",
+            "malicious": 8,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 0,
+              "contextual": 8
+            },
+            "layers": [
+              "semantic",
+              "workflow"
+            ]
+          },
+          "K08": {
+            "subcategory_name": "Plan manipulation",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K09": {
+            "subcategory_name": "Memory poisoning",
+            "malicious": 6,
+            "benign": 18,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic",
+              "workflow"
+            ]
+          },
+          "K10": {
+            "subcategory_name": "Context poisoning",
+            "malicious": 2,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 1,
+              "contextual": 1
+            },
+            "layers": [
+              "semantic",
+              "workflow"
+            ]
+          },
+          "K11": {
+            "subcategory_name": "Multi-agent collusion",
+            "malicious": 1,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K12": {
+            "subcategory_name": "Unauthorized delegation",
+            "malicious": 5,
+            "benign": 17,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 1
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K13": {
+            "subcategory_name": "Recursive agent spawning",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 2,
+              "compositional": 1,
+              "contextual": 1
+            },
+            "layers": [
+              "dcbf"
+            ]
+          },
+          "K14": {
+            "subcategory_name": "Trust-boundary violation",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 1
+            },
+            "layers": [
+              "ifc"
+            ]
+          },
+          "K15": {
+            "subcategory_name": "Human approval manipulation",
+            "malicious": 6,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "hitl"
+            ]
+          },
+          "K16": {
+            "subcategory_name": "Semantic policy evasion",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "K17": {
+            "subcategory_name": "Action replay",
+            "malicious": 5,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 1
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K18": {
+            "subcategory_name": "Excessive agency",
+            "malicious": 8,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 4
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "K19": {
+            "subcategory_name": "Goal drift",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 0,
+              "contextual": 4
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "K20": {
+            "subcategory_name": "Tool-output exploitation",
+            "malicious": 3,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "semantic",
+              "workflow"
+            ]
+          }
+        }
+      },
+      "H": {
+        "category_name": "Financial and transactional attacks",
+        "total": 87,
+        "malicious": 60,
+        "benign": 27,
+        "by_complexity": {
+          "atomic": 30,
+          "compositional": 15,
+          "contextual": 15
+        },
+        "by_decision": {
+          "ALLOW": 24,
+          "DENY": 52,
+          "REQUIRE_APPROVAL": 11
+        },
+        "by_layer": {
+          "capability": 5,
+          "contracts": 43,
+          "dcbf": 1,
+          "hitl": 8,
+          "semantic": 3
+        },
+        "subcategories": {
+          "H01": {
+            "subcategory_name": "Unauthorized purchases",
+            "malicious": 10,
+            "benign": 10,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 4
+            },
+            "layers": [
+              "capability",
+              "contracts",
+              "hitl"
+            ]
+          },
+          "H02": {
+            "subcategory_name": "Unauthorized fund transfers",
+            "malicious": 10,
+            "benign": 8,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 4
+            },
+            "layers": [
+              "capability",
+              "contracts",
+              "hitl",
+              "semantic"
+            ]
+          },
+          "H03": {
+            "subcategory_name": "Payment manipulation",
+            "malicious": 8,
+            "benign": 2,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 4
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "H04": {
+            "subcategory_name": "Invoice fraud",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "H05": {
+            "subcategory_name": "Subscription abuse",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts",
+              "dcbf"
+            ]
+          },
+          "H06": {
+            "subcategory_name": "Refund abuse",
+            "malicious": 4,
+            "benign": 6,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "H07": {
+            "subcategory_name": "Financial data manipulation",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "H08": {
+            "subcategory_name": "Cryptocurrency transaction abuse",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "H09": {
+            "subcategory_name": "Trading manipulation",
+            "malicious": 7,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 3
+            },
+            "layers": [
+              "capability",
+              "contracts",
+              "semantic"
+            ]
+          },
+          "H10": {
+            "subcategory_name": "Resource procurement abuse",
+            "malicious": 4,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "hitl"
+            ]
+          }
+        }
+      },
+      "J": {
+        "category_name": "Persistence and security-control interference",
+        "total": 72,
+        "malicious": 68,
+        "benign": 4,
+        "by_complexity": {
+          "atomic": 30,
+          "compositional": 15,
+          "contextual": 23
+        },
+        "by_decision": {
+          "ALLOW": 3,
+          "DENY": 67,
+          "REQUIRE_APPROVAL": 2
+        },
+        "by_layer": {
+          "capability": 17,
+          "contracts": 36,
+          "hitl": 1,
+          "workflow": 14
+        },
+        "subcategories": {
+          "J01": {
+            "subcategory_name": "Unauthorized scheduled tasks",
+            "malicious": 8,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 3,
+              "contextual": 2
+            },
+            "layers": [
+              "capability",
+              "contracts",
+              "workflow"
+            ]
+          },
+          "J02": {
+            "subcategory_name": "Startup configuration manipulation",
+            "malicious": 12,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 7
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "J03": {
+            "subcategory_name": "Unauthorized service creation",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "J04": {
+            "subcategory_name": "Security configuration modification",
+            "malicious": 6,
+            "benign": 1,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "J05": {
+            "subcategory_name": "Audit log manipulation",
+            "malicious": 6,
+            "benign": 2,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "J06": {
+            "subcategory_name": "Monitoring interference",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "J07": {
+            "subcategory_name": "Security tool interference",
+            "malicious": 4,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "J08": {
+            "subcategory_name": "Policy modification",
+            "malicious": 6,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 1,
+              "contextual": 2
+            },
+            "layers": [
+              "capability",
+              "contracts"
+            ]
+          },
+          "J09": {
+            "subcategory_name": "Unauthorized agent delegation",
+            "malicious": 13,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 8
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "J10": {
+            "subcategory_name": "Persistent unauthorized access",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 3,
+              "compositional": 2,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts",
+              "hitl"
+            ]
+          }
+        }
+      },
+      "X": {
+        "category_name": "Externally sourced cases (GATE-Union)",
+        "total": 985,
+        "malicious": 937,
+        "benign": 48,
+        "by_complexity": {
+          "atomic": 937,
+          "compositional": 0,
+          "contextual": 0
+        },
+        "by_decision": {
+          "ALLOW": 48,
+          "DENY": 919,
+          "REQUIRE_APPROVAL": 18
+        },
+        "by_layer": {
+          "capability": 60,
+          "contracts": 836,
+          "dcbf": 18,
+          "semantic": 18,
+          "workflow": 5
+        },
+        "subcategories": {
+          "X01": {
+            "subcategory_name": "InjecAgent tool-response injection",
+            "malicious": 731,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 731,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "X02": {
+            "subcategory_name": "Gate-suite capability or privilege violation",
+            "malicious": 60,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 60,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "capability"
+            ]
+          },
+          "X03": {
+            "subcategory_name": "Gate-suite declarative contract violation",
+            "malicious": 13,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 13,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "X04": {
+            "subcategory_name": "Gate-suite semantic policy violation",
+            "malicious": 18,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 18,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "semantic"
+            ]
+          },
+          "X05": {
+            "subcategory_name": "Gate-suite workflow (DFA) violation",
+            "malicious": 5,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 5,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "workflow"
+            ]
+          },
+          "X06": {
+            "subcategory_name": "Gate-suite runtime barrier violation",
+            "malicious": 18,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 18,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "dcbf"
+            ]
+          },
+          "X07": {
+            "subcategory_name": "SafeClawBench unsafe instruction",
+            "malicious": 92,
+            "benign": 0,
+            "by_complexity": {
+              "atomic": 92,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": [
+              "contracts"
+            ]
+          },
+          "X08": {
+            "subcategory_name": "Benign externally sourced case",
+            "malicious": 0,
+            "benign": 48,
+            "by_complexity": {
+              "atomic": 0,
+              "compositional": 0,
+              "contextual": 0
+            },
+            "layers": []
+          }
+        }
+      }
     }
   },
   "passed": true

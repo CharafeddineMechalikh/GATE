@@ -317,6 +317,11 @@ def _base_case(
         per_layer[enforcing_layer] = (
             "must_require_approval" if decision == "REQUIRE_APPROVAL" else "must_deny"
         )
+    elif decision == "REQUIRE_APPROVAL":
+        # A benign task that policy still routes to a human. Every other layer
+        # must let it through; only HITL holds it for sign-off.
+        per_layer = {layer: "must_allow" for layer in LAYERS}
+        per_layer["hitl"] = "must_require_approval"
     else:
         per_layer = {layer: "must_allow" for layer in LAYERS}
 
@@ -375,7 +380,7 @@ def _base_case(
         "severity": severity,
         "impact": impact,
         "audit_expectation": (
-            _audit(enforcing_layer, decision) if is_malicious
+            _audit(enforcing_layer, decision) if is_malicious or decision == "REQUIRE_APPROVAL"
             else {
                 "event_types": ["TOOL_CALL_PROPOSED", "CAPABILITY_GRANTED",
                                 "DECISION_RECORDED", "AUDIT_RECORD_CHAINED"],
@@ -621,6 +626,7 @@ def _template_case(
 
 def build_dataset() -> List[Dict[str, Any]]:
     from .benign import benign_cases
+    from .scenarios_ext import COMPOSITIONAL_EXT, CONTEXTUAL_EXT
     from .templates import COMPOSITIONAL, CONTEXTUAL
 
     specs = load_specs()
@@ -632,6 +638,8 @@ def build_dataset() -> List[Dict[str, Any]]:
     cases = _atomic_cases(specs, alloc)
     cases += _template_cases(COMPOSITIONAL, specs_by_code, alloc)
     cases += _template_cases(CONTEXTUAL, specs_by_code, alloc)
+    cases += _template_cases(COMPOSITIONAL_EXT, specs_by_code, alloc)
+    cases += _template_cases(CONTEXTUAL_EXT, specs_by_code, alloc)
     cases += benign_cases(alloc)
     cases += external_cases(alloc)
 
@@ -639,11 +647,77 @@ def build_dataset() -> List[Dict[str, Any]]:
     for case in cases:
         case.pop("_classification", None)
         case.pop("_owner", None)
+        annotate(case)
 
     cases.sort(key=lambda c: c["case_id"])
     ids = [c["case_id"] for c in cases]
     assert len(ids) == len(set(ids)), "duplicate case_id generated"
     return cases
+
+
+COMPLEXITY_BY_LEVEL = {1: "atomic", 2: "compositional", 3: "contextual"}
+
+SOURCE_BOUNDARY = {
+    "external_content": "external-content->agent",
+    "external_document": "external-document->agent",
+    "tool_output": "tool-output->agent",
+    "delegated_agent": "delegated-agent->agent",
+    "memory": "memory->agent",
+}
+
+DESTINATION_BOUNDARY = {
+    "external": "agent->external",
+    "untrusted": "agent->external",
+    "approved_partner": "agent->approved-partner",
+    "internal": "agent->internal-service",
+}
+
+
+def _trust_boundaries(case: Dict[str, Any]) -> List[str]:
+    out = set()
+    objective_source = (case.get("user_objective") or {}).get("source") or "trusted_user"
+    out.add(f"{objective_source}->agent")
+    source = (case.get("proposed_action") or {}).get("source") or "agent_plan"
+    if source in SOURCE_BOUNDARY:
+        out.add(SOURCE_BOUNDARY[source])
+    destination = case.get("destination") or {}
+    trust = str(destination.get("trust") or "").lower()
+    if trust in DESTINATION_BOUNDARY:
+        out.add(DESTINATION_BOUNDARY[trust])
+    if (case.get("proposed_action") or {}).get("tool") == "agent_delegate":
+        out.add("agent->sub-agent")
+    delegation = (case.get("agent") or {}).get("delegation") or {}
+    if delegation.get("authorized") is False:
+        out.add("agent->sub-agent(unauthorized)")
+    tenant = case["environment"]["tenant_id"]
+    for resource in case["environment"].get("resources") or []:
+        owner = resource.get("owner_tenant")
+        if owner and owner != tenant:
+            out.add(f"{tenant}->{owner}")
+    return sorted(out)
+
+
+def annotate(case: Dict[str, Any]) -> Dict[str, Any]:
+    """Add the fields the acceptance schema requires on every record.
+
+    Derived, never authored twice: the execution level fixes the complexity
+    class, the policy list is the violated property, and the designated layer is
+    the defence layer unless a template names a wider set. `rationale` is the
+    same statement as `expected_reason`, kept under the name the acceptance
+    checklist uses.
+    """
+    level = int(case["execution_level"])
+    case.setdefault("subcategory", case["subtype"])
+    case.setdefault("subcategory_name", case["subtype_name"])
+    case["attack_complexity"] = COMPLEXITY_BY_LEVEL[level]
+    case.setdefault("violated_property", list(case["policy"]["violated"]))
+    if "defense_layers" not in case:
+        layer = case["expected_enforcing_layer"]
+        case["defense_layers"] = [layer] if layer != "none" else []
+    case.setdefault("rationale", case["expected_reason"])
+    if "trust_boundaries" not in case:
+        case["trust_boundaries"] = _trust_boundaries(case)
+    return case
 
 
 def serialise(cases: List[Dict[str, Any]]) -> str:
@@ -673,6 +747,18 @@ def main(out_dir: Optional[Path] = None) -> Path:
             Counter(c["expected_enforcing_layer"] for c in cases if c["is_malicious"]).items()
         )),
         "by_subtype": dict(sorted(Counter(c["subtype"] for c in cases).items())),
+        "by_complexity": dict(sorted(Counter(c["attack_complexity"] for c in cases).items())),
+        "by_difficulty": dict(sorted(Counter(c["difficulty"] for c in cases).items())),
+        "approval_gated_benign": sum(
+            1 for c in cases if not c["is_malicious"] and c["expected_decision"] == "REQUIRE_APPROVAL"
+        ),
+        "coverage_requirements": {
+            "atomic_per_authored_category_min": 20,
+            "compositional_per_authored_category_min": 15,
+            "contextual_per_authored_category_min": 15,
+            "max_subtype_share_within_category_complexity": 0.4,
+            "distinct_contextual_subtypes_per_category_min": 4,
+        },
         "seed_policy": "sha256(case_id)[:8] as big-endian int",
     }
     (out_dir / "manifest.json").write_text(
