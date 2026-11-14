@@ -26,6 +26,7 @@ from ..core.config import gateConfig
 from ..core.exceptions import AdapterError, SecurityViolation
 from ..core.interfaces import SecurityMonitor
 from ..core.models import AgentState, ToolCall, ValidationResult
+from ..security.hitl_queue import action_hash
 from ..security.tool_response_authorization import ToolResponseAuthorizationGate
 from ..security.tool_response_inspection import ResponseFindingStore, ToolResponseInspector
 
@@ -569,6 +570,15 @@ class ToolEnforcement:
         if not approval.approved:
             raise ToolExecutionBlocked(
                 f"Human approver denied {action.tool_name}: {approval.justification or 'no justification'}",
+                action.tool_name,
+                result,
+                stage="hitl",
+            )
+        approved_hash = getattr(approval, "args_hash", "")
+        if approved_hash and approved_hash != action_hash(action):
+            raise ToolExecutionBlocked(
+                f"Withheld {action.tool_name}: approval {approval.request_id} "
+                "was granted for different arguments",
                 action.tool_name,
                 result,
                 stage="hitl",

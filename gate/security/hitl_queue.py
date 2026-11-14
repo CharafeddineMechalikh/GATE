@@ -4,6 +4,9 @@ Queue for human approval of high-risk actions.
 """
 
 import asyncio
+import copy
+import hashlib
+import json
 import logging
 import uuid
 from dataclasses import dataclass, field
@@ -14,6 +17,17 @@ from enum import Enum
 from ..core.models import ToolCall
 
 logger = logging.getLogger(__name__)
+
+
+def action_hash(action: ToolCall) -> str:
+    """Digest of the tool name and effective arguments a human is shown."""
+    canonical = json.dumps(
+        {"tool": action.tool_name, "args": action.tool_args},
+        sort_keys=True,
+        default=str,
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
 
 
 class ApprovalStatus(str, Enum):
@@ -32,6 +46,7 @@ class ApprovalRequest:
     action: ToolCall
     risk_level: str
     dry_run_result: Optional[Any]
+    args_hash: str = ""
     status: ApprovalStatus = ApprovalStatus.PENDING
     created_at: datetime = field(default_factory=datetime.utcnow)
     resolved_at: Optional[datetime] = None
@@ -48,6 +63,7 @@ class ApprovalResult:
     justification: Optional[str]
     request_id: str
     timestamp: datetime
+    args_hash: str = ""
 
 
 def _post_json(url: str, payload: Dict[str, Any], timeout: float = 10.0) -> bool:
@@ -164,14 +180,20 @@ class HumanApprovalQueue:
         """
         request_id = str(uuid.uuid4())
         sla = sla_seconds or self.default_sla
+        # Bind the approval to the operation shown to the approver. The caller's
+        # ToolCall is snapshotted so a later mutation cannot ride an approval
+        # granted for different arguments.
+        bound_hash = action_hash(action)
+        snapshot = copy.deepcopy(action)
         
         request = ApprovalRequest(
             request_id=request_id,
             agent_id=agent_id,
             tenant_id=tenant_id,
-            action=action,
+            action=snapshot,
             risk_level=risk_level,
             dry_run_result=dry_run_result,
+            args_hash=bound_hash,
             sla_timeout_seconds=sla,
         )
         
@@ -183,6 +205,7 @@ class HumanApprovalQueue:
                 justification="Approval queue full",
                 request_id=request_id,
                 timestamp=datetime.utcnow(),
+                args_hash=bound_hash,
             )
         
         self._pending[request_id] = request
@@ -207,13 +230,28 @@ class HumanApprovalQueue:
                 justification=f"SLA timeout ({sla}s)",
                 request_id=request_id,
                 timestamp=datetime.utcnow(),
+                args_hash=bound_hash,
             )
         
         result = self._results.pop(request_id)
         del self._pending[request_id]
         del self._events[request_id]
         self._audit_log.append(request)
-        
+
+        current_hash = action_hash(action)
+        if current_hash != bound_hash:
+            logger.error(
+                "Approval %s was granted for different arguments; withholding",
+                request_id,
+            )
+            return ApprovalResult(
+                approved=False,
+                approver_id=result.approver_id,
+                justification="approved operation does not match the current arguments",
+                request_id=request_id,
+                timestamp=datetime.utcnow(),
+                args_hash=bound_hash,
+            )
         return result
     
     async def approve(
@@ -238,6 +276,7 @@ class HumanApprovalQueue:
             justification=justification,
             request_id=request_id,
             timestamp=datetime.utcnow(),
+            args_hash=request.args_hash,
         )
         
         self._events[request_id].set()
@@ -265,6 +304,7 @@ class HumanApprovalQueue:
             justification=reason,
             request_id=request_id,
             timestamp=datetime.utcnow(),
+            args_hash=request.args_hash,
         )
         
         self._events[request_id].set()
