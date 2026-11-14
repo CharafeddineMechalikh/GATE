@@ -20,10 +20,11 @@ from typing import Any, Dict, List, Tuple
 import jsonschema
 
 ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT.parent))
 
-from generator.build import build_dataset, serialise  # noqa: E402
-from generator.taxonomy import CATEGORIES, GENERATOR_VERSION, LAYERS, SCHEMA_VERSION, load_specs  # noqa: E402
+from dataset.external.adapter import EXTERNAL_SUBTYPES  # noqa: E402
+from dataset.generator.build import build_dataset, serialise  # noqa: E402
+from dataset.generator.taxonomy import CATEGORIES, GENERATOR_VERSION, LAYERS, SCHEMA_VERSION, load_specs  # noqa: E402
 
 DATASET = ROOT / "out" / "dataset.jsonl"
 MANIFEST = ROOT / "out" / "manifest.json"
@@ -31,7 +32,7 @@ SCHEMA = ROOT / "schema" / "attack_case.schema.json"
 REPORT_JSON = ROOT / "out" / "validation.json"
 REPORT_MD = ROOT / "out" / "validation.md"
 
-ID_RE = re.compile(r"^ZT-([A-K]\d{2}|BEN)-L([123])-(\d{4})$")
+ID_RE = re.compile(r"^ZT-([A-KX]\d{2}|BEN)-L([123])-(\d{4})$")
 LAYER_VALUES = {"must_deny", "must_require_approval", "must_allow", "not_required"}
 DECISION_TO_LABEL = {"DENY": "must_deny", "REQUIRE_APPROVAL": "must_require_approval", "ALLOW": "must_allow"}
 EXECUTION_BY_DECISION = {"DENY": "not_executed", "REQUIRE_APPROVAL": "withheld", "ALLOW": "executed"}
@@ -39,6 +40,10 @@ EXECUTION_BY_DECISION = {"DENY": "not_executed", "REQUIRE_APPROVAL": "withheld",
 
 def load() -> List[Dict[str, Any]]:
     return [json.loads(line) for line in DATASET.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def is_imported(row: Dict[str, Any]) -> bool:
+    return (row.get("provenance") or {}).get("source") == "external_import"
 
 
 def _norm_text(value: Any) -> str:
@@ -123,6 +128,27 @@ def check_taxonomy(rows, rep: Report) -> None:
     specs = {s.code: s for s in load_specs()}
     bad = []
     for r in rows:
+        if is_imported(r):
+            # Imported rows keep their source family code instead of being
+            # forced into an authored subtype. They are single calls, and the
+            # subtype's layer must be the one the source label names.
+            if r["category"] != "X":
+                bad.append({"case_id": r["case_id"], "error": "imported row outside category X"})
+            if not r["is_malicious"]:
+                if r["subtype"] != "X08" or r["expected_enforcing_layer"] != "none":
+                    bad.append({"case_id": r["case_id"], "error": "imported benign row mislabelled"})
+                continue
+            info = EXTERNAL_SUBTYPES.get(r["subtype"])
+            if info is None:
+                bad.append({"case_id": r["case_id"], "error": f"unknown imported subtype {r['subtype']}"})
+            elif info["layer"] != r["expected_enforcing_layer"]:
+                bad.append({"case_id": r["case_id"],
+                            "error": f"imported layer {r['expected_enforcing_layer']} != subtype {info['layer']}"})
+            if r["execution_level"] != 1:
+                bad.append({"case_id": r["case_id"], "error": "imported row is not a single call"})
+            continue
+        if r["category"] == "X":
+            bad.append({"case_id": r["case_id"], "error": "authored row in the imported category"})
         if not r["is_malicious"]:
             if r["subtype"] != "BEN" and not r["case_id"].startswith("ZT-BEN"):
                 bad.append({"case_id": r["case_id"], "error": "benign row carries a taxonomy subtype"})
@@ -194,9 +220,12 @@ def check_outcomes(rows, rep: Report) -> None:
                 bad.append({"case_id": r["case_id"], "error": f"malicious row expects {decision}"})
             if layer not in LAYERS:
                 bad.append({"case_id": r["case_id"], "error": f"unknown enforcing layer {layer}"})
-            if decision == "REQUIRE_APPROVAL" and layer != "hitl":
+            if decision == "REQUIRE_APPROVAL" and layer != "hitl" and not is_imported(r):
+                # Authored approval cases are raised by HITL only. An imported
+                # source may label a call "escalate" at another stage; its
+                # label is preserved verbatim and the run reports the mismatch.
                 bad.append({"case_id": r["case_id"], "error": "approval demanded by a non-HITL layer"})
-            if decision == "DENY" and layer == "hitl":
+            if decision == "DENY" and layer == "hitl" and not is_imported(r):
                 bad.append({"case_id": r["case_id"], "error": "HITL layer hard-denies"})
             if not r["policy"]["violated"]:
                 bad.append({"case_id": r["case_id"], "error": "no violated policy declared"})
@@ -286,11 +315,16 @@ def check_distributions(rows, rep: Report) -> dict:
     sub_by_cat = defaultdict(set)
     for r in malicious:
         sub_by_cat[r["category"]].add(r["subtype"])
-    thin = {c: sorted(s) for c, s in sub_by_cat.items() if len(s) < 10}
+    # The ten-subtype rule is a property of the authored taxonomy. Imported
+    # rows use one family code per source and layer, so category X is exempt.
+    thin = {c: sorted(s) for c, s in sub_by_cat.items()
+            if c != "X" and len(s) < 10}
+    authored = {c: s for c, s in sub_by_cat.items() if c != "X"}
     rep.add("class_distributions", not thin,
-            f"{len(sub_by_cat)} categories, {len(dist['by_subtype'])} subtypes, every category with 10 subtypes"
+            f"{len(authored)} authored categories, {len(dist['by_subtype'])} subtypes, every authored category with 10 subtypes"
             if not thin else f"categories with fewer than 10 subtypes: {sorted(thin)}",
-            {"categories_below_10_subtypes": thin})
+            {"categories_below_10_subtypes": thin,
+             "imported_subtypes": sorted(sub_by_cat.get("X", []))})
     return dist
 
 
@@ -321,7 +355,12 @@ def check_duplicates(rows, rep: Report) -> None:
             entry = {"a": a, "b": b,
                      "subtypes": [ra["subtype"], rb["subtype"]],
                      "levels": [ra["execution_level"], rb["execution_level"]]}
-            if same_benign or same_malicious:
+            if is_imported(ra) or is_imported(rb):
+                # An imported row is identified by its source case, not by the
+                # payload: the union pairs one injected call with many distinct
+                # user tasks on purpose, and the provenance keeps them apart.
+                informational.append(entry)
+            elif same_benign or same_malicious:
                 exact_dupes.append(entry)
             else:
                 informational.append(entry)
@@ -333,6 +372,8 @@ def check_duplicates(rows, rep: Report) -> None:
         by_subtype[(r["subtype"] if r["is_malicious"] else "BEN")].append(r["case_id"])
     for ids in by_subtype.values():
         for a, b in combinations(sorted(ids), 2):
+            if is_imported(by_case[a]) or is_imported(by_case[b]):
+                continue
             sa, sb = shingles[a], shingles[b]
             if not sa or not sb:
                 continue

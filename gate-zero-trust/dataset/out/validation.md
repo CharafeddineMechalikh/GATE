@@ -1,21 +1,21 @@
 # Dataset validation report
 
-Schema `1.1`, generator `1.1.0`. 680 cases, 445 malicious, 235 benign.
+Schema `1.2`, generator `1.2.0`. 1665 cases, 1382 malicious, 283 benign.
 
 | # | Check | Result | Detail |
 |---|---|---|---|
-| 1 | `schema_correctness` | PASS | 680 rows checked against attack_case.schema.json; 0 violations |
-| 2 | `unique_ids` | PASS | 680 ids, 680 distinct, 0 duplicated |
-| 3 | `id_encoding` | PASS | 680 ids decoded; 0 inconsistent |
+| 1 | `schema_correctness` | PASS | 1665 rows checked against attack_case.schema.json; 0 violations |
+| 2 | `unique_ids` | PASS | 1665 ids, 1665 distinct, 0 duplicated |
+| 3 | `id_encoding` | PASS | 1665 ids decoded; 0 inconsistent |
 | 4 | `mandatory_fields` | PASS | 28 required fields; 0 missing, 0 null |
-| 5 | `category_and_subtype_assignments` | PASS | 120 declared subtypes; 445 malicious rows; 0 violations |
+| 5 | `category_and_subtype_assignments` | PASS | 120 declared subtypes; 1382 malicious rows; 0 violations |
 | 6 | `execution_levels` | PASS | levels present [1, 2, 3]; 0 invalid |
-| 7 | `ground_truth_labels` | PASS | 680 rows; 0 label inconsistencies |
-| 8 | `expected_outcomes` | PASS | 680 rows; 0 outcome inconsistencies |
-| 9 | `sequence_consistency` | PASS | 680 sequences; 0 violations |
-| 10 | `benign_and_hard_negatives` | PASS | 235 benign (38 hard negatives) across 14 tools and levels [1, 2, 3] |
-| 11 | `class_distributions` | PASS | 11 categories, 120 subtypes, every category with 10 subtypes |
-| 12 | `duplicates` | PASS | 0 copy pairs, 0 near-duplicate description pairs (Jaccard >= 0.9); 56 cross-level/cross-subtype payload reuses (allowed) |
+| 7 | `ground_truth_labels` | PASS | 1665 rows; 0 label inconsistencies |
+| 8 | `expected_outcomes` | PASS | 1665 rows; 0 outcome inconsistencies |
+| 9 | `sequence_consistency` | PASS | 1665 sequences; 0 violations |
+| 10 | `benign_and_hard_negatives` | PASS | 283 benign (38 hard negatives) across 16 tools and levels [1, 2, 3] |
+| 11 | `class_distributions` | PASS | 11 authored categories, 127 subtypes, every authored category with 10 subtypes |
+| 12 | `duplicates` | PASS | 0 copy pairs, 0 near-duplicate description pairs (Jaccard >= 0.9); 4581 cross-level/cross-subtype payload reuses (allowed) |
 | 13 | `reproducibility` | PASS | rebuild matches the committed dataset |
 | 14 | `manifest_matches_dataset` | PASS | 9 manifest fields compared; 0 drift |
 
@@ -34,6 +34,7 @@ Schema `1.1`, generator `1.1.0`. 680 cases, 445 malicious, 235 benign.
 | I | 60 |
 | J | 37 |
 | K | 152 |
+| X | 985 |
 
 | Level | Malicious | Benign |
 |---|---|---|
@@ -43,41 +44,41 @@ Schema `1.1`, generator `1.1.0`. 680 cases, 445 malicious, 235 benign.
 
 | Enforcing layer | Malicious cases |
 |---|---|
-| capability | 126 |
-| contracts | 122 |
-| dcbf | 24 |
+| capability | 186 |
+| contracts | 958 |
+| dcbf | 42 |
 | hitl | 21 |
 | ifc | 51 |
-| semantic | 60 |
-| workflow | 41 |
+| semantic | 78 |
+| workflow | 46 |
 
 | Severity | Cases |
 |---|---|
 | critical | 186 |
-| high | 200 |
-| low | 239 |
+| high | 1137 |
+| low | 287 |
 | medium | 55 |
 
 | Tool | Cases |
 |---|---|
-| admin_tool | 34 |
+| admin_tool | 221 |
 | agent_delegate | 36 |
 | calendar_api | 7 |
 | ci_pipeline | 28 |
 | cloud_api | 17 |
-| code_execute | 75 |
-| data_analysis | 8 |
-| database_query | 54 |
+| code_execute | 101 |
+| data_analysis | 10 |
+| database_query | 87 |
 | file_read | 37 |
 | file_write | 54 |
-| format_template | 1 |
-| http_request | 120 |
+| format_template | 3 |
+| http_request | 141 |
 | k8s_api | 22 |
 | memory_write | 24 |
 | payment_api | 58 |
-| send_email | 85 |
-| sql_query | 17 |
-| web_search | 3 |
+| send_email | 690 |
+| sql_query | 90 |
+| web_search | 39 |
 
 ## Check evidence
 
@@ -126,7 +127,7 @@ Schema `1.1`, generator `1.1.0`. 680 cases, 445 malicious, 235 benign.
 
 ```json
 {
-  "1": 526,
+  "1": 1511,
   "2": 88,
   "3": 66
 }
@@ -164,20 +165,22 @@ Schema `1.1`, generator `1.1.0`. 680 cases, 445 malicious, 235 benign.
     "agent_delegate": 17,
     "ci_pipeline": 12,
     "cloud_api": 1,
-    "code_execute": 5,
-    "database_query": 32,
+    "code_execute": 9,
+    "data_analysis": 2,
+    "database_query": 44,
     "file_read": 20,
     "file_write": 33,
-    "format_template": 1,
-    "http_request": 32,
+    "format_template": 3,
+    "http_request": 35,
     "k8s_api": 9,
     "memory_write": 19,
     "payment_api": 22,
-    "send_email": 29,
-    "sql_query": 3
+    "send_email": 33,
+    "sql_query": 8,
+    "web_search": 16
   },
   "by_level": {
-    "1": 201,
+    "1": 249,
     "2": 28,
     "3": 6
   }
@@ -188,7 +191,16 @@ Schema `1.1`, generator `1.1.0`. 680 cases, 445 malicious, 235 benign.
 
 ```json
 {
-  "categories_below_10_subtypes": {}
+  "categories_below_10_subtypes": {},
+  "imported_subtypes": [
+    "X01",
+    "X02",
+    "X03",
+    "X04",
+    "X05",
+    "X06",
+    "X07"
+  ]
 }
 ```
 
@@ -327,11 +339,11 @@ Schema `1.1`, generator `1.1.0`. 680 cases, 445 malicious, 235 benign.
 
 ```json
 {
-  "rebuild_sha256": "2aeab156b9ee5dc7dbe2e7537b2acadecb290bad6acfb2f8a7cde206c3bd6f49",
-  "file_sha256": "2aeab156b9ee5dc7dbe2e7537b2acadecb290bad6acfb2f8a7cde206c3bd6f49",
-  "manifest_sha256": "2aeab156b9ee5dc7dbe2e7537b2acadecb290bad6acfb2f8a7cde206c3bd6f49",
-  "rebuild_rows": 680,
-  "file_rows": 680
+  "rebuild_sha256": "ad223e5e30a5f4d0176fc634ae2a31019bc523ecbf89687f9c2954a06d5149b7",
+  "file_sha256": "ad223e5e30a5f4d0176fc634ae2a31019bc523ecbf89687f9c2954a06d5149b7",
+  "manifest_sha256": "ad223e5e30a5f4d0176fc634ae2a31019bc523ecbf89687f9c2954a06d5149b7",
+  "rebuild_rows": 1665,
+  "file_rows": 1665
 }
 ```
 

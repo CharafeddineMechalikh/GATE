@@ -3,7 +3,7 @@
     {
       "check": "schema_correctness",
       "passed": true,
-      "detail": "680 rows checked against attack_case.schema.json; 0 violations",
+      "detail": "1665 rows checked against attack_case.schema.json; 0 violations",
       "evidence": {
         "violations": []
       }
@@ -11,7 +11,7 @@
     {
       "check": "unique_ids",
       "passed": true,
-      "detail": "680 ids, 680 distinct, 0 duplicated",
+      "detail": "1665 ids, 1665 distinct, 0 duplicated",
       "evidence": {
         "duplicates": []
       }
@@ -19,7 +19,7 @@
     {
       "check": "id_encoding",
       "passed": true,
-      "detail": "680 ids decoded; 0 inconsistent",
+      "detail": "1665 ids decoded; 0 inconsistent",
       "evidence": {
         "violations": []
       }
@@ -36,7 +36,7 @@
     {
       "check": "category_and_subtype_assignments",
       "passed": true,
-      "detail": "120 declared subtypes; 445 malicious rows; 0 violations",
+      "detail": "120 declared subtypes; 1382 malicious rows; 0 violations",
       "evidence": {
         "violations": []
       }
@@ -46,7 +46,7 @@
       "passed": true,
       "detail": "levels present [1, 2, 3]; 0 invalid",
       "evidence": {
-        "1": 526,
+        "1": 1511,
         "2": 88,
         "3": 66
       }
@@ -54,7 +54,7 @@
     {
       "check": "ground_truth_labels",
       "passed": true,
-      "detail": "680 rows; 0 label inconsistencies",
+      "detail": "1665 rows; 0 label inconsistencies",
       "evidence": {
         "violations": []
       }
@@ -62,7 +62,7 @@
     {
       "check": "expected_outcomes",
       "passed": true,
-      "detail": "680 rows; 0 outcome inconsistencies",
+      "detail": "1665 rows; 0 outcome inconsistencies",
       "evidence": {
         "violations": []
       }
@@ -70,7 +70,7 @@
     {
       "check": "sequence_consistency",
       "passed": true,
-      "detail": "680 sequences; 0 violations",
+      "detail": "1665 sequences; 0 violations",
       "evidence": {
         "violations": []
       }
@@ -78,26 +78,28 @@
     {
       "check": "benign_and_hard_negatives",
       "passed": true,
-      "detail": "235 benign (38 hard negatives) across 14 tools and levels [1, 2, 3]",
+      "detail": "283 benign (38 hard negatives) across 16 tools and levels [1, 2, 3]",
       "evidence": {
         "by_tool": {
           "agent_delegate": 17,
           "ci_pipeline": 12,
           "cloud_api": 1,
-          "code_execute": 5,
-          "database_query": 32,
+          "code_execute": 9,
+          "data_analysis": 2,
+          "database_query": 44,
           "file_read": 20,
           "file_write": 33,
-          "format_template": 1,
-          "http_request": 32,
+          "format_template": 3,
+          "http_request": 35,
           "k8s_api": 9,
           "memory_write": 19,
           "payment_api": 22,
-          "send_email": 29,
-          "sql_query": 3
+          "send_email": 33,
+          "sql_query": 8,
+          "web_search": 16
         },
         "by_level": {
-          "1": 201,
+          "1": 249,
           "2": 28,
           "3": 6
         }
@@ -106,15 +108,24 @@
     {
       "check": "class_distributions",
       "passed": true,
-      "detail": "11 categories, 120 subtypes, every category with 10 subtypes",
+      "detail": "11 authored categories, 127 subtypes, every authored category with 10 subtypes",
       "evidence": {
-        "categories_below_10_subtypes": {}
+        "categories_below_10_subtypes": {},
+        "imported_subtypes": [
+          "X01",
+          "X02",
+          "X03",
+          "X04",
+          "X05",
+          "X06",
+          "X07"
+        ]
       }
     },
     {
       "check": "duplicates",
       "passed": true,
-      "detail": "0 copy pairs, 0 near-duplicate description pairs (Jaccard >= 0.9); 56 cross-level/cross-subtype payload reuses (allowed)",
+      "detail": "0 copy pairs, 0 near-duplicate description pairs (Jaccard >= 0.9); 4581 cross-level/cross-subtype payload reuses (allowed)",
       "evidence": {
         "exact": [],
         "near": [],
@@ -247,11 +258,11 @@
       "passed": true,
       "detail": "rebuild matches the committed dataset",
       "evidence": {
-        "rebuild_sha256": "2aeab156b9ee5dc7dbe2e7537b2acadecb290bad6acfb2f8a7cde206c3bd6f49",
-        "file_sha256": "2aeab156b9ee5dc7dbe2e7537b2acadecb290bad6acfb2f8a7cde206c3bd6f49",
-        "manifest_sha256": "2aeab156b9ee5dc7dbe2e7537b2acadecb290bad6acfb2f8a7cde206c3bd6f49",
-        "rebuild_rows": 680,
-        "file_rows": 680
+        "rebuild_sha256": "ad223e5e30a5f4d0176fc634ae2a31019bc523ecbf89687f9c2954a06d5149b7",
+        "file_sha256": "ad223e5e30a5f4d0176fc634ae2a31019bc523ecbf89687f9c2954a06d5149b7",
+        "manifest_sha256": "ad223e5e30a5f4d0176fc634ae2a31019bc523ecbf89687f9c2954a06d5149b7",
+        "rebuild_rows": 1665,
+        "file_rows": 1665
       }
     },
     {
@@ -264,9 +275,9 @@
     }
   ],
   "distributions": {
-    "total": 680,
-    "malicious": 445,
-    "benign": 235,
+    "total": 1665,
+    "malicious": 1382,
+    "benign": 283,
     "by_category": {
       "A": 33,
       "B": 36,
@@ -278,7 +289,8 @@
       "H": 60,
       "I": 60,
       "J": 37,
-      "K": 152
+      "K": 152,
+      "X": 985
     },
     "by_subtype": {
       "A01": 4,
@@ -400,64 +412,71 @@
       "K17": 5,
       "K18": 8,
       "K19": 4,
-      "K20": 3
+      "K20": 3,
+      "X01": 731,
+      "X02": 60,
+      "X03": 13,
+      "X04": 18,
+      "X05": 5,
+      "X06": 18,
+      "X07": 92
     },
     "by_level": {
-      "1": 526,
+      "1": 1511,
       "2": 88,
       "3": 66
     },
     "by_level_malicious": {
-      "1": 325,
+      "1": 1262,
       "2": 60,
       "3": 60
     },
     "by_enforcing_layer": {
-      "capability": 126,
-      "contracts": 122,
-      "dcbf": 24,
+      "capability": 186,
+      "contracts": 958,
+      "dcbf": 42,
       "hitl": 21,
       "ifc": 51,
-      "semantic": 60,
-      "workflow": 41
+      "semantic": 78,
+      "workflow": 46
     },
     "by_severity": {
       "critical": 186,
-      "high": 200,
-      "low": 239,
+      "high": 1137,
+      "low": 287,
       "medium": 55
     },
     "by_difficulty": {
       "benign/contextual_hard": 6,
       "benign/easy": 62,
       "benign/hard_negative": 32,
-      "benign/moderate": 135,
+      "benign/moderate": 183,
       "malicious/contextual_hard": 60,
       "malicious/easy": 325,
-      "malicious/moderate": 60
+      "malicious/moderate": 997
     },
     "by_tool": {
-      "admin_tool": 34,
+      "admin_tool": 221,
       "agent_delegate": 36,
       "calendar_api": 7,
       "ci_pipeline": 28,
       "cloud_api": 17,
-      "code_execute": 75,
-      "data_analysis": 8,
-      "database_query": 54,
+      "code_execute": 101,
+      "data_analysis": 10,
+      "database_query": 87,
       "file_read": 37,
       "file_write": 54,
-      "format_template": 1,
-      "http_request": 120,
+      "format_template": 3,
+      "http_request": 141,
       "k8s_api": 22,
       "memory_write": 24,
       "payment_api": 58,
-      "send_email": 85,
-      "sql_query": 17,
-      "web_search": 3
+      "send_email": 690,
+      "sql_query": 90,
+      "web_search": 39
     },
     "by_tenant": {
-      "tenant-alpha": 680
+      "tenant-alpha": 1665
     }
   },
   "passed": true

@@ -1,0 +1,61 @@
+{
+  "by_outcome": {
+    "allow": 48,
+    "block": 919,
+    "escalate": 18
+  },
+  "by_primary_layer": {
+    "contracts": 836,
+    "dcbf": 18,
+    "dfa": 5,
+    "none": 48,
+    "privilege": 60,
+    "semantic": 18
+  },
+  "by_source_all": {
+    "authored": 858,
+    "gate_original": 200,
+    "injecagent": 745,
+    "safeclawbench": 92
+  },
+  "by_source_selected": {
+    "gate_original": 148,
+    "injecagent": 745,
+    "safeclawbench": 92
+  },
+  "dropped_label_conflict": {
+    "gate_original": 52
+  },
+  "excluded_heldout": [
+    "agentdojo",
+    "agent_dojo"
+  ],
+  "output": "union_external.jsonl",
+  "output_rows": 985,
+  "output_sha256": "a30112f9a34b060f9ee238fcf67b534cab76c0c78842c08dd9b7be26e04a1e94",
+  "rules": [
+    "keep source_dataset in injecagent, gate_original, safeclawbench",
+    "drop label_conflict rows",
+    "never import the held-out AgentDojo suite",
+    "frozen rows are raw union records; the only addition is the _split key"
+  ],
+  "selected": 985,
+  "split_rows": {
+    "calibration": {
+      "rows": 305
+    },
+    "dev": {
+      "rows": 302
+    },
+    "test": {
+      "rows": 1288
+    }
+  },
+  "split_sha256": {
+    "calibration": "15cadfc10194a667db270a116c7050efe1657edd828764bd97e526b5488727ce",
+    "dev": "f40262fd6340953676dce622b33cbf3de9a25b626a60ad011ee417b88619a540",
+    "test": "f942f8234860ed65ce84fca5201e7a4e60f8695d7fea0fba4b5890371e27fec5"
+  },
+  "union_root": "D:\\Charef\\doctorat\\Work folder\\AI agents\\gate-union",
+  "union_rows": 1895
+}

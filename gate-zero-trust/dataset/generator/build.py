@@ -627,10 +627,13 @@ def build_dataset() -> List[Dict[str, Any]]:
     specs_by_code = {s.code: s for s in specs}
     alloc = Allocator()
 
+    from ..external.adapter import external_cases
+
     cases = _atomic_cases(specs, alloc)
     cases += _template_cases(COMPOSITIONAL, specs_by_code, alloc)
     cases += _template_cases(CONTEXTUAL, specs_by_code, alloc)
     cases += benign_cases(alloc)
+    cases += external_cases(alloc)
 
     # strip internal bookkeeping keys
     for case in cases:

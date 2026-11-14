@@ -153,7 +153,11 @@ Approval is bound to the exact parameters: `RuntimeState.matching_approval(actio
 
 ## 11. Dataset and validation
 
-`dataset/generator/` builds the 680 cases (445 attacks, 235 benign) across eleven categories A–K and three execution levels. `dataset/validate.py` runs fourteen structural and semantic checks (schema, unique ids, sequence/level consistency, label presence, layer validity, state deltas, benign/attack pairing, quota coverage, and others); `dataset/out/validation.md` records the result of each.
+`dataset/generator/` builds the authored cases across eleven categories A–K and three execution levels. `dataset/external/` adds cases that already exist in public datasets instead of re-authoring them: `import_union.py` freezes the selected GATE-Union rows (provenance included) into `union_external.jsonl`, and `adapter.py` converts them to the case schema at build time. Imported rows carry category `X`, keep their source label, and record `source_dataset`, `source_case_id`, `source_split`, the union file digest and the licence in `provenance`. The held-out AgentDojo suite is never imported; the importer refuses to run if it finds it.
+
+The adapter is mechanical and documented: the source's `user_intent` becomes the objective (a neutral line when the source recorded none, so the attack description never leaks into the semantic layer), the profile's `allowed_tools` and database/endpoint lists become the capability grants, the recorded session state and barrier envelope become `initial_state`, and `block`/`allow`/`escalate` map to DENY/ALLOW/REQUIRE_APPROVAL. Nothing is derived from monitor behaviour. Of the union's 1,895 rows, 985 are imported (injecagent 745, gate_original 148 after dropping 52 label conflicts, safeclawbench 92), giving 1,665 cases in total: 680 authored and 985 imported.
+
+`dataset/validate.py` runs fourteen structural and semantic checks (schema, unique ids, sequence/level consistency, label presence, layer validity, state deltas, benign/attack pairing, quota coverage, and others); `dataset/out/validation.md` records the result of each. Imported rows are checked against their own family codes rather than the authored A–K subtypes, and the duplicate detector treats distinct source cases as distinct even when they reuse a payload.
 
 The generator is part of the evidence, not a fixture: five templates and three workflow specs were corrected during integration (see D27 in the decision log) because they asserted a delegation authority or a created row that the recorded sequence never established.
 

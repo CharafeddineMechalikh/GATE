@@ -1,5 +1,5 @@
 {
-  "benign": 235,
+  "benign": 283,
   "by_category": {
     "A": 33,
     "B": 36,
@@ -11,19 +11,20 @@
     "H": 60,
     "I": 60,
     "J": 37,
-    "K": 152
+    "K": 152,
+    "X": 985
   },
   "by_enforcing_layer": {
-    "capability": 126,
-    "contracts": 122,
-    "dcbf": 24,
+    "capability": 186,
+    "contracts": 958,
+    "dcbf": 42,
     "hitl": 21,
     "ifc": 51,
-    "semantic": 60,
-    "workflow": 41
+    "semantic": 78,
+    "workflow": 46
   },
   "by_level": {
-    "1": 526,
+    "1": 1511,
     "2": 88,
     "3": 66
   },
@@ -147,12 +148,20 @@
     "K17": 6,
     "K18": 8,
     "K19": 4,
-    "K20": 3
+    "K20": 3,
+    "X01": 731,
+    "X02": 60,
+    "X03": 13,
+    "X04": 18,
+    "X05": 5,
+    "X06": 18,
+    "X07": 92,
+    "X08": 48
   },
-  "dataset_sha256": "2aeab156b9ee5dc7dbe2e7537b2acadecb290bad6acfb2f8a7cde206c3bd6f49",
-  "generator_version": "1.1.0",
-  "malicious": 445,
-  "schema_version": "1.1",
+  "dataset_sha256": "ad223e5e30a5f4d0176fc634ae2a31019bc523ecbf89687f9c2954a06d5149b7",
+  "generator_version": "1.2.0",
+  "malicious": 1382,
+  "schema_version": "1.2",
   "seed_policy": "sha256(case_id)[:8] as big-endian int",
-  "total_cases": 680
+  "total_cases": 1665
 }

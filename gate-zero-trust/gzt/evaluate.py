@@ -129,6 +129,7 @@ class CaseOutcome:
     case_id: str
     category: str
     subtype: str
+    source: str
     level: int
     is_malicious: bool
     expected_decision: str
@@ -150,7 +151,7 @@ class CaseOutcome:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "case_id": self.case_id, "category": self.category,
-            "subtype": self.subtype, "level": self.level,
+            "subtype": self.subtype, "source": self.source, "level": self.level,
             "is_malicious": self.is_malicious,
             "expected_decision": self.expected_decision,
             "expected_layer": self.expected_layer,
@@ -164,6 +165,13 @@ class CaseOutcome:
             "latency_ms": round(self.latency_ms, 3),
             "layer_latency_ms": {k: round(v, 3) for k, v in self.layer_latency_ms.items()},
         }
+
+
+def _source_of(case: Dict[str, Any]) -> str:
+    provenance = case.get("provenance") or {}
+    if provenance.get("source") == "external_import":
+        return str(provenance.get("source_dataset") or "external")
+    return "authored"
 
 
 def _action(step: Dict[str, Any]) -> Action:
@@ -221,7 +229,8 @@ def run_case(monitor: ReferenceMonitor, case: Dict[str, Any],
     latency = (time.perf_counter() - started) * 1000.0
     return CaseOutcome(
         case_id=case["case_id"], category=case.get("category", "?"),
-        subtype=case.get("subtype", "?"), level=int(case.get("execution_level", 1)),
+        subtype=case.get("subtype", "?"), source=_source_of(case),
+        level=int(case.get("execution_level", 1)),
         is_malicious=bool(case.get("is_malicious")),
         expected_decision=case.get("expected_decision", "ALLOW"),
         expected_layer=case.get("expected_enforcing_layer") or "none",
@@ -469,6 +478,17 @@ def render_markdown(report: Dict[str, Any]) -> str:
     for name, s in report["per_level"].items():
         add(_row(name, s))
     add("")
+    add("## Per source")
+    add("")
+    add("| source | cases | TP | FP | FN | TN | precision | recall | F1 | accuracy | exact | hard | early |")
+    add("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    for name, s in report["per_source"].items():
+        add(_row(name, s))
+    add("")
+    add("`authored` is the GATE taxonomy; the other rows are imported from the named "
+        "public dataset and keep their source label. They are reported separately so "
+        "that the authored result is not diluted by a different threat model.")
+    add("")
     add("## Per category")
     add("")
     add("| category | cases | TP | FP | FN | TN | precision | recall | F1 | accuracy | exact | hard | early |")
@@ -653,6 +673,7 @@ def evaluate(path: Path, out_dir: Path, bootstrap_samples: int = 1000) -> Dict[s
         "bootstrap": bootstrap,
         "per_level": grouped_summary(full_outcomes, lambda o: f"L{o.level}"),
         "per_category": grouped_summary(full_outcomes, lambda o: o.category),
+        "per_source": grouped_summary(full_outcomes, lambda o: o.source),
         "per_subtype": grouped_summary(full_outcomes, lambda o: o.subtype),
         "layer_usage": layer_usage(full_outcomes),
         "latency": latency,

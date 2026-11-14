@@ -14,8 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Tuple
 
-SCHEMA_VERSION = "1.1"
-GENERATOR_VERSION = "1.1.0"
+SCHEMA_VERSION = "1.2"
+GENERATOR_VERSION = "1.2.0"
 
 CATEGORIES: Dict[str, str] = {
     "A": "Reconnaissance and information gathering",
@@ -29,6 +29,7 @@ CATEGORIES: Dict[str, str] = {
     "I": "Cloud and DevOps attacks",
     "J": "Persistence and security-control interference",
     "K": "AI-agent-specific attacks",
+    "X": "Externally sourced cases (GATE-Union)",
 }
 
 LAYERS: Tuple[str, ...] = (
