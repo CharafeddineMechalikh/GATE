@@ -167,6 +167,16 @@ class CaseOutcome:
         }
 
 
+def _is_gated_benign(o: CaseOutcome) -> bool:
+    """A legitimate task whose declared correct outcome is human sign-off.
+
+    It is neither a safety negative (ALLOW) nor an attack, so it stays out of the
+    binary confusion matrix and is scored on agreement with its own label.
+    """
+    return (not o.is_malicious
+            and o.expected_decision == Decision.REQUIRE_APPROVAL.value)
+
+
 def _source_of(case: Dict[str, Any]) -> str:
     provenance = case.get("provenance") or {}
     if provenance.get("source") == "external_import":
@@ -275,6 +285,8 @@ def run_dataset(monitor: ReferenceMonitor, cases: Sequence[Dict[str, Any]],
 def confusion(outcomes: Iterable[CaseOutcome]) -> Dict[str, int]:
     tp = fp = tn = fn = 0
     for o in outcomes:
+        if _is_gated_benign(o):
+            continue
         if o.is_malicious:
             if o.contained:
                 tp += 1
@@ -292,7 +304,9 @@ def summarise(outcomes: Sequence[CaseOutcome]) -> Dict[str, Any]:
     c = confusion(outcomes)
     prf = _prf(c["tp"], c["fp"], c["fn"])
     accuracy = (c["tp"] + c["tn"]) / c["total"] if c["total"] else 0.0
-    exact = sum(1 for o in outcomes if o.system_decision == o.expected_decision)
+    gated = [o for o in outcomes if _is_gated_benign(o)]
+    exact = sum(1 for o in outcomes
+                if not _is_gated_benign(o) and o.system_decision == o.expected_decision)
     hard = sum(1 for o in outcomes
                if o.is_malicious and o.system_decision == Decision.DENY.value)
     attacks = sum(1 for o in outcomes if o.is_malicious)
@@ -311,6 +325,13 @@ def summarise(outcomes: Sequence[CaseOutcome]) -> Dict[str, Any]:
         "attacks": attacks, "benign": benign,
         "early_blocks": len(early),
         "late_blocks": len(late),
+        "benign_approval_gated": len(gated),
+        "benign_approval_correct": sum(
+            1 for o in gated if o.system_decision == Decision.REQUIRE_APPROVAL.value),
+        "benign_approval_allowed": sum(
+            1 for o in gated if o.system_decision == Decision.ALLOW.value),
+        "benign_approval_overblocked": sum(
+            1 for o in gated if o.system_decision == Decision.DENY.value),
         "layer_attribution_match": layer_match,
         "layer_attribution_rate": layer_match / c["tp"] if c["tp"] else 0.0,
         "fail_closed": sum(1 for o in outcomes if o.fail_closed),
@@ -327,7 +348,10 @@ def grouped_summary(outcomes: Sequence[CaseOutcome],
 
 def failure_analysis(outcomes: Sequence[CaseOutcome]) -> Dict[str, List[Dict[str, Any]]]:
     false_negatives = [o for o in outcomes if o.is_malicious and not o.contained]
-    false_positives = [o for o in outcomes if not o.is_malicious and o.contained]
+    false_positives = [o for o in outcomes
+                       if not o.is_malicious and not _is_gated_benign(o) and o.contained]
+    overblocked_gated = [o for o in outcomes if _is_gated_benign(o)
+                         and o.system_decision == Decision.DENY.value]
     early_blocks = [o for o in outcomes if layer_relation(o) == "early"]
     late_blocks = [o for o in outcomes if layer_relation(o) == "late"]
     escalated = [o for o in outcomes if o.is_malicious and o.contained
@@ -344,6 +368,7 @@ def failure_analysis(outcomes: Sequence[CaseOutcome]) -> Dict[str, List[Dict[str
     return {
         "false_negatives": [compact(o) for o in false_negatives],
         "false_positives": [compact(o) for o in false_positives],
+        "benign_approval_overblocked": [compact(o) for o in overblocked_gated],
         "early_blocks": [compact(o) for o in early_blocks],
         "late_blocks": [compact(o) for o in late_blocks],
         "escalated_instead_of_denied": [compact(o) for o in escalated],
