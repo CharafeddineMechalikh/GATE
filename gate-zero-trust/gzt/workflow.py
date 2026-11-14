@@ -77,6 +77,38 @@ def _body(action: Action) -> Optional[Dict[str, Any]]:
     return parsed if isinstance(parsed, dict) else None
 
 
+def _flatten_action(action: Action) -> str:
+    parts: List[str] = [action.tool, action.operation, action.target]
+    for key, value in action.args.items():
+        parts.append(str(key))
+        if isinstance(value, (dict, list)):
+            parts.append(json.dumps(value, sort_keys=True, default=str))
+        elif value is not None:
+            parts.append(str(value))
+    return " ".join(part for part in parts if part)
+
+
+_EMAIL = re.compile(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}")
+_URL = re.compile(r"https?://[^\s\"'<>)\]]+")
+_BACKTICK = re.compile(r"`([^`\n]{4,200})`")
+_SHELL_LINE = re.compile(r"(?:^|\n)\s*(?:[$#>]\s*)?((?:curl|wget|rm|mv|cp|ssh|scp|"
+                         r"powershell|bash|sh|python|sudo|chmod|chown)\b[^\n]{3,200})", re.I)
+_SQL_VERB = re.compile(r"\b((?:delete\s+from|drop\s+table|update|insert\s+into|truncate)\s+"
+                       r"[a-z0-9_.\"']+(?:\s+set\b[^;\n]{0,80})?)", re.I)
+
+
+def _response_indicators(content: str) -> List[str]:
+    """Concrete artefacts an agent could copy from a response into a call."""
+    found: List[str] = []
+    for pattern in (_EMAIL, _URL, _BACKTICK, _SHELL_LINE, _SQL_VERB):
+        for match in pattern.findall(content):
+            value = match if isinstance(match, str) else match[0]
+            value = value.strip().rstrip(".,;)")
+            if value and value not in found:
+                found.append(value)
+    return found
+
+
 def _scope_tokens(scope: str) -> Dict[str, List[str]]:
     out: Dict[str, List[str]] = {}
     for part in re.split(r"\s*;\s*", scope or ""):
@@ -151,9 +183,9 @@ class WorkflowLayer:
 
     def check(self, obs: Observation, state: RuntimeState, action: Action) -> LayerResult:
         for check in (
-            self._replay, self._memory_directive, self._tool_output, self._toolchain,
-            self._escalation, self._context_mutation, self._delegation, self._persistence,
-            self._plan, self._deployment, self._scope, self._composition,
+            self._replay, self._memory_directive, self._tool_output, self._response_following,
+            self._toolchain, self._escalation, self._context_mutation, self._delegation,
+            self._persistence, self._plan, self._deployment, self._scope, self._composition,
         ):
             result = check(obs, state, action)
             if result is not None:
@@ -204,6 +236,34 @@ class WorkflowLayer:
             return _deny(action, "WF-TOOLOUTPUT-001",
                          "executed command is copied from prior tool output, not the plan",
                          command=command)
+        return None
+
+    # --- 3b. action copied out of untrusted tool output --------------------
+    def _response_following(self, obs: Observation, state: RuntimeState,
+                            action: Action) -> Optional[LayerResult]:
+        """Refuse a call whose destination or command came from untrusted output.
+
+        The check compares concrete indicators (addresses, URLs, backticked or
+        printed commands, SQL verbs) in the untrusted response with the call the
+        agent proposes. Overlap with the user objective is allowed: the user may
+        legitimately name the same destination, and the objective is trusted.
+        """
+        if not state.untrusted_outputs:
+            return None
+        proposed = _flatten_action(action).lower()
+        objective = obs.objective_text.lower()
+        for record in reversed(state.untrusted_outputs[-8:]):
+            sources = [str(record.get("content", ""))]
+            sources.extend(str(item) for item in record.get("concealed_instructions") or [])
+            for indicator in _response_indicators(" ".join(sources)):
+                lowered = indicator.lower()
+                if len(lowered) < 6 or lowered not in proposed or lowered in objective:
+                    continue
+                return _deny(action, "WF-RESPONSE-001",
+                             f"the call copies {indicator!r} from a response classified "
+                             f"{record.get('trust')!r}; tool output is data, not a task",
+                             response_id=record.get("response_id"),
+                             trust=record.get("trust"), indicator=indicator)
         return None
 
     # --- 4. write-then-execute -------------------------------------------

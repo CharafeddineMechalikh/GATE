@@ -37,7 +37,8 @@ flowchart TD
     M --> N[postcondition verification]
     N -- failure --> Z5[EXECUTED_POSTCONDITION_FAILED]
     N -- ok --> O[apply effects]
-    O --> P[hash-chained audit record]
+    O --> R[response inspector<br/>validate, label, taint]
+    R --> P[hash-chained audit record]
 ```
 
 Short-circuiting is at DENY only, so an approval requirement does not hide a later denial. Any exception inside a layer is converted to `DENY` with `policy_id = FAIL-CLOSED` and the exception repr as evidence.
@@ -161,7 +162,15 @@ The adapter is mechanical and documented: the source's `user_intent` becomes the
 
 The generator is part of the evidence, not a fixture: five templates and three workflow specs were corrected during integration (see D27 in the decision log) because they asserted a delegation authority or a created row that the recorded sequence never established.
 
-## 12. Evaluation harness
+## 12. Tool-response inspection
+
+`gzt/responses.py`, enforced through `gzt/monitor.py::execute` and `gzt/workflow.py::_response_following`
+
+The pipeline approves calls; the inspector handles what a tool returns. It is cross-cutting rather than an eighth layer: it runs after an executed call passes postcondition verification, validates the envelope, joins the declared classification with the resource the call touched, quarantines foreign-tenant and malformed bodies, decodes concealed instructions, and taints any content that carries an instruction, an authority or approval claim, or provenance below the tenant. Accepted content is retained as data; nothing in the inspector can add a grant, create an approval, change the objective or advance the workflow state.
+
+Tainted responses are appended to `RuntimeState.untrusted_outputs`. Before a later action is approved, the workflow layer compares its arguments with destinations, commands, URLs and SQL statements found in that output and refuses an action that copies one the trusted objective never named (`WF-RESPONSE-001`). Full design, corpus and measured results are in [05_tool_responses.md](05_tool_responses.md).
+
+## 13. Evaluation harness
 
 `gzt/evaluate.py`
 
@@ -177,12 +186,15 @@ The harness replays each case's recorded sequence through the real pipeline. Gro
 
 Reports are written to `target/evaluation.json` and `target/evaluation.md`.
 
-## 13. Reproducing
+## 14. Reproducing
 
 ```bash
 cd gate-zero-trust
 python -m dataset.generator.build            # rebuild dataset/out/
 python dataset/validate.py                   # fourteen checks
+python -m dataset.responses.generate         # response corpus (109 fixtures, 146 scenarios)
+python -m gzt.responses_eval                 # response-side experiment
+python -m pytest tests/test_gzt_responses.py -q
 USE_TF=0 USE_TORCH=1 python -m gzt.evaluate \
     --dataset dataset/out/dataset.jsonl --out target
 ```

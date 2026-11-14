@@ -122,6 +122,12 @@ class RuntimeState:
     memory: Dict[str, Any] = field(default_factory=dict)
     tool_output: str = ""
     context_taint: List[str] = field(default_factory=list)
+    # Tool-response provenance. The response inspector appends to these; the
+    # workflow layer reads `untrusted_outputs` to refuse an action that copies a
+    # destination or command out of untrusted content.
+    response_log: List[Dict[str, Any]] = field(default_factory=list)
+    untrusted_outputs: List[Dict[str, Any]] = field(default_factory=list)
+    rejected_outputs: List[Dict[str, Any]] = field(default_factory=list)
     staged: Set[str] = field(default_factory=set)
     coordination: Dict[str, List[str]] = field(default_factory=dict)
     delegations: List[Dict[str, Any]] = field(default_factory=list)
@@ -153,6 +159,9 @@ class RuntimeState:
         state.memory = dict(initial.get("memory") or {})
         state.tool_output = str(initial.get("tool_output") or "")
         state.context_taint = list(initial.get("context_taint") or [])
+        state.response_log = list(initial.get("response_log") or [])
+        state.untrusted_outputs = list(initial.get("untrusted_outputs") or [])
+        state.rejected_outputs = list(initial.get("rejected_outputs") or [])
         state.staged = set(initial.get("staged") or [])
         state.deputy_requests = int(initial.get("deputy_requests", 0))
         state.acting_user = initial.get("acting_user")

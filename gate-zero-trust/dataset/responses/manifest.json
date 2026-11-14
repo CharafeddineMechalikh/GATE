@@ -1,0 +1,47 @@
+{
+  "by_category": {
+    "benign": 18,
+    "compromised": 9,
+    "malformed": 18,
+    "malicious": 27,
+    "misleading": 18,
+    "sensitive": 19
+  },
+  "by_condition": {
+    "benign_only": 18,
+    "conflicting": 18,
+    "malicious_only": 38,
+    "midway": 18,
+    "misleading_only": 18,
+    "mixed": 18,
+    "sensitive_only": 18
+  },
+  "by_tool": {
+    "agent_delegate": 12,
+    "calendar_api": 12,
+    "cloud_api": 12,
+    "code_execute": 12,
+    "database_query": 13,
+    "file_read": 12,
+    "http_request": 12,
+    "send_email": 12,
+    "web_search": 12
+  },
+  "response_sha256": "a5acedfa3dffc72e7d7a72835604cc8fc41808d9af91efb91a51f4b103810f9d",
+  "responses": 109,
+  "scenario_sha256": "f31371e8cb23444f311986c2963efea54914df54a3a89218fff8523189394c08",
+  "scenarios": 146,
+  "synthetic": true,
+  "variation_axes": [
+    "instruction:concealed",
+    "instruction:direct",
+    "instruction:indirect",
+    "instruction:none",
+    "structure:structured",
+    "structure:unstructured",
+    "truth:correct",
+    "truth:fabricated",
+    "truth:malicious",
+    "truth:misleading"
+  ]
+}

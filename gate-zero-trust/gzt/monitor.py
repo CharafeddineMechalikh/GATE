@@ -32,6 +32,7 @@ from .decision import (CombinedDecision, Decision, LayerResult, Outcome, combine
 from .hitl import HITLLayer
 from .ifc import InformationFlowLayer
 from .runtime import Action, Observation, RuntimeState, canonical_hash
+from .responses import ResponseAssessment, ResponseInspector, ToolResponse
 from .semantic import SemanticLayer
 from .workflow import WorkflowLayer
 
@@ -60,6 +61,7 @@ class StepResult:
     environment_delta: Dict[str, Any] = field(default_factory=dict)
     postcondition_failures: List[str] = field(default_factory=list)
     breaker_event: Optional[Dict[str, Any]] = None
+    response: Optional[ResponseAssessment] = None
     elapsed_ms: float = 0.0
     audit_hash: str = ""
 
@@ -78,6 +80,7 @@ class StepResult:
             "layers": [r.to_dict() for r in self.combined.results],
             "postcondition_failures": self.postcondition_failures,
             "breaker_event": self.breaker_event,
+            "response": self.response.to_dict() if self.response else None,
             "elapsed_ms": round(self.elapsed_ms, 3),
             "audit_hash": self.audit_hash,
         }
@@ -88,7 +91,8 @@ class ReferenceMonitor:
                  layers: Optional[List[str]] = None,
                  audit: Optional[AuditLog] = None,
                  semantic: Optional[SemanticLayer] = None,
-                 breaker: Optional[CircuitBreaker] = None) -> None:
+                 breaker: Optional[CircuitBreaker] = None,
+                 responses: Optional[ResponseInspector] = None) -> None:
         self.authority = authority or CapabilityAuthority()
         self.capability = CapabilityLayer(self.authority)
         self.workflow = WorkflowLayer()
@@ -98,6 +102,7 @@ class ReferenceMonitor:
         self.hitl = HITLLayer()
         self.breaker = breaker or CircuitBreaker()
         self.audit = audit or AuditLog()
+        self.responses = responses or ResponseInspector()
         self.enabled = list(LAYER_ORDER) if layers is None else list(layers)
 
     # ------------------------------------------------------------ tokens
@@ -163,8 +168,11 @@ class ReferenceMonitor:
 
         delta: Dict[str, Any] = {}
         failures: List[str] = []
+        assessment: Optional[ResponseAssessment] = None
         if outcome is Outcome.EXECUTED and executor is not None:
-            delta = executor(action) or {}
+            raw = executor(action) or {}
+            envelope = raw.get("response") if isinstance(raw, dict) else None
+            delta = {k: v for k, v in raw.items() if k != "response"} if isinstance(raw, dict) else {}
             failures = self._verify_postconditions(obs, state, action, delta)
             if failures:
                 outcome = Outcome.EXECUTED_POSTCONDITION_FAILED
@@ -177,6 +185,12 @@ class ReferenceMonitor:
             else:
                 self._apply_effects(obs, state, action, delta)
                 self._consume_approval(state, action)
+                if envelope is not None:
+                    # The response is inspected after the effect is accepted, so
+                    # a rejected effect cannot smuggle content into the context.
+                    assessment = self.responses.inspect(
+                        ToolResponse.from_payload(envelope, action.tool, action.target),
+                        obs, state, target=action.target)
 
         state.note_action(action, combined.decision.value)
         event = self.breaker.record(state, combined.decision, combined.deciding_policy,
@@ -188,13 +202,14 @@ class ReferenceMonitor:
             deciding_layer=combined.deciding_layer, deciding_policy=combined.deciding_policy,
             outcome=outcome.value,
             layers=[r.to_dict() for r in combined.results],
-            evidence={"delta": delta, "postcondition_failures": failures},
+            evidence={"delta": delta, "postcondition_failures": failures,
+                      "response": assessment.to_dict() if assessment else None},
         )
         elapsed = (time.perf_counter() - started) * 1000.0
         return StepResult(action=action, combined=combined, outcome=outcome,
                           environment_delta=delta, postcondition_failures=failures,
                           breaker_event=(event.__dict__ if event else None),
-                          elapsed_ms=elapsed, audit_hash=record.record_hash)
+                          response=assessment, elapsed_ms=elapsed, audit_hash=record.record_hash)
 
     # ------------------------------------------------------------- helpers
     def _tenant_isolation(self, obs: Observation, state: RuntimeState,

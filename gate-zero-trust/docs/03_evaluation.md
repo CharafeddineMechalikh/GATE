@@ -179,7 +179,15 @@ The semantic encoder is 99.0% of the steady-state layer time on the combined cor
 
 Combined run: process RSS 168.1 MB; resident growth over the sampled 60 cases 0.6 MB; `tracemalloc` peak 0.154 MB. The encoder's weights dominate resident memory; the reference matrices add under a megabyte. The authored-only rerun measured 167.0 MB RSS and 2.3 MB growth.
 
-## 11. What this does and does not establish
+## 11. Response-side evaluation
+
+The 1,665-case corpus scores proposed calls. The response side has its own synthetic corpus and experiment: 109 response fixtures over nine tool families and 146 scenarios across seven conditions (benign only, malicious only, misleading only, sensitive only, mixed, conflicting, midway). Driver `python -m gzt.responses_eval`; artefacts in [target/responses/evaluation.json](file:///D:/Charef/doctorat/Work%20folder/AI%20agents/gate-zero-trust/target/responses/evaluation.json).
+
+Measured on the authored scenarios: 272 of 272 benign steps accepted, 83 of 83 induced steps refused, zero false positives and zero false negatives, on both the full pipeline and a deterministic control without the semantic layer. All 9 malformed envelopes were rejected whole; all 73 malicious and all 10 compromised responses were retained as data and tainted; no benign response was tainted. The deterministic control isolates the mechanisms: workflow refuses copied destinations and commands, contracts refuses fabricated bank-detail changes, and IFC enforces confidential labels on external egress.
+
+A perfect score here is a property of the constructed suite: each scenario exercises a specific mechanism, so it is mechanism evidence, not a generalisation measurement. Design and guarantees are in [05_tool_responses.md](05_tool_responses.md).
+
+## 12. What this does and does not establish
 
 Established: the seven mechanisms exist, each contributes to containment, the combination is deny-dominant, fails closed, and is measured against 680 authored cases plus 985 imported union cases with full failure disclosure.
 
