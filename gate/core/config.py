@@ -28,18 +28,30 @@ class SemanticThresholds:
     inputs to the fusion are reachable by the attacker (the intent anchor is
     written by the agent's caller and the cross-encoder reads the same text as
     the embedding), so a low fused score is absence of evidence rather than
-    evidence of safety. ``fused_block_threshold`` is the midpoint of the gap
-    between the highest benign and the lowest attack fused score on the
-    GATE-Union calibration split. Set ``alignment_weight`` to 0 to ignore the
-    alignment term entirely.
+    evidence of safety. ``fused_block_threshold`` is set on the GATE-Union
+    calibration split: 0.8 keeps every benign call below it (highest benign
+    0.719) while converting 29 of the 31 band attacks to blocks; the two
+    remaining band attacks sit at 0.608 and 0.722 and stay escalated. Set
+    ``alignment_weight`` to 0 to ignore the alignment term entirely.
+
+    ``degenerate_intent_threshold`` guards the anchor itself. The intent term
+    is only evidence when the anchor differs from the action; an anchor the
+    agent supplies as a copy of its own action collapses both the embedding
+    distance and the cross-encoder contradiction, which is what releases
+    self-anchored attacks. Below this threshold the anchor is treated as
+    unusable: the call is blocked when the harm distance is smaller than the
+    safe distance and escalated otherwise, never allowed. The threshold sits
+    below every benign separation measured (0.0776 on 189 calls) and above the
+    residual separation a verbatim copy leaves (0.0 to 0.0277).
     """
-    sss_safe_threshold: float = 0.7
-    sss_block_threshold: float = 0.5
+    sss_safe_threshold: float = 0.75  # recalibrated 2026-11-14 on reference benign centroids (was 0.7 with partial centroids)
+    sss_block_threshold: float = 0.60  # band opens at 0.60; 0.62 left two benign calls hard-blocked
     drift_threshold: float = 0.8
     harm_threshold: float = 0.2
     alignment_model_name: str = "cross-encoder/nli-MiniLM2-L6-H768"
     alignment_weight: float = 0.5
-    fused_block_threshold: float = 0.9024
+    fused_block_threshold: float = 0.8
+    degenerate_intent_threshold: float = 0.05  # below every benign separation (min 0.0776 on 189 calls): the anchor is a copy of the action
 
 
 @dataclass
@@ -135,6 +147,9 @@ class gateConfig:
     log_level: LogLevel = LogLevel.INFO
     embedding_model_name: str = "all-MiniLM-L6-v2"
     vector_store_path: Optional[str] = None
+    # Path to a benign call-reference corpus; when set, the semantic firewall
+    # seeds per-tool safe centroids for allowlisted tools that have none.
+    semantic_calibration_path: Optional[str] = None
     audit_log_path: Optional[str] = None
     enable_async_batching: bool = True
     batch_window_ms: int = 10

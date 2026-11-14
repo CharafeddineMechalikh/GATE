@@ -153,6 +153,9 @@ class DefaultSemanticFirewall(SemanticFirewall):
         self.safe_centroids: Dict[str, Dict] = {}
         
         self._load_prototypes()
+        if getattr(config, "semantic_calibration_path", None):
+            from gate.security.calibration import calibrate
+            calibrate(self, config.semantic_calibration_path)
         
         logger.info(f"SemanticFirewall initialized with model: {config.embedding_model_name}")
     
@@ -197,11 +200,55 @@ class DefaultSemanticFirewall(SemanticFirewall):
                 return np.zeros(384)
             raise EmbeddingModelError(f"Failed to embed text: {e}")
     
+    @staticmethod
+    def _compute_provenance(provenance=None, **kwargs):
+        """Deterministic provenance/taint features (v1+3C-H). Higher taint = more untrusted/external influence.
+        METADATA ONLY: never affects SSS/thresholds/decisions (decision computed before this in check_semantic_safety).
+        Consumes richer segment schema when present; backward-compatible with sources-only."""
+        prov = provenance or kwargs.get('context_provenance') or {}
+        sources = prov.get('sources') or prov.get('taint_sources') or []
+        if isinstance(sources, str):
+            sources = [sources]
+        sources_l = [str(s).lower() for s in sources]
+        # 3C-H: derive source flags from known segments (origin metadata), without inference/labels
+        segments = prov.get('segments') or []
+        if isinstance(segments, list):
+            for seg in segments:
+                if not isinstance(seg, dict):
+                    continue
+                if not seg.get('known', False) and seg.get('origin') != 'user_instruction':
+                    # explicit unknown segments do not create trusted/untrusted flags
+                    pass
+                org = str(seg.get('origin', '')).lower()
+                if seg.get('known'):
+                    if org == 'user_instruction' and 'user' not in sources_l:
+                        sources_l.append('user')
+                    elif org == 'external_document' and 'external_content' not in sources_l:
+                        sources_l.append('external_content')
+                    elif org == 'tool_result' and 'tool_result' not in sources_l:
+                        sources_l.append('tool_result')
+                    elif org == 'system_developer_context' and 'system' not in sources_l:
+                        sources_l.append('system')
+        flags = {
+            'prov_user': 1.0 if any('user' in s for s in sources_l) else 0.0,
+            'prov_external': 1.0 if any(x in s for s in sources_l for x in ('external', 'web', 'email', 'retriev', 'document', 'injection')) else 0.0,
+            'prov_tool_result': 1.0 if any('tool' in s or 'result' in s for s in sources_l) else 0.0,
+            'prov_system': 1.0 if any('system' in s for s in sources_l) else 0.0,
+        }
+        known = 1.0 if (sources_l or any(isinstance(s, dict) and s.get('known') for s in segments if isinstance(s, dict))) else 0.0
+        # taint: external/tool_result contribute; user/system reduce relative trust uncertainty (metadata only)
+        taint = 0.0
+        if known:
+            taint = min(1.0, 0.75*flags['prov_external'] + 0.45*flags['prov_tool_result'] - 0.1*flags['prov_user'])
+            taint = max(0.0, taint)
+        return {'known': known, 'taint_score': taint if known else None, 'sources': sources_l, **flags}
+
     def check_semantic_safety(
-        self, action: str, tool_name: str, agent_id: str
+        self, action: str, tool_name: str, agent_id: str, provenance=None, **kwargs
     ) -> SemanticScore:
         """
         Check semantic safety using triangulated scoring with dynamic anchor.
+        Optional provenance/taint context (backward-compatible): provenance={'sources':[...]}.
         """
         try:
             e_action = self.embedding_model.embed(action)
@@ -217,7 +264,18 @@ class DefaultSemanticFirewall(SemanticFirewall):
                 drift_to_safe + drift_to_intent + epsilon
             )
 
-            if sss_value > self.thresholds.sss_safe_threshold:
+            # An anchor the agent supplies as a copy of its own action carries no
+            # evidence: both consistency signals collapse and the ratio's
+            # denominator loses the intent term. Below every benign separation,
+            # decide on the intent-free evidence and never allow.
+            degenerate_anchor = (
+                self.intent_text is not None
+                and drift_to_intent < self.thresholds.degenerate_intent_threshold
+            )
+
+            if degenerate_anchor:
+                decision = "BLOCK" if drift_to_harm < drift_to_safe else "ESCALATE"
+            elif sss_value > self.thresholds.sss_safe_threshold:
                 decision = "ALLOW"
             elif sss_value < self.thresholds.sss_block_threshold:
                 decision = "BLOCK"
@@ -228,7 +286,8 @@ class DefaultSemanticFirewall(SemanticFirewall):
             entailment = None
             fused_harm = None
             if (
-                self.aligner is not None
+                not degenerate_anchor
+                and self.aligner is not None
                 and self.thresholds.alignment_weight != 0
                 and self.intent_text
             ):
@@ -246,6 +305,7 @@ class DefaultSemanticFirewall(SemanticFirewall):
                     ):
                         decision = "BLOCK"
 
+            prov = self._compute_provenance(provenance=provenance, **kwargs)
             score = SemanticScore(
                 sss_value=sss_value,
                 drift_to_intent=drift_to_intent,
@@ -257,13 +317,21 @@ class DefaultSemanticFirewall(SemanticFirewall):
                     "num_harm_prototypes": len(self.harm_prototypes),
                     "has_safe_centroid": tool_name in self.safe_centroids,
                     "trajectory_length": len(self.trajectory_tracker.trajectory),
+                    "anchor_degenerate": bool(degenerate_anchor),
                     "embedding_cb_state": self.embedding_cb.state.value,
                     "alignment_contradiction": contradiction,
                     "alignment_entailment": entailment,
                     "fused_harm": fused_harm,
+                    "provenance_known": prov['known'],
+                    "provenance_taint_score": prov['taint_score'],
+                    "prov_external": prov['prov_external'],
+                    "prov_tool_result": prov['prov_tool_result'],
+                    "prov_user": prov['prov_user'],
                 },
                 alignment_contradiction=contradiction,
                 fused_harm=fused_harm,
+                provenance={'sources': prov['sources'], 'known': prov['known']} if prov['known'] else None,
+                taint_score=prov['taint_score'],
             )
             
             logger.debug(

@@ -15,7 +15,7 @@ class SemanticFirewall(ABC):
     
     @abstractmethod
     def check_semantic_safety(self, action: str, tool_name: str, 
-                             agent_id: str) -> SemanticScore:
+                             agent_id: str, **kwargs) -> SemanticScore:
         """
         Check if an action is semantically safe.
         
@@ -23,6 +23,7 @@ class SemanticFirewall(ABC):
             action: Natural language description of the action
             tool_name: Name of the tool being called
             agent_id: ID of the agent proposing the action
+            **kwargs: Optional provenance/taint context (e.g. provenance, context_source, taint_sources)
             
         Returns:
             SemanticScore with safety assessment
@@ -237,7 +238,7 @@ class SecurityMonitor(ABC):
     
     @abstractmethod
     async def check_semantic_safety(self, action: str, tool_name: str, 
-                             agent_id: str) -> SemanticScore:
+                             agent_id: str, **kwargs) -> SemanticScore:
         """
         Check semantic safety of an action.
         
@@ -245,6 +246,7 @@ class SecurityMonitor(ABC):
             action: Natural language description
             tool_name: Tool name
             agent_id: Agent ID
+            **kwargs: Optional provenance/taint context
             
         Returns:
             SemanticScore

@@ -221,6 +221,30 @@ class TestSemanticStage:
         assert result.escalated is True
         assert result.requires_approval is True
 
+    @pytest.mark.asyncio
+    async def test_degenerate_anchor_block_reports_the_rule(self):
+        sem = SemStub(decision="BLOCK", sss=0.86)
+        sem.check_semantic_safety = lambda *a, **k: SemanticScore(
+            sss_value=0.86,
+            drift_to_intent=0.0,
+            drift_to_harm=0.72,
+            drift_to_safe=0.83,
+            decision="BLOCK",
+            fused_harm=None,
+            details={"anchor_degenerate": True},
+        )
+        mon = _monitor(sem=sem)
+        with pytest.raises(SemanticSafetyViolation) as exc:
+            await mon._check_semantic_safety(_action(), AgentState(agent_id="a1"))
+        assert "degenerate" in str(exc.value)
+
+    @pytest.mark.asyncio
+    async def test_degenerate_anchor_escalation_is_withheld(self):
+        mon = _monitor(sem=SemStub(decision="ESCALATE", sss=0.86))
+        result = await mon.validate_action(_action(), AgentState(agent_id="a1"))
+        assert result.escalated is True
+        assert result.is_allowed is False
+
 
 class TestDcbfStage:
     @pytest.mark.asyncio

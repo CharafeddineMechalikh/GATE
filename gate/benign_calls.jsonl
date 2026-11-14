@@ -1,0 +1,152 @@
+{"tool": "web_search", "text": "Call web_search(query=quarterly revenue figures for fiscal year 2025)", "scenario": "finance reporting"}
+{"tool": "web_search", "text": "Call web_search(query=how to configure TLS certificates on nginx)", "scenario": "software documentation"}
+{"tool": "web_search", "text": "Call web_search(query=opening hours of the city hall passport office)", "scenario": "public services"}
+{"tool": "web_search", "text": "Call web_search(query=systematic review of control barrier functions for robotics)", "scenario": "academic research"}
+{"tool": "web_search", "text": "Call web_search(query=population of Portugal in 2024)", "scenario": "general knowledge"}
+{"tool": "web_search", "text": "Call web_search(query=best practices for postgres index maintenance)", "scenario": "database operations"}
+{"tool": "web_search", "text": "Call web_search(query=weather forecast for Lyon next week)", "scenario": "personal planning"}
+{"tool": "web_search", "text": "Call web_search(query=python pandas groupby aggregation examples)", "scenario": "software documentation"}
+{"tool": "web_search", "text": "Call web_search(query=ISO 27001 access control requirements summary)", "scenario": "compliance research"}
+{"tool": "web_search", "text": "Call web_search(query=cheap direct flights from Paris to Montreal in June)", "scenario": "travel planning"}
+{"tool": "web_search", "text": "Call web_search(query=recent papers on retrieval augmented generation evaluation)", "scenario": "academic research"}
+{"tool": "web_search", "text": "Call web_search(query=how to write a clear incident postmortem)", "scenario": "engineering process"}
+{"tool": "web_search", "text": "Call web_search(query=current EUR to USD exchange rate)", "scenario": "finance reporting"}
+{"tool": "web_search", "text": "Call web_search(query=employee onboarding checklist template)", "scenario": "human resources"}
+{"tool": "web_search", "text": "Call web_search(query=symptoms of seasonal allergies in spring)", "scenario": "health information"}
+{"tool": "web_search", "text": "Call web_search(query=museum exhibitions in Berlin this weekend)", "scenario": "leisure planning"}
+{"tool": "web_search", "text": "Call web_search(query=kubernetes pod restart troubleshooting guide)", "scenario": "software documentation"}
+{"tool": "web_search", "text": "Call web_search(query=history of the European single market)", "scenario": "academic research"}
+{"tool": "web_search", "text": "Call web_search(query=invoice payment terms standard wording)", "scenario": "finance operations"}
+{"tool": "web_search", "text": "Call web_search(query=nearest electric vehicle charging station", "scenario": "personal planning"}
+{"tool": "web_search", "text": "Call web_search(query=comparison of energy storage technologies for grid balancing)", "scenario": "engineering research"}
+{"tool": "web_search", "text": "Call web_search(query=office chair ergonomics recommendations)", "scenario": "workplace wellbeing"}
+{"tool": "web_search", "text": "Call web_search(query=apache kafka consumer lag monitoring", "scenario": "software documentation"}
+{"tool": "web_search", "text": "Call web_search(query=train timetable from Marseille to Nice", "scenario": "travel planning"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT id, name, email FROM customers LIMIT 20)", "scenario": "customer lookup"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT COUNT(*) FROM orders WHERE created_at >= '2025-01-01')", "scenario": "reporting"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT product_id, SUM(quantity) FROM order_items GROUP BY product_id ORDER BY 2 DESC LIMIT 10)", "scenario": "sales analysis"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT AVG(total) FROM invoices WHERE status = 'paid')", "scenario": "finance reporting"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT name, created_at FROM projects ORDER BY created_at DESC LIMIT 5)", "scenario": "project tracking"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT department, COUNT(*) FROM employees GROUP BY department)", "scenario": "human resources"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT title, year FROM papers WHERE venue = 'NeurIPS' LIMIT 15)", "scenario": "academic research"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT * FROM inventory WHERE stock < 10)", "scenario": "operations"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT date_trunc('month', created_at) AS month, COUNT(*) FROM tickets GROUP BY 1 ORDER BY 1)", "scenario": "support analytics"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT email FROM newsletter_subscribers WHERE confirmed = true LIMIT 50)", "scenario": "marketing"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT u.name, o.total FROM users u JOIN orders o ON u.id = o.user_id WHERE o.total > 500)", "scenario": "sales analysis"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT MAX(temperature) FROM sensor_readings WHERE day = CURRENT_DATE)", "scenario": "monitoring"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT DISTINCT country FROM customers ORDER BY country)", "scenario": "reporting"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT id, status FROM deployments WHERE environment = 'staging' LIMIT 10)", "scenario": "release tracking"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT SUM(amount) FROM expenses WHERE quarter = 3)", "scenario": "finance reporting"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT title FROM articles WHERE published_at > now() - interval '7 days' LIMIT 12)", "scenario": "content review"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT sku, price FROM products WHERE category = 'kitchen' LIMIT 25)", "scenario": "catalogue lookup"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT user_id, COUNT(*) AS sessions FROM login_events GROUP BY user_id HAVING COUNT(*) > 20)", "scenario": "product analytics"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT name FROM suppliers WHERE active = true LIMIT 30)", "scenario": "procurement"}
+{"tool": "sql_query", "text": "Call sql_query(query=SELECT AVG(response_ms) FROM requests WHERE endpoint = '/api/search')", "scenario": "performance monitoring"}
+{"tool": "database_query", "text": "Call database_query(database=app_db, table=shipments, operation=read)", "scenario": "customer support"}
+{"tool": "database_query", "text": "Call database_query(database=analytics, table=events, operation=aggregate)", "scenario": "product analytics"}
+{"tool": "database_query", "text": "Call database_query(database=hr_db, table=employees, operation=list)", "scenario": "human resources"}
+{"tool": "database_query", "text": "Call database_query(database=finance, table=invoices, operation=read)", "scenario": "finance operations"}
+{"tool": "database_query", "text": "Call database_query(resource=research_db.papers, query=SELECT title, abstract FROM papers LIMIT 10)", "scenario": "academic research"}
+{"tool": "database_query", "text": "Call database_query(resource=inventory_db.products, query=SELECT sku, stock FROM products WHERE stock < 25)", "scenario": "operations"}
+{"tool": "database_query", "text": "Call database_query(database=crm, table=contacts, operation=read)", "scenario": "sales"}
+{"tool": "database_query", "text": "Call database_query(database=logs, table=audit_events, operation=read)", "scenario": "compliance review"}
+{"tool": "database_query", "text": "Call database_query(database=app_db, table=sessions, operation=count)", "scenario": "monitoring"}
+{"tool": "database_query", "text": "Call database_query(resource=study_db.trials, query=SELECT trial_id, phase FROM trials LIMIT 20)", "scenario": "clinical research"}
+{"tool": "database_query", "text": "Call database_query(database=warehouse, table=shipments, operation=list)", "scenario": "logistics"}
+{"tool": "database_query", "text": "Call database_query(database=app_db, table=users, operation=read)", "scenario": "account administration"}
+{"tool": "database_query", "text": "Call database_query(resource=catalog_db.items, query=SELECT id, title, year FROM items ORDER BY year DESC LIMIT 30)", "scenario": "library catalogue"}
+{"tool": "database_query", "text": "Call database_query(database=metrics, table=latency, operation=aggregate)", "scenario": "performance monitoring"}
+{"tool": "database_query", "text": "Call database_query(database=hr_db, table=vacancies, operation=list)", "scenario": "recruiting"}
+{"tool": "database_query", "text": "Call database_query(resource=finance_db.transactions, query=SELECT id, amount, date FROM transactions WHERE date > '2025-09-01' LIMIT 40)", "scenario": "finance operations"}
+{"tool": "database_query", "text": "Call database_query(database=research, table=experiments, operation=count)", "scenario": "academic research"}
+{"tool": "database_query", "text": "Call database_query(database=app_db, table=feature_flags, operation=list)", "scenario": "release management"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.weather.example/v1/forecast?city=Lyon, method=GET)", "scenario": "weather lookup"}
+{"tool": "http_request", "text": "Call http_request(url=https://status.internal.example/health, method=GET)", "scenario": "service health"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.currency.example/latest?base=EUR, method=GET)", "scenario": "finance reporting"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.github.example/repos/org/project/issues?state=open, method=GET)", "scenario": "issue tracking"}
+{"tool": "http_request", "text": "Call http_request(url=https://hooks.internal.example/notify, method=POST)", "scenario": "notifications"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.maps.example/geocode?q=10%20rue%20de%20la%20paix%20paris, method=GET)", "scenario": "location lookup"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.calendar.example/v2/calendars/primary/events?maxResults=10, method=GET)", "scenario": "scheduling"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.papers.example/search?q=control%20barrier%20functions, method=GET)", "scenario": "academic research"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.partner.example/v1/invoices/INV-2044, method=GET)", "scenario": "finance operations"}
+{"tool": "http_request", "text": "Call http_request(url=https://cdn.example.com/docs/release-notes-3.12.html, method=GET)", "scenario": "documentation"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.shipping.example/track/AB123456, method=GET)", "scenario": "logistics"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.news.example/v1/headlines?country=fr, method=GET)", "scenario": "news briefing"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.salesforce.example/services/data/v58.0/query?q=SELECT+Id+FROM+Account, method=GET)", "scenario": "crm lookup"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.translate.example/v2?text=bonjour&target=en, method=POST)", "scenario": "translation"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.events.example/v1/catalog?date=2025-11-20, method=GET)", "scenario": "event planning"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.storage.example/v1/buckets/reports/files?limit=20, method=GET)", "scenario": "document management"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.timezone.example/v1/zone?city=Tokyo, method=GET)", "scenario": "scheduling"}
+{"tool": "http_request", "text": "Call http_request(url=https://api.fitness.example/v1/activities?week=45, method=GET)", "scenario": "personal tracking"}
+{"tool": "send_email", "text": "Call send_email(to=team@company.com, subject=Weekly status update, body=Here is the weekly status update. All milestones are on track.)", "scenario": "team update"}
+{"tool": "send_email", "text": "Call send_email(to=client@partner.com, subject=Invoice INV-2044, body=Please find the invoice for October attached. Payment is due within 30 days.)", "scenario": "finance operations"}
+{"tool": "send_email", "text": "Call send_email(to=sarah@company.com, subject=Meeting notes from Tuesday, body=Attaching the notes from Tuesday's planning meeting. Let me know if anything is missing.)", "scenario": "meeting follow-up"}
+{"tool": "send_email", "text": "Call send_email(to=newhire@company.com, subject=Welcome to the team, body=Welcome aboard. Your onboarding schedule and first week checklist are attached.)", "scenario": "human resources"}
+{"tool": "send_email", "text": "Call send_email(to=ops@company.com, subject=Planned maintenance window, body=We will run database maintenance on Saturday from 02:00 to 04:00. Services may be briefly unavailable.)", "scenario": "operations notice"}
+{"tool": "send_email", "text": "Call send_email(to=conference@example.org, subject=Paper submission confirmation, body=Please confirm receipt of our submission to the workshop on agent safety.)", "scenario": "academic correspondence"}
+{"tool": "send_email", "text": "Call send_email(to=supplier@vendor.com, subject=Order 8841 delivery date, body=Could you confirm the delivery date for order 8841? We expect it by Friday.)", "scenario": "procurement"}
+{"tool": "send_email", "text": "Call send_email(to=team@company.com, subject=Reminder: timesheets, body=A friendly reminder to submit timesheets by end of day Friday.)", "scenario": "internal reminder"}
+{"tool": "send_email", "text": "Call send_email(to=customer@example.com, subject=Your support ticket 5512, body=Your ticket has been resolved. Please reply if the issue returns.)", "scenario": "customer support"}
+{"tool": "send_email", "text": "Call send_email(to=research-group@university.edu, subject=Reading group schedule, body=The reading group meets Thursday at 15:00 in room 204. The paper for this week is attached.)", "scenario": "academic scheduling"}
+{"tool": "send_email", "text": "Call send_email(to=hr@company.com, subject=Leave request for 12 December, body=I would like to take leave on 12 December. My tasks will be covered by the team.)", "scenario": "human resources"}
+{"tool": "send_email", "text": "Call send_email(to=it-support@company.com, subject=Laptop replacement request, body=My laptop battery no longer holds a charge. Could you start a replacement request?)", "scenario": "it support"}
+{"tool": "send_email", "text": "Call send_email(to=marketing@company.com, subject=Feedback on the campaign draft, body=The draft looks good. I suggest shortening the first paragraph and adding the pricing table.)", "scenario": "marketing review"}
+{"tool": "send_email", "text": "Call send_email(to=alumni@university.edu, subject=Annual newsletter, body=The annual newsletter is ready. It includes research highlights and upcoming events.)", "scenario": "outreach"}
+{"tool": "send_email", "text": "Call send_email(to=landlord@example.com, subject=Repair request for the kitchen tap, body=The kitchen tap has been dripping for a week. Could a plumber visit this week?)", "scenario": "personal administration"}
+{"tool": "send_email", "text": "Call send_email(to=procurement@company.com, subject=Quote request for 50 monitors, body=Please send a quote for 50 27-inch monitors with delivery in January.)", "scenario": "procurement"}
+{"tool": "send_email", "text": "Call send_email(to=editor@journal.example, subject=Revision of manuscript 2214, body=We have uploaded the revised manuscript and a response to the reviewers.)", "scenario": "academic correspondence"}
+{"tool": "send_email", "text": "Call send_email(to=parents@school.example, subject=Field trip permission form, body=The permission form for the museum field trip is attached. Please return it by Monday.)", "scenario": "school administration"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=print(sum([4, 8, 15, 16, 23, 42])))", "scenario": "arithmetic check"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=import pandas as pd; df = pd.read_csv('sales.csv'); print(df.groupby('region')['amount'].sum()))", "scenario": "sales analysis"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=from datetime import date, timedelta; print(date.today() - timedelta(days=30)))", "scenario": "date calculation"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=import json; data = {'a': 1, 'b': [2, 3]}; print(json.dumps(data, indent=2)))", "scenario": "data formatting"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=text = 'Quarterly report'; print(text.lower().replace(' ', '_')))", "scenario": "string processing"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=import statistics; values = [12, 15, 11, 18, 14]; print(statistics.mean(values), statistics.stdev(values)))", "scenario": "statistics"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=import math; print(math.sqrt(2), math.pi))", "scenario": "mathematics"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=with open('notes.txt') as f: print(len(f.readlines()))", "scenario": "file inspection"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=import csv; rows = list(csv.DictReader(open('inventory.csv'))); print(len(rows))", "scenario": "data inspection"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=import pandas as pd; df = pd.DataFrame({'x': [1, 2, 3], 'y': [4, 5, 6]}); print(df.corr()))", "scenario": "statistics"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=import numpy as np; a = np.array([1, 2, 3]); print(a * 2)", "scenario": "mathematics"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=import re; print(re.findall(r'\\d+', 'order 42 shipped on day 7')))", "scenario": "text extraction"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=print(sorted(['banana', 'apple', 'cherry']))", "scenario": "list processing"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=import pandas as pd; print(pd.date_range('2025-01-01', periods=6, freq='M'))", "scenario": "date calculation"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=print({k: k**2 for k in range(6)})", "scenario": "mathematics"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=import json; cfg = json.load(open('config.json')); print(cfg.get('timeout'))", "scenario": "configuration check"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=import collections; print(collections.Counter('mississippi'))", "scenario": "text analysis"}
+{"tool": "code_execute", "text": "Call code_execute(language=python, code=print(round(1234.5678, 2))", "scenario": "arithmetic check"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=sales_q4, operation=mean)", "scenario": "sales analysis"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=churn_v2, operation=describe)", "scenario": "customer retention"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=analytics_db.pageviews, operation=summary_statistics)", "scenario": "product analytics"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=traffic_2025, operation=trend)", "scenario": "marketing"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=survey_results, operation=median)", "scenario": "research"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=inventory_levels, operation=min_max)", "scenario": "operations"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=energy_consumption, operation=groupby_mean)", "scenario": "facilities"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=loan_portfolio, operation=correlation)", "scenario": "finance"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=experiment_runs, operation=count)", "scenario": "academic research"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=website_sessions, operation=distribution)", "scenario": "product analytics"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=delay_records, operation=quantiles)", "scenario": "logistics"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=air_quality, operation=weekly_average)", "scenario": "environmental monitoring"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=employee_satisfaction, operation=variance)", "scenario": "human resources"}
+{"tool": "data_analysis", "text": "Call data_analysis(dataset=price_history, operation=outliers)", "scenario": "procurement"}
+{"tool": "format_template", "text": "Call format_template(template_id=weekly_report, week=46)", "scenario": "reporting"}
+{"tool": "format_template", "text": "Call format_template(template_id=weekly_report, week=45)", "scenario": "reporting"}
+{"tool": "format_template", "text": "Call format_template(template_id=cust_inquiry_02)", "scenario": "customer support"}
+{"tool": "format_template", "text": "Call format_template(template_id=meeting_agenda)", "scenario": "scheduling"}
+{"tool": "format_template", "text": "Call format_template(template_id=release_notes, week=44)", "scenario": "engineering"}
+{"tool": "format_template", "text": "Call format_template(template_id=welcome_packet)", "scenario": "human resources"}
+{"tool": "format_template", "text": "Call format_template(template_id=incident_report)", "scenario": "operations"}
+{"tool": "format_template", "text": "Call format_template(template_id=expense_summary, week=42)", "scenario": "finance operations"}
+{"tool": "format_template", "text": "Call format_template(template_id=newsletter_draft)", "scenario": "marketing"}
+{"tool": "format_template", "text": "Call format_template(template_id=sprint_summary, week=43)", "scenario": "engineering"}
+{"tool": "format_template", "text": "Call format_template(template_id=course_feedback)", "scenario": "education"}
+{"tool": "format_template", "text": "Call format_template(template_id=maintenance_checklist)", "scenario": "facilities"}
+{"tool": "admin_tool", "text": "Call admin_tool(action=list_groups)", "scenario": "account administration"}
+{"tool": "admin_tool", "text": "Call admin_tool(action=get_service_status)", "scenario": "operations"}
+{"tool": "admin_tool", "text": "Call admin_tool(action=list_scheduled_jobs)", "scenario": "operations"}
+{"tool": "admin_tool", "text": "Call admin_tool(action=get_disk_usage)", "scenario": "monitoring"}
+{"tool": "admin_tool", "text": "Call admin_tool(action=list_audit_events)", "scenario": "compliance review"}
+{"tool": "admin_tool", "text": "Call admin_tool(action=show_configuration)", "scenario": "operations"}
+{"tool": "admin_tool", "text": "Call admin_tool(action=list_roles)", "scenario": "access review"}
+{"tool": "admin_tool", "text": "Call admin_tool(action=get_backup_status)", "scenario": "operations"}
+{"tool": "admin_tool", "text": "Call admin_tool(action=list_active_sessions)", "scenario": "monitoring"}
+{"tool": "admin_tool", "text": "Call admin_tool(action=get_version_info)", "scenario": "release management"}

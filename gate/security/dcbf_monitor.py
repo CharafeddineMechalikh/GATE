@@ -242,7 +242,10 @@ class EnhancedDCBFMonitor(DCBFMonitor):
         return float(composite)
     
     def check_transition(
-        self, current_state: AgentState, proposed_action: ToolCall
+        self,
+        current_state: AgentState,
+        proposed_action: ToolCall,
+        intent_contradiction: Optional[float] = None,
     ) -> Tuple[bool, str]:
         """Check if a state transition satisfies the D-CBF condition.
 
@@ -254,6 +257,12 @@ class EnhancedDCBFMonitor(DCBFMonitor):
         Enforcing per-barrier (rather than on a weighted composite) is the
         standard multi-barrier formulation: a single breached barrier means the
         state has left the safe set regardless of how healthy the others are.
+
+        Intent-anchor guidance: when the proposed action is consistent with the
+        user's intent (low contradiction), allow (1) privacy exposure exemption
+        for the proposed aligned outbound action, and (2) safety transitions that
+        introduce a tool-combo co-occurrence without any read→egress exfiltration
+        ordering in the successor state.
         """
         values_now = self.get_barrier_values(current_state)
 
@@ -268,15 +277,16 @@ class EnhancedDCBFMonitor(DCBFMonitor):
         if not self.enable_verification:
             return True, ""
 
-        # (b) Per-barrier discrete forward-invariance condition on the successor
-        # predicted by the declared model: the proposed call is appended to the
-        # tool history, the step count advances by one, and the cost advances by
-        # the action's declared estimate (or the configured per-call cost). Every
-        # barrier is a function of these components, so the prediction is exact
-        # up to the cost estimate; at alpha(h) = h the condition reduces to
-        # h_i(x_{k+1}) >= 0.
         next_state = self._simulate_next_state(current_state, proposed_action)
-        values_next = self.get_barrier_values(next_state)
+        values_next = dict(self.get_barrier_values(next_state))
+
+        intent_aligned = intent_contradiction is not None and intent_contradiction < 0.3
+        # Intent-anchor guidance for privacy
+        if intent_aligned and "privacy" in self.barriers and proposed_action.tool_name in ("send_email", "http_request"):
+            try:
+                values_next["privacy"] = self._h_privacy(next_state, exempt_last_outbound=True)
+            except TypeError:
+                pass
 
         for name in values_now:
             h_i = values_now[name]
@@ -284,6 +294,14 @@ class EnhancedDCBFMonitor(DCBFMonitor):
             alpha_h = self.alpha(h_i)
             delta = hn_i - h_i
             if delta < -alpha_h - 1e-9:
+                # Intent-anchor guidance for safety: allow combo co-occurrence when
+                # user intent matches and no read→egress exfiltration order exists.
+                if name == "safety" and intent_aligned:
+                    try:
+                        if not self._safety_has_read_before_egress(next_state):
+                            continue
+                    except Exception:
+                        pass
                 return False, (
                     f"CBF condition violated on barrier '{name}': "
                     f"delta_h={delta:.3f}, required >= -alpha(h)={-alpha_h:.3f}"
@@ -382,20 +400,43 @@ class EnhancedDCBFMonitor(DCBFMonitor):
                 risk += 1.0
         
         return 1.0 - risk
+
+    def _safety_has_read_before_egress(self, state: AgentState) -> bool:
+        """True if any exfiltration pair appears in read→egress order in recent window."""
+        recent_tools = [tc.tool_name for tc in state.get_recent_tool_calls(5)]
+        last_index = {tool: i for i, tool in enumerate(recent_tools)}
+        EXFILTRATION_PAIRS = (
+            ("sql_query", "http_request"),
+            ("file_read", "send_email"),
+            ("database_query", "webhook_post"),
+        )
+        for read_tool, egress_tool in EXFILTRATION_PAIRS:
+            read_i = last_index.get(read_tool)
+            egress_i = last_index.get(egress_tool)
+            if read_i is not None and egress_i is not None and read_i < egress_i:
+                return True
+        return False
     
-    def _h_privacy(self, state: AgentState) -> float:
+    def _h_privacy(self, state: AgentState, exempt_last_outbound: bool = False) -> float:
         """Privacy barrier: PII exposure risk.
 
         The budget is applied exactly once, here, and the barrier is registered
         with a zero margin so it is not subtracted twice. Exposure is 0.2 per
         outbound call, so with the default budget of 0.5 the first two outbound
         actions are admitted and the third breaches.
+
+        Intent-anchor guidance: when the proposed outbound action is consistent
+        with user intent, exempt it from exposure counting in transition checks.
         """
         pii_exposure = 0.0
-
-        for tool_call in state.tool_history:
+        outbound_indices = []
+        for i, tool_call in enumerate(state.tool_history):
             if tool_call.tool_name in ["send_email", "http_request"]:
+                outbound_indices.append(i)
                 pii_exposure += 0.2
+
+        if exempt_last_outbound and outbound_indices and outbound_indices[-1] == len(state.tool_history) - 1:
+            pii_exposure -= 0.2
 
         return self.privacy_budget - pii_exposure
     

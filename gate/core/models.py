@@ -20,6 +20,9 @@ class ToolCall:
     timestamp: datetime = field(default_factory=datetime.utcnow)
     agent_id: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
+    # Provenance/taint (optional, backward-compatible)
+    taint_sources: List[str] = field(default_factory=list)
+    provenance: Optional[Dict[str, Any]] = None
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
@@ -72,10 +75,20 @@ class ResourceMetrics:
         self.cost_usd += cost
 
 
+# 3C-H: segment-level provenance schema (origin metadata only; never used for decisions/blocking).
+# origin: user_instruction|system_developer_context|environment_data|external_document|tool_result|unknown
+# boundary: initial_context|tool_ingestion|decision
+# 3B-A: `environment_data` = benchmark/framework-authored environment content observed at construction
+# (e.g. retained YAML defaults). Distinct from `external_document` (externally supplied content recorded
+# at its construction/substitution event). Neither is inferred from text or labels; neither affects decisions.
+SEGMENT_ORIGINS = {"user_instruction", "system_developer_context", "environment_data", "external_document", "tool_result", "unknown"}
+SEGMENT_BOUNDARIES = {"initial_context", "tool_ingestion", "decision"}
+
+
 @dataclass
 class AgentState:
     """Represents the complete state of an agent."""
-    
+
     agent_id: str
     context_embedding: Optional[np.ndarray] = None
     action_embedding: Optional[np.ndarray] = None
@@ -88,15 +101,117 @@ class AgentState:
     loop_count: Dict[str, int] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)
     last_updated: datetime = field(default_factory=datetime.utcnow)
-    
+    # Provenance/taint (optional, backward-compatible)
+    taint_sources: List[str] = field(default_factory=list)
+    provenance: Optional[Dict[str, Any]] = None
+
     def update_timestamp(self):
         """Update the last_updated timestamp."""
         self.last_updated = datetime.utcnow()
-    
+
+    def _ensure_provenance(self) -> Dict[str, Any]:
+        prov = self.provenance if isinstance(self.provenance, dict) else {}
+        if 'sources' not in prov:
+            prov['sources'] = list(self.taint_sources)
+        if 'source_log' not in prov:
+            prov['source_log'] = []
+        if 'segments' not in prov:
+            prov['segments'] = []
+        self.provenance = prov
+        return prov
+
+    def add_segment(self, origin: str, boundary: str, *, known: bool = None,
+                    content_ref: str = None, source: str = None,
+                    parent_segments: list = None, transformation: str = None,
+                    segment_id: str = None, metadata: dict = None) -> None:
+        """Record a provenance segment (3C-H; lineage extended in 3B-A). Metadata only; never affects decisions.
+        `known` defaults True for established non-unknown origins, False for unknown.
+        `source` is the recording mechanism (e.g. runtime/initial_context) — not case labels.
+        3B-A lineage (all optional): `parent_segments` (ids of constructed/earlier segments this one
+        derives from), `transformation` (e.g. 'environment_vector_substitution',
+        'tool_result_serialization', 'summarization'), `segment_id` (auto-assigned when lineage is
+        recorded), `metadata` (construction-event fields, e.g. vector_id/replaced/source_mechanism).
+        A transformed segment NEVER inherits a parent's origin or known-ness: lineage is preserved
+        while the child's own origin stands alone (3B-A constraint A)."""
+        if origin not in SEGMENT_ORIGINS:
+            origin = 'unknown'
+        if boundary not in SEGMENT_BOUNDARIES:
+            boundary = 'decision'
+        if known is None:
+            known = origin != 'unknown'
+        prov = self._ensure_provenance()
+        seg = {
+            'origin': origin,
+            'boundary': boundary,
+            'known': bool(known),
+        }
+        if content_ref is not None:
+            seg['content_ref'] = str(content_ref)[:200]
+        if source is not None:
+            seg['source'] = str(source)[:80]
+        has_lineage = parent_segments is not None or transformation is not None or segment_id is not None or metadata is not None
+        if has_lineage:
+            seg['segment_id'] = str(segment_id) if segment_id is not None else f"seg_{len(prov['segments']):03d}"
+            seg['parent_segments'] = [str(p) for p in (parent_segments or [])]
+            seg['transformation'] = str(transformation) if transformation is not None else None
+            if metadata is not None:
+                # construction-event metadata only (never scores/labels); keep bounded
+                seg['metadata'] = {str(k): v for k, v in list(dict(metadata).items())[:10]}
+        seg['ts'] = self.last_updated.isoformat() if self.last_updated else None
+        # dedupe identical (origin,boundary,content_ref,transformation,parent set)
+        segs = prov['segments']
+        key = (seg['origin'], seg['boundary'], seg.get('content_ref'), seg.get('transformation'), tuple(seg.get('parent_segments') or []))
+        if not any((s.get('origin'), s.get('boundary'), s.get('content_ref'), s.get('transformation'), tuple(s.get('parent_segments') or [])) == key for s in segs):
+            segs.append(seg)
+            if len(segs) > 100:
+                prov['segments'] = segs[-100:]
+        # known initial/user segments also register as a 'user' source for provenance flags (metadata).
+        # 3B-A: environment_data / external_document / tool_result segments must NOT add taint flags here.
+        if seg['known'] and origin == 'user_instruction' and 'user' not in self.taint_sources:
+            self.taint_sources.append('user')
+        prov['sources'] = list(self.taint_sources)
+        self.provenance = prov
+        self.update_timestamp()
+
+    def add_taint(self, *sources: str, origin: str = None, content_ref: str = None, tool_name: str = None,
+                  boundary: str = None):
+        """Mark state as influenced by given provenance sources (idempotent).
+        Taint = information origin (not maliciousness). Preserves per-source records and segments."""
+        for s in sources:
+            if s and s not in self.taint_sources:
+                self.taint_sources.append(s)
+        prov = self._ensure_provenance()
+        log = list(prov.get('source_log') or [])
+        if origin or tool_name or content_ref or sources:
+            entry = {'sources': [s for s in sources if s]}
+            if origin:
+                entry['origin'] = origin
+            if tool_name:
+                entry['tool_name'] = tool_name
+            if content_ref:
+                entry['content_ref'] = str(content_ref)[:200]
+            entry['ts'] = self.last_updated.isoformat() if self.last_updated else None
+            log.append(entry)
+            if len(log) > 50:
+                log = log[-50:]
+        prov['source_log'] = log
+        prov['sources'] = list(self.taint_sources)
+        # 3C-H: record a tool-ingestion segment when origin is tool_result (metadata; preserves global taint)
+        if origin == 'tool_result' and sources:
+            b = boundary or 'tool_ingestion'
+            seg_origin = 'external_document' if 'external_content' in sources else 'tool_result'
+            self.add_segment(seg_origin, b, known=True, content_ref=content_ref or tool_name, source='runtime')
+            prov = self._ensure_provenance()
+        self.provenance = prov
+        self.update_timestamp()
+
     def add_tool_call(self, tool_call: ToolCall):
         """Add a tool call to history."""
         self.tool_history.append(tool_call)
         self.step_count += 1
+        # propagate taint from tool call (tool results/actions can introduce influence)
+        for s in getattr(tool_call, 'taint_sources', []) or []:
+            self.add_taint(s)
         self.update_timestamp()
     
     def increment_loop(self, phase: str):
@@ -140,6 +255,9 @@ class SemanticScore:
     details: Dict[str, float]
     alignment_contradiction: Optional[float] = None
     fused_harm: Optional[float] = None
+    # Provenance/taint (optional, backward-compatible): source of influencing context
+    provenance: Optional[Dict[str, Any]] = None
+    taint_score: Optional[float] = None
     
     def is_safe(self) -> bool:
         """Check if the score indicates safety."""

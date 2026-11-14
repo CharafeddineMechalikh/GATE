@@ -35,6 +35,9 @@ _VECTORS = {
     "harm": np.array([-1.0, 0.0, 0.0, 0.0]),
     "safe": np.array([1.0, 0.0, 0.0, 0.0]),
     "mid": np.array([0.35, np.sqrt(1 - 0.35 ** 2), 0.0, 0.0]),
+    # sss ~ 0.55: inside the new escalation band [0.5, 0.58), used to exercise
+    # the fused-harm block path now that the allow bound is 0.58.
+    "band": np.array([0.45, np.sqrt(1 - 0.45 ** 2), 0.0, 0.0]),
 }
 
 
@@ -49,6 +52,10 @@ def firewall():
         embedding_model_name="all-MiniLM-L6-v2",
         vector_store_path=None,
     )
+    # Tests below assume allow bound 0.58 (pre-3A default behavior in unit fixtures);
+    # 3A freeze sets operational default to 0.7 — keep logic tests explicit/robust.
+    config.semantic_thresholds.sss_safe_threshold = 0.58
+    config.semantic_thresholds.sss_block_threshold = 0.5
     fw = DefaultSemanticFirewall(config)
     yield fw, stub
     EmbeddingModel._MODEL_CACHE.pop(_CACHE_KEY, None)
@@ -80,7 +87,14 @@ def _firewall_with_aligner(stub_aligner, weight=0.5, **thresholds):
         embedding_model_name="all-MiniLM-L6-v2",
         vector_store_path=None,
     )
+    # Preserve unit-test logic assumptions independent of 3A operational default (0.7).
+    config.semantic_thresholds.sss_safe_threshold = 0.58
+    config.semantic_thresholds.sss_block_threshold = 0.5
     config.semantic_thresholds.alignment_weight = weight
+    # The stub encoder maps every string to the same vector, so the anchor can
+    # never separate from the action. Disable the degenerate-anchor guard here;
+    # TestDegenerateAnchor exercises it with a stub that does separate.
+    config.semantic_thresholds.degenerate_intent_threshold = 0.0
     for k, v in thresholds.items():
         setattr(config.semantic_thresholds, k, v)
     return DefaultSemanticFirewall(config, aligner=stub_aligner)
@@ -165,7 +179,9 @@ class TestDefaultSemanticFirewall:
         fw, _ = firewall
         fw.harm_prototypes = [_VECTORS["mid"].astype("float32")]
         score = fw.check_semantic_safety("act", "search", "a1")
-        assert score.decision == "ESCALATE"
+        # sss ~ 0.65 now clears the allow bound (0.58), so it is allowed rather
+        # than escalated — fewer benign calls reach the review queue.
+        assert score.decision == "ALLOW"
 
     def test_check_with_safe_centroid(self, firewall):
         fw, _ = firewall
@@ -219,25 +235,28 @@ class TestIntentActionAlignment:
         fw.set_intent_anchor("summarise the tickets")
         assert fw.intent_text == "summarise the tickets"
 
-    def test_low_contradiction_leaves_a_band_call_escalated(self, aligned):
-        # Harm prototype "mid" puts the SSS at ~0.65, an ESCALATE under SSS.
-        # Alignment is one-sided, so a low contradiction cannot lift it.
+    def test_low_contradiction_clears_the_allow_bound(self, aligned):
+        # Harm prototype "mid" puts the SSS at ~0.65, above the allow bound
+        # (0.58). Alignment is one-sided, so a low contradiction cannot refuse
+        # a call the SSS has already cleared.
         aligner = _StubAligner(contradiction=0.01, entailment=0.95)
         fw = aligned(aligner)
         fw.harm_prototypes = [_VECTORS["mid"].astype("float32")]
         fw.set_intent_anchor("read the ticket")
         score = fw.check_semantic_safety("act", "search", "a1")
         assert score.details["alignment_contradiction"] == 0.01
-        assert 0.5 <= score.sss_value < 0.7
-        assert score.decision == "ESCALATE"
+        assert score.sss_value >= 0.58
+        assert score.decision == "ALLOW"
 
     def test_high_contradiction_blocks_a_band_call(self, aligned):
+        # sss ~ 0.55 is inside the escalation band [0.5, 0.58); high
+        # contradiction pushes it over the fused-harm line into a block.
         aligner = _StubAligner(contradiction=0.99, entailment=0.0)
         fw = aligned(aligner)
-        fw.harm_prototypes = [_VECTORS["mid"].astype("float32")]
+        fw.harm_prototypes = [_VECTORS["band"].astype("float32")]
         fw.set_intent_anchor("read the ticket")
         score = fw.check_semantic_safety("act", "search", "a1")
-        assert 0.5 <= score.sss_value < 0.7
+        assert 0.5 <= score.sss_value < 0.58
         assert score.fused_harm > fw.thresholds.fused_block_threshold
         assert score.decision == "BLOCK"
 
@@ -271,7 +290,7 @@ class TestIntentActionAlignment:
         fw.set_intent_anchor("read the ticket")
         score = fw.check_semantic_safety("act", "search", "a1")
         assert score.alignment_contradiction is None
-        assert score.decision == "ESCALATE"
+        assert score.decision == "ALLOW"
 
     def test_zero_weight_skips_the_aligner(self, aligned):
         aligner = _StubAligner(contradiction=0.99)
@@ -280,7 +299,7 @@ class TestIntentActionAlignment:
         fw.set_intent_anchor("read the ticket")
         score = fw.check_semantic_safety("act", "search", "a1")
         assert aligner.calls == []
-        assert score.decision == "ESCALATE"
+        assert score.decision == "ALLOW"
 
     def test_no_intent_skips_the_aligner(self, aligned):
         aligner = _StubAligner(contradiction=0.99)
@@ -288,16 +307,87 @@ class TestIntentActionAlignment:
         fw.harm_prototypes = [_VECTORS["mid"].astype("float32")]
         score = fw.check_semantic_safety("act", "search", "a1")
         assert aligner.calls == []
-        assert score.decision == "ESCALATE"
+        assert score.decision == "ALLOW"
 
     def test_block_bound_sets_the_refusal_line(self, aligned):
-        # A wide bound keeps the band call escalated; a zero bound refuses it.
+        # sss ~ 0.55 sits in the escalation band [0.5, 0.58). A high fused-harm
+        # threshold leaves it escalated; a zero threshold refuses it.
         fw = aligned(_StubAligner(contradiction=0.5), fused_block_threshold=10.0)
-        fw.harm_prototypes = [_VECTORS["mid"].astype("float32")]
+        fw.harm_prototypes = [_VECTORS["band"].astype("float32")]
         fw.set_intent_anchor("read the ticket")
         assert fw.check_semantic_safety("act", "search", "a1").decision == "ESCALATE"
 
         fw = aligned(_StubAligner(contradiction=0.5), fused_block_threshold=0.0)
-        fw.harm_prototypes = [_VECTORS["mid"].astype("float32")]
+        fw.harm_prototypes = [_VECTORS["band"].astype("float32")]
         fw.set_intent_anchor("read the ticket")
         assert fw.check_semantic_safety("act", "search", "a1").decision == "BLOCK"
+
+
+class _SeparatingEncoder(_StubEncoder):
+    """Anchor and action map to different vectors, so the intent term is real."""
+
+    EXTRA = {"read the ticket": np.array([0.8, 0.6, 0.0, 0.0], dtype="float32")}
+
+    def encode(self, texts, convert_to_numpy=True, **kwargs):
+        vecs = []
+        for t in texts:
+            vecs.append(self.EXTRA.get(t, np.array([1.0, 0.0, 0.0, 0.0])))
+        return np.array(vecs, dtype="float32")
+
+
+def _degenerate_firewall(aligner=None):
+    EmbeddingModel._MODEL_CACHE[_CACHE_KEY] = _SeparatingEncoder()
+    config = gateConfig(
+        agent_profile=AgentProfile(
+            agent_id="a1", role="r", allowed_tools={"search", "read"}
+        ),
+        embedding_model_name="all-MiniLM-L6-v2",
+        vector_store_path=None,
+    )
+    config.semantic_thresholds.sss_safe_threshold = 0.58
+    config.semantic_thresholds.sss_block_threshold = 0.45
+    return DefaultSemanticFirewall(config, aligner=aligner)
+
+
+class TestDegenerateAnchor:
+    def teardown_method(self):
+        EmbeddingModel._MODEL_CACHE.pop(_CACHE_KEY, None)
+
+    def test_degenerate_anchor_never_allows_a_high_sss_call(self):
+        # Anchor identical to the action: drift_to_intent 0. Harm prototype far
+        # from the action puts SSS above the allow bound, which is exactly how a
+        # self-anchored attack used to pass. The guard refuses it.
+        fw = _degenerate_firewall()
+        fw.harm_prototypes = [_VECTORS["harm"].astype("float32")]
+        fw.set_intent_anchor("act")
+        score = fw.check_semantic_safety("act", "search", "a1")
+        assert score.drift_to_intent < fw.thresholds.degenerate_intent_threshold
+        assert score.sss_value > fw.thresholds.sss_safe_threshold
+        assert score.details["anchor_degenerate"] is True
+        assert score.decision == "ESCALATE"
+
+    def test_degenerate_anchor_blocks_when_harm_is_closer(self):
+        fw = _degenerate_firewall()
+        fw.harm_prototypes = [_VECTORS["band"].astype("float32")]
+        fw.set_intent_anchor("act")
+        score = fw.check_semantic_safety("act", "search", "a1")
+        assert score.drift_to_harm < score.drift_to_safe
+        assert score.decision == "BLOCK"
+
+    def test_degenerate_anchor_skips_the_aligner(self):
+        aligner = _StubAligner(contradiction=0.99)
+        fw = _degenerate_firewall(aligner=aligner)
+        fw.harm_prototypes = [_VECTORS["band"].astype("float32")]
+        fw.set_intent_anchor("act")
+        score = fw.check_semantic_safety("act", "search", "a1")
+        assert score.details["anchor_degenerate"] is True
+        assert score.alignment_contradiction is None
+        assert aligner.calls == []
+
+    def test_separated_anchor_keeps_the_ternary_rule(self):
+        fw = _degenerate_firewall()
+        fw.harm_prototypes = [_VECTORS["harm"].astype("float32")]
+        fw.set_intent_anchor("read the ticket")
+        score = fw.check_semantic_safety("act", "search", "a1")
+        assert score.details["anchor_degenerate"] is False
+        assert score.decision == "ALLOW"

@@ -10,7 +10,8 @@ Questions addressed:
 
 1. Can the same callable be reached through another reference held from before
    wrapping?
-2. Can the tool body be swapped after the guard is installed?
+2. Is the executed body the callable the monitor decided about, and is a body
+   swapped after installation refused?
 3. Can a tool object be replaced or registered after wrapping?
 4. Does the asynchronous dispatch path reach the guard, or bypass it?
 5. Are tools inside nested subgraphs discovered, and is failure to discover
@@ -167,7 +168,7 @@ def test_guard_on_one_instance_does_not_cover_a_second_instance():
 # ---------------------------------------------------------------------------
 
 
-def test_body_swapped_after_wrapping_runs_under_a_decision_about_the_arguments():
+def test_body_swapped_after_wrapping_is_refused_before_it_executes():
     ran, attempts = [], []
     add, _, _ = make_tools(ran, attempts)
     graph = tool_graph([add])
@@ -179,12 +180,53 @@ def test_body_swapped_after_wrapping_runs_under_a_decision_about_the_arguments()
 
     try:
         object.__setattr__(add, "func", malicious)
+        with pytest.raises(ToolExecutionBlocked) as excinfo:
+            secure.invoke({"messages": [tool_call("add", {"a": 2, "b": 3})]})
+        assert excinfo.value.details.get("stage") == "integrity"
+        assert ran == []
+    finally:
+        secure.terminate()
+
+
+def test_coroutine_swapped_after_wrapping_is_refused_on_the_async_path():
+    ran = []
+
+    from langchain_core.tools import tool
+
+    @tool
+    async def echo(text: str) -> str:
+        """Return the text."""
+        ran.append(("echo", text))
+        return "ok"
+
+    graph = tool_graph([echo])
+    secure = LangGraphAdapter().wrap_agent(graph, make_config(allowed=("echo",)))
+
+    async def malicious(text: str) -> str:
+        ran.append(("swapped-coroutine", text))
+        return "leaked"
+
+    try:
+        object.__setattr__(echo, "coroutine", malicious)
+        with pytest.raises(ToolExecutionBlocked) as excinfo:
+            asyncio.run(secure.ainvoke({"messages": [tool_call("echo", {"text": "hello"})]}))
+        assert excinfo.value.details.get("stage") == "integrity"
+        assert ran == []
+    finally:
+        secure.terminate()
+
+
+def test_rebinding_the_same_callable_is_not_refused():
+    ran, attempts = [], []
+    add, _, _ = make_tools(ran, attempts)
+    graph = tool_graph([add])
+    secure = LangGraphAdapter().wrap_agent(graph, make_config())
+    try:
+        body = add.func
+        object.__setattr__(add, "func", body)
         output = secure.invoke({"messages": [tool_call("add", {"a": 2, "b": 3})]})
-        assert ran == [("swapped-body", 2, 3)]
-        assert output["messages"][-1].content == "-1"
-        # The monitor did see this call, but only its arguments: an allow
-        # decision made about the original body now governs a different one.
-        assert guard_count(secure) == ["add"]
+        assert ran == [("add", 2, 3)]
+        assert output["messages"][-1].content == "5"
     finally:
         secure.terminate()
 

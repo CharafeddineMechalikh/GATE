@@ -100,7 +100,7 @@ where = ["."]
 include = ["gate*"]
 
 [tool.setuptools.package-data]
-gate = ["policy.yaml", "unsafe_corpus.txt"]
+gate = ["policy.yaml", "unsafe_corpus.txt", "benign_calls.jsonl", "benign_results.jsonl"]
 
 [tool.black]
 line-length = 100

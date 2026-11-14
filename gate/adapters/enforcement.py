@@ -19,14 +19,22 @@ import threading
 import uuid
 from collections.abc import Mapping
 from concurrent.futures import TimeoutError as FutureTimeoutError
+from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from ..core.config import gateConfig
 from ..core.exceptions import AdapterError, SecurityViolation
 from ..core.interfaces import SecurityMonitor
 from ..core.models import AgentState, ToolCall, ValidationResult
+from ..security.tool_response_authorization import ToolResponseAuthorizationGate
+from ..security.tool_response_inspection import ResponseFindingStore, ToolResponseInspector
 
 logger = logging.getLogger(__name__)
+
+# ``BaseTool._run`` resolves ``self.func`` (and ``_arun`` resolves
+# ``self.coroutine``) at call time, so a body assigned after the guard was
+# installed would otherwise execute under a decision made about the original one.
+_BODY_ATTRIBUTES = ("func", "coroutine")
 
 _CONTROL_KWARGS = frozenset(
     {
@@ -82,6 +90,7 @@ class ToolExecutionBlocked(SecurityViolation):
         self.tool_name = tool_name
         self.result = result
         self.post_execution = post_execution
+        self.stage = stage if stage is not None else details.get("stage")
 
 
 def schema_field_names(tool: Any) -> List[str]:
@@ -144,6 +153,53 @@ def _signature_parameters(func: Callable[..., Any]) -> Mapping[str, inspect.Para
         return {}
 
 
+def _body_identity(value: Any) -> Optional[Tuple[Any, Any, Any]]:
+    """Canonical identity of a callable across repeated attribute access.
+
+    A bound method is a fresh object on every ``getattr``, so identity is taken
+    from the instance and the underlying function instead of the bound wrapper.
+    """
+    if value is None:
+        return None
+    bound_to = getattr(value, "__self__", None)
+    underlying = getattr(value, "__func__", None)
+    if bound_to is not None and underlying is not None:
+        return (bound_to, underlying, getattr(underlying, "__code__", None))
+    return (value, value, getattr(value, "__code__", None))
+
+
+def capture_tool_body(tool: Any) -> Dict[str, Tuple[Any, Any, Any]]:
+    """Record the callables a tool dispatches to, for identity binding."""
+    body: Dict[str, Tuple[Any, Any, Any]] = {}
+    for attribute in _BODY_ATTRIBUTES:
+        identity = _body_identity(getattr(tool, attribute, None))
+        if identity is not None:
+            body[attribute] = identity
+    return body
+
+
+def ensure_tool_body(
+    tool: Any, body: Mapping[str, Tuple[Any, Any, Any]], tool_name: str
+) -> None:
+    """Fail closed when the body about to run is not the one that was validated."""
+    for attribute, (holder, func, code) in body.items():
+        current_holder, current_func, current_code = _body_identity(
+            getattr(tool, attribute, None)
+        ) or (None, None, None)
+        if (
+            current_holder is not holder
+            or current_func is not func
+            or current_code is not code
+        ):
+            raise ToolExecutionBlocked(
+                f"Tool {tool_name!r} body changed after the guard was installed; "
+                "the call was refused rather than executed under a decision about "
+                "the original callable",
+                tool_name=tool_name,
+                stage="integrity",
+            )
+
+
 def _invoke_sync_tool(
     func: Callable[..., Any],
     args: Tuple[Any, ...],
@@ -182,18 +238,41 @@ class ToolEnforcement:
         self._loop_guard = threading.Lock()
         self._approval_loop: Optional[asyncio.AbstractEventLoop] = None
         self._approval_guard = threading.Lock()
+        # V1 tool-response inspection / cross-step authorization (Components A-C) + inbound 5-layer response validation.
+        self.tool_response_inspector = ToolResponseInspector()
+        self.tool_response_findings = ResponseFindingStore()
+        self.tool_response_authorization = ToolResponseAuthorizationGate(
+            inspector=self.tool_response_inspector,
+            store=self.tool_response_findings,
+        )
+        try:
+            from ..security.response_validation import InboundResponseValidator
+            self.inbound_response_validator = InboundResponseValidator(monitor=self.monitor)
+        except Exception:
+            self.inbound_response_validator = None
+        self._user_constraints: Optional[List[str]] = None
 
     @property
     def state(self) -> AgentState:
         return self._state
 
     def begin_run(self, intent: Optional[str] = None) -> None:
-        """Start a fresh agent run: new state, planning phase, fresh intent anchor."""
+        """Start a fresh agent run: new state, planning phase, fresh intent anchor.
+        3C-H: seeds genuine user_instruction provenance from construction-time intent BEFORE first validate_action.
+        Metadata only; never affects decisions. Unobserved segments remain unknown."""
         with self._lock:
             self._state = AgentState(agent_id=self.config.agent_profile.agent_id)
             self._state.current_phase = "IDLE"
             self._finished = False
             self._aborted_reason = None
+            self.tool_response_findings.clear()
+            self._user_constraints = [intent] if isinstance(intent, str) and intent.strip() else None
+            if isinstance(intent, str) and intent.strip():
+                cref = f"intent:{abs(hash(intent.strip())) % (10**10):010d}"
+                try:
+                    self._state.add_segment('user_instruction', 'initial_context', known=True, content_ref=cref, source='construction_intent')
+                except Exception:
+                    pass
         firewall = getattr(self.monitor, "semantic_firewall", None)
         if intent is not None and firewall is not None:
             firewall.set_intent_anchor(str(intent))
@@ -270,6 +349,38 @@ class ToolEnforcement:
             result = await self.monitor.validate_action(action, self._state)
 
             if result.is_allowed:
+                decision = await self._evaluate_tool_response_authorization(action)
+                if decision.decision == "BLOCK":
+                    blocked_result = ValidationResult(
+                        is_allowed=False,
+                        reason=f"Response-inspection authorization blocked {tool_name}: {decision.reason}",
+                        details={
+                            "source": "tool_response_authorization",
+                            "decision": decision.decision,
+                            "reason": decision.reason,
+                        },
+                    )
+                    raise ToolExecutionBlocked(
+                        f"Blocked {tool_name}: {decision.reason}",
+                        tool_name,
+                        blocked_result,
+                        stage="authorization",
+                    )
+                if decision.decision == "ESCALATE":
+                    escalated_result = ValidationResult(
+                        is_allowed=False,
+                        escalated=True,
+                        requires_approval=True,
+                        reason=decision.reason,
+                        details={
+                            "needs_user_approval": True,
+                            "source": "tool_response_authorization",
+                            "decision": decision.decision,
+                        },
+                    )
+                    approval = await self._await_human(action, escalated_result)
+                    action.metadata["hitl_approval"] = approval
+                    return action
                 return action
 
             if result.escalated:
@@ -284,25 +395,150 @@ class ToolEnforcement:
             )
 
     async def after_call(self, action: ToolCall, output: Any) -> Any:
-        """Record an executed call and enforce the contract postcondition."""
+        """Record an executed call and enforce postcondition + inbound 5-layer response validation at delivery boundary."""
         with self._lock:
             self._state.add_tool_call(action)
             self._state.resource_usage.api_calls += 1
             self._state.current_phase = "OBSERVING"
 
             validator = getattr(self.monitor, "validate_result", None)
-            if validator is None:
+            if validator is not None:
+                result = await validator(action, output, self._state)
+                if not result.is_allowed:
+                    raise ToolExecutionBlocked(
+                        f"Postcondition failed for {action.tool_name}: {result.reason}",
+                        action.tool_name,
+                        result,
+                        post_execution=True,
+                    )
+
+            # Inbound 5-layer response validation: BLOCK/ESCALATE prevents delivery as trusted usable content.
+            inbound = None
+            try:
+                if self.inbound_response_validator is not None:
+                    inbound = self.inbound_response_validator.validate(action, output, self._state)
+            except Exception:
+                inbound = None
+            if inbound is not None:
+                try:
+                    self.tool_response_findings.add(
+                        action.call_id,
+                        list(getattr(inbound, "findings", []) or []),
+                        status="success" if getattr(inbound, "decision", "") in ("ALLOW", "ESCALATE", "BLOCK") else "failure",
+                        timestamp=datetime.utcnow(),
+                    )
+                except Exception:
+                    try:
+                        self.tool_response_findings.add(action.call_id, [], status="failure", timestamp=datetime.utcnow())
+                    except Exception:
+                        pass
+                if getattr(inbound, "decision", "") == "BLOCK":
+                    blocked_result = ValidationResult(
+                        is_allowed=False,
+                        reason=f"Inbound response validation blocked {action.tool_name}: {inbound.reason}",
+                        details={
+                            "source": "inbound_response_validation",
+                            "layer": getattr(inbound, "blocked_layer", None),
+                            "layers": [
+                                {"layer": lr.layer, "decision": lr.decision, "reason": lr.reason}
+                                for lr in (getattr(inbound, "layer_results", []) or [])
+                            ],
+                        },
+                        checks_failed=[getattr(inbound, "blocked_layer", "inbound_response") or "inbound_response"],
+                    )
+                    raise ToolExecutionBlocked(
+                        f"Inbound response blocked for {action.tool_name}: {inbound.reason}",
+                        action.tool_name,
+                        blocked_result,
+                        post_execution=True,
+                    )
+                if getattr(inbound, "decision", "") == "ESCALATE":
+                    # Fail-closed at delivery boundary: do not deliver as trusted usable content.
+                    blocked_result = ValidationResult(
+                        is_allowed=False,
+                        escalated=True,
+                        requires_approval=True,
+                        reason=f"Inbound response escalation for {action.tool_name}: {inbound.reason}",
+                        details={
+                            "source": "inbound_response_validation",
+                            "escalated_layers": list(getattr(inbound, "escalated_layers", []) or []),
+                            "layers": [
+                                {"layer": lr.layer, "decision": lr.decision, "reason": lr.reason}
+                                for lr in (getattr(inbound, "layer_results", []) or [])
+                            ],
+                            "default_deny": True,
+                        },
+                        checks_failed=list(getattr(inbound, "escalated_layers", []) or ["inbound_response"]),
+                    )
+                    raise ToolExecutionBlocked(
+                        f"Inbound response escalated (fail-closed) for {action.tool_name}: {inbound.reason}",
+                        action.tool_name,
+                        blocked_result,
+                        post_execution=True,
+                    )
+                # ALLOW: response may be delivered as trusted usable content (subject to postcondition already passed)
                 return output
 
-            result = await validator(action, output, self._state)
-            if not result.is_allowed:
-                raise ToolExecutionBlocked(
-                    f"Postcondition failed for {action.tool_name}: {result.reason}",
-                    action.tool_name,
-                    result,
-                    post_execution=True,
-                )
+            # Fallback if inbound validator unavailable: preserve legacy inspection recording
+            self._record_tool_response_findings(action, output)
             return output
+
+    def _record_tool_response_findings(self, action: ToolCall, output: Any, *, status: Optional[str] = None) -> None:
+        """Inspect an executed tool result and store response findings (corrective V1).
+
+        Runs on the successful-result path of ``after_call`` before the output is
+        returned to the agent. Detector failure/timeout/missing evidence are
+        recorded with explicit unavailable status and never treated as clean.
+        """
+        try:
+            if status in {"failure", "timeout", "unavailable"}:
+                self.tool_response_findings.add(
+                    action.call_id,
+                    [],
+                    status=status,
+                    timestamp=datetime.utcnow(),
+                )
+                return
+            if output is None and status == "missing":
+                self.tool_response_findings.add(
+                    action.call_id,
+                    [],
+                    status="unavailable",
+                    timestamp=datetime.utcnow(),
+                )
+                return
+            findings = self.tool_response_inspector.inspect(action, output)
+            self.tool_response_findings.add(action.call_id, findings, status="success", timestamp=datetime.utcnow())
+        except Exception:
+            self.tool_response_findings.add(
+                action.call_id,
+                [],
+                status="failure",
+                timestamp=datetime.utcnow(),
+            )
+
+    async def _evaluate_tool_response_authorization(
+        self, action: ToolCall
+    ) -> Any:
+        """Run cross-step response-inspection authorization for a proposed action.
+
+        Returns the authorization decision (ALLOW / ESCALATE / BLOCK). BLOCK is
+        raised as ``ToolExecutionBlocked`` by the caller; ESCALATE is routed through
+        the existing HITL approval flow; ALLOW lets the action proceed to execution.
+        """
+        return self.tool_response_authorization.evaluate(
+            action=action,
+            state=self._state,
+            user_constraints=self._user_constraints,
+        )
+
+    def record_tool_response_status(self, call_id: str, status: str) -> None:
+        """Record explicit inspection status (failure/timeout/unavailable) for a call.
+
+        Used for failed tool calls or missing results so evidence gaps are explicit
+        and never treated as clean inspection.
+        """
+        self.tool_response_findings.add(call_id, [], status=status, timestamp=datetime.utcnow())
 
     async def _await_human(
         self, action: ToolCall, result: ValidationResult
@@ -498,8 +734,10 @@ def install_tool_guard(
     has_coroutine = getattr(tool, "coroutine", None) is not None
     if native_async is None:
         native_async = has_coroutine and original_arun is not None
+    validated_body = capture_tool_body(tool)
 
     def guarded_run(*args: Any, run_manager: Any = None, config: Any = None, **kwargs: Any) -> Any:
+        ensure_tool_body(tool, validated_body, name)
         call_args = marshal_tool_args(tool, args, kwargs)
         action = enforcement.sync_before_call(name, call_args)
         output = _invoke_sync_tool(original_run, args, kwargs, run_manager, config)
@@ -512,6 +750,7 @@ def install_tool_guard(
         async def guarded_arun(
             *args: Any, run_manager: Any = None, config: Any = None, **kwargs: Any
         ) -> Any:
+            ensure_tool_body(tool, validated_body, name)
             call_args = marshal_tool_args(tool, args, kwargs)
             action = await enforcement.before_call(name, call_args)
             if native_async:

@@ -258,6 +258,18 @@ class gateMonitor(SecurityMonitor):
             checks_failed=checks_failed,
         )
     
+    @staticmethod
+    def _taint_sources_for_tool_result(tool_name: str, tool_args: Dict[str, Any] = None) -> List[str]:
+        """Deterministic v1: tool outputs influence context (tool_result); external-data tools add external_content."""
+        name = (tool_name or '').lower()
+        sources = ['tool_result']
+        external = ('http','web','search','fetch','browse','browser','email','inbox','message','slack',
+                    'retrieve','retriev','download','url','api','calendar_read','read_email','get_email',
+                    'scrape','query_external','news','weather')
+        if any(x in name for x in external):
+            sources.append('external_content')
+        return sources
+
     async def validate_result(
         self, action: ToolCall, result: Any, state: AgentState
     ) -> ValidationResult:
@@ -266,12 +278,28 @@ class gateMonitor(SecurityMonitor):
         Runs after dispatch; a failed postcondition withholds the output from
         the agent. Contract evaluation errors fail closed, as in the
         pre-execution stages.
+        On allowed results (output delivered to agent context), propagates provenance/taint:
+        marks `tool_result`; adds `external_content` for external-data tools (origin, not maliciousness).
+        Withheld/failed postconditions do NOT propagate taint.
         """
+        def _propagate():
+            try:
+                srcs = self._taint_sources_for_tool_result(action.tool_name, getattr(action, 'tool_args', None))
+                if hasattr(state, 'add_taint'):
+                    state.add_taint(*srcs, origin='tool_result', tool_name=action.tool_name, content_ref=getattr(action, 'call_id', None))
+                elif hasattr(state, 'taint_sources'):
+                    for s in srcs:
+                        if s not in state.taint_sources: state.taint_sources.append(s)
+            except Exception as e:
+                logger.debug(f"Taint propagation skipped: {e}")
+
         if not (self.config.is_check_enabled("contracts") and self.contract_registry):
+            _propagate()
             return ValidationResult(is_allowed=True, reason="Postcondition checks disabled")
 
         contract = self.contract_registry.get_contract(action.tool_name)
         if contract is None:
+            _propagate()
             return ValidationResult(is_allowed=True, reason="No contract for tool")
 
         try:
@@ -308,6 +336,8 @@ class gateMonitor(SecurityMonitor):
                 checks_failed=["postcondition"],
             )
 
+        # Propagate taint: allowed tool output influences subsequent agent context (origin, not maliciousness)
+        _propagate()
         return ValidationResult(
             is_allowed=True,
             reason="All postconditions passed",
@@ -315,12 +345,12 @@ class gateMonitor(SecurityMonitor):
         )
 
     async def check_semantic_safety(
-        self, action: str, tool_name: str, agent_id: str
+        self, action: str, tool_name: str, agent_id: str, **kwargs
     ) -> SemanticScore:
         """Check semantic safety of an action."""
         if not self.semantic_firewall:
             raise ValueError("Semantic firewall not configured")
-        return self.semantic_firewall.check_semantic_safety(action, tool_name, agent_id)
+        return self.semantic_firewall.check_semantic_safety(action, tool_name, agent_id, **kwargs)
     
     async def check_state_invariants(self, state: AgentState) -> bool:
         """Check all state invariants."""
@@ -393,34 +423,67 @@ class gateMonitor(SecurityMonitor):
     ) -> SemanticScore:
         """Check semantic safety."""
         action_description = action.get_action_description()
+        # 3C-H: pass full provenance (sources + segments) for metadata; firewall decision logic unchanged.
+        provenance = getattr(action, 'provenance', None) or getattr(state, 'provenance', None)
+        taint_sources = getattr(action, 'taint_sources', None) or getattr(state, 'taint_sources', None)
+        if provenance is None and taint_sources:
+            provenance = {'sources': taint_sources}
+        elif isinstance(provenance, dict) and taint_sources and not provenance.get('sources'):
+            provenance = {**provenance, 'sources': list(taint_sources)}
+        kwargs = {}
+        if provenance is not None:
+            kwargs['provenance'] = provenance
         score = self.semantic_firewall.check_semantic_safety(
-            action_description, action.tool_name, state.agent_id
+            action_description, action.tool_name, state.agent_id, **kwargs
         )
-        
+
         if score.decision == "BLOCK":
-            fused = score.fused_harm is not None
-            threshold = (
-                self.config.semantic_thresholds.fused_block_threshold
-                if fused
-                else self.config.semantic_thresholds.sss_block_threshold
+            thresholds = self.config.semantic_thresholds
+            by_sss = (
+                score.sss_value is not None
+                and score.sss_value < thresholds.sss_block_threshold
             )
-            detail = (
-                f"fused harm={score.fused_harm:.3f} > {threshold:.3f}"
-                if fused
-                else f"SSS={score.sss_value:.3f} < {threshold:.3f}"
-            )
+            if (score.details or {}).get("anchor_degenerate"):
+                threshold = thresholds.degenerate_intent_threshold
+                detail = (
+                    f"intent anchor degenerate (drift={score.drift_to_intent:.3f} < "
+                    f"{threshold:.3f}) and harm distance {score.drift_to_harm:.3f} < "
+                    f"safe distance {score.drift_to_safe:.3f}"
+                )
+            elif by_sss:
+                threshold = thresholds.sss_block_threshold
+                detail = f"SSS={score.sss_value:.3f} < {threshold:.3f}"
+            else:
+                threshold = thresholds.fused_block_threshold
+                detail = f"fused harm={score.fused_harm:.3f} > {threshold:.3f}"
             raise SemanticSafetyViolation(
                 f"Action semantically unsafe: {detail}",
                 sss_score=score.sss_value,
                 threshold=threshold,
                 semantic_score=score,
             )
-        
+
         return score
     
     async def _check_dcbf(self, action: ToolCall, state: AgentState) -> None:
         """Check D-CBF state invariants."""
-        is_safe, reason = self.dcbf_monitor.check_transition(state, action)
+        intent_contradiction = None
+        try:
+            fw = self.semantic_firewall
+            if fw is not None:
+                intent_text = getattr(fw, 'intent_text', None)
+                aligner = getattr(fw, 'aligner', None)
+                if intent_text and aligner is not None:
+                    scores = aligner.score(intent_text, action.get_action_description())
+                    if scores is not None:
+                        intent_contradiction = float(scores[0])
+        except Exception:
+            intent_contradiction = None
+
+        try:
+            is_safe, reason = self.dcbf_monitor.check_transition(state, action, intent_contradiction=intent_contradiction)
+        except TypeError:
+            is_safe, reason = self.dcbf_monitor.check_transition(state, action)
         
         if not is_safe:
             barrier_value = self.dcbf_monitor.evaluate_state(state)
