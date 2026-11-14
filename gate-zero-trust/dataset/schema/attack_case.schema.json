@@ -1,0 +1,351 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gate.local/schema/attack_case.schema.json",
+  "title": "GATE Zero-Trust benchmark case",
+  "description": "One benchmark instance: a malicious (atomic, compositional or contextual) or benign agent operation against a declared environment and policy set.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id", "schema_version", "category", "category_name", "subtype", "subtype_name",
+    "execution_level", "is_malicious", "difficulty", "scenario", "environment",
+    "user_objective", "agent", "tools", "expected_sequence", "proposed_action",
+    "target_resources", "policy", "expected_decision", "expected_reason",
+    "expected_enforcing_layer", "expected_state_after", "labels", "severity", "impact",
+    "audit_expectation", "provenance", "contextual_constraint"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^ZT-([A-K][0-9]{2}|BEN)-L[123]-[0-9]{4}$",
+      "description": "Deterministic identifier. Malicious: ZT-<category><subtype>-L<level>-<ordinal>. Benign: ZT-BEN-L<level>-<ordinal>."
+    },
+    "schema_version": {"type": "string", "enum": ["1.0", "1.1"]},
+    "category": {"type": "string", "enum": ["A","B","C","D","E","F","G","H","I","J","K"]},
+    "category_name": {"type": "string", "minLength": 3},
+    "subtype": {"type": "string", "pattern": "^[A-K][0-9]{2}$"},
+    "subtype_name": {"type": "string", "minLength": 3},
+    "execution_level": {"type": "integer", "enum": [1, 2, 3]},
+    "is_malicious": {"type": "boolean"},
+    "difficulty": {"type": "string", "enum": ["easy", "moderate", "hard_negative", "contextual_hard"]},
+
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["description", "threat_model", "preconditions"],
+      "properties": {
+        "description": {"type": "string", "minLength": 20},
+        "threat_model": {"type": "string", "minLength": 10},
+        "preconditions": {"type": "array", "items": {"type": "string"}, "minItems": 0}
+      }
+    },
+
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant_id", "trust_domain", "resources", "initial_state"],
+      "properties": {
+        "tenant_id": {"type": "string", "minLength": 2},
+        "trust_domain": {"type": "string", "minLength": 2},
+        "resources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["resource_id", "resource_type", "classification", "owner_tenant"],
+            "properties": {
+              "resource_id": {"type": "string", "minLength": 2},
+              "resource_type": {
+                "type": "string",
+                "enum": ["file", "directory", "database_table", "database_record", "api_endpoint",
+                         "email_account", "email_message", "calendar", "cloud_resource",
+                         "kubernetes_object", "ci_artifact", "memory_entry", "agent", "secret",
+                         "financial_account", "network_host"]
+              },
+              "classification": {"type": "string", "enum": ["public", "internal", "confidential", "restricted", "secret"]},
+              "owner_tenant": {"type": "string", "minLength": 2}
+            }
+          }
+        },
+        "initial_state": {
+          "type": "object",
+          "description": "Free-form but must be JSON-serialisable; carries counters, flags and resource mutation baselines used for postcondition/state-diff checks."
+        }
+      }
+    },
+
+    "user_objective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "source", "constraints"],
+      "properties": {
+        "text": {"type": "string", "minLength": 10},
+        "source": {"type": "string", "enum": ["trusted_user"]},
+        "constraints": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agent_id", "role", "tenant_id", "instructions", "delegation"],
+      "properties": {
+        "agent_id": {"type": "string", "minLength": 2},
+        "role": {"type": "string", "minLength": 2},
+        "tenant_id": {"type": "string", "minLength": 2},
+        "instructions": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "delegation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["parent_agent", "depth", "authorized"],
+          "properties": {
+            "parent_agent": {"type": ["string", "null"]},
+            "depth": {"type": "integer", "minimum": 0},
+            "authorized": {"type": "boolean"}
+          }
+        }
+      }
+    },
+
+    "tools": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "operations", "permissions"],
+        "properties": {
+          "name": {"type": "string", "minLength": 2},
+          "operations": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "permissions": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["allowed_operations", "resource_scope", "tenant_scope"],
+            "properties": {
+              "allowed_operations": {"type": "array", "items": {"type": "string"}},
+              "resource_scope": {"type": "array", "items": {"type": "string"}},
+              "tenant_scope": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        }
+      }
+    },
+
+    "expected_sequence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["step", "tool", "args", "operation", "target", "state_before", "state_after", "decision", "enforcing_layer"],
+        "properties": {
+          "step": {"type": "integer", "minimum": 1},
+          "tool": {"type": "string", "minLength": 2},
+          "args": {"type": "object"},
+          "operation": {"type": "string", "minLength": 3},
+          "target": {"type": "string", "minLength": 1},
+          "state_before": {"type": "object"},
+          "state_after": {"type": "object"},
+          "decision": {"type": "string", "enum": ["ALLOW", "DENY", "REQUIRE_APPROVAL"]},
+          "enforcing_layer": {
+            "type": "string",
+            "enum": ["capability", "workflow", "semantic", "ifc", "contracts", "dcbf", "hitl", "none"]
+          }
+        }
+      }
+    },
+
+    "proposed_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool", "args", "source"],
+      "properties": {
+        "tool": {"type": "string", "minLength": 2},
+        "args": {"type": "object"},
+        "source": {
+          "type": "string",
+          "enum": ["user_instruction", "agent_plan", "external_content", "tool_output", "memory", "delegated_agent"]
+        }
+      }
+    },
+
+    "target_resources": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "destination": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "channel": {"type": "string", "enum": ["email", "http", "webhook", "file_write", "database_write", "cloud_api", "agent_message"]},
+        "target": {"type": "string", "minLength": 2},
+        "trust": {"type": "string", "enum": ["internal", "approved_partner", "external", "untrusted"]}
+      }
+    },
+
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy_ids", "violated", "description"],
+      "properties": {
+        "policy_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "violated": {"type": "array", "items": {"type": "string"}, "minItems": 0},
+        "description": {"type": "string", "minLength": 10}
+      }
+    },
+
+    "expected_decision": {"type": "string", "enum": ["ALLOW", "DENY", "REQUIRE_APPROVAL"]},
+    "expected_reason": {"type": "string", "minLength": 10},
+    "expected_enforcing_layer": {
+      "type": "string",
+      "enum": ["capability", "workflow", "semantic", "ifc", "contracts", "dcbf", "hitl", "none"]
+    },
+
+    "expected_state_after": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["execution", "resource_changes", "agent_state"],
+      "properties": {
+        "execution": {"type": "string", "enum": ["executed", "not_executed", "withheld"]},
+        "resource_changes": {"type": "array", "items": {"type": "object"}},
+        "agent_state": {"type": "object"}
+      }
+    },
+
+    "labels": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overall", "per_layer"],
+      "properties": {
+        "overall": {"type": "string", "enum": ["DENY", "REQUIRE_APPROVAL", "ALLOW"]},
+        "per_layer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["capability", "workflow", "semantic", "ifc", "contracts", "dcbf", "hitl"],
+          "properties": {
+            "capability": {"$ref": "#/definitions/layer_label"},
+            "workflow": {"$ref": "#/definitions/layer_label"},
+            "semantic": {"$ref": "#/definitions/layer_label"},
+            "ifc": {"$ref": "#/definitions/layer_label"},
+            "contracts": {"$ref": "#/definitions/layer_label"},
+            "dcbf": {"$ref": "#/definitions/layer_label"},
+            "hitl": {"$ref": "#/definitions/layer_label"}
+          }
+        }
+      }
+    },
+
+    "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+    "impact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cia", "authorization_violation", "autonomy_violation"],
+      "properties": {
+        "cia": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["confidentiality", "integrity", "availability"],
+          "properties": {
+            "confidentiality": {"type": "string", "enum": ["none", "partial", "full"]},
+            "integrity": {"type": "string", "enum": ["none", "partial", "full"]},
+            "availability": {"type": "string", "enum": ["none", "partial", "full"]}
+          }
+        },
+        "authorization_violation": {"type": "boolean"},
+        "autonomy_violation": {"type": "boolean"}
+      }
+    },
+
+    "audit_expectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_types", "correlation_id_required", "tamper_evidence"],
+      "properties": {
+        "event_types": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "correlation_id_required": {"type": "boolean"},
+        "tamper_evidence": {"type": "boolean"}
+      }
+    },
+
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "generator_version", "seed", "template_id"],
+      "properties": {
+        "source": {"type": "string", "enum": ["synthetic_generated"]},
+        "generator_version": {"type": "string"},
+        "seed": {"type": "integer"},
+        "template_id": {"type": "string"}
+      }
+    },
+
+    "contextual_constraint": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "original_objective": {"type": "string", "minLength": 10},
+        "constraint": {"type": "string", "minLength": 10},
+        "violated_aspect": {"type": "string", "minLength": 5}
+      }
+    }
+  },
+  "definitions": {
+    "layer_label": {
+      "type": "string",
+      "enum": ["must_deny", "must_require_approval", "must_allow", "not_required"]
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"execution_level": {"const": 1}}},
+      "then": {"properties": {"expected_sequence": {"minItems": 1, "maxItems": 1}}}
+    },
+    {
+      "if": {"properties": {"execution_level": {"const": 2}}},
+      "then": {
+        "properties": {
+          "expected_sequence": {"minItems": 2}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"execution_level": {"const": 3}}},
+      "then": {
+        "properties": {
+          "contextual_constraint": {"type": "object"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"is_malicious": {"const": false}}},
+      "then": {
+        "properties": {
+          "expected_decision": {"const": "ALLOW"},
+          "expected_enforcing_layer": {"const": "none"},
+          "labels": {
+            "properties": {
+              "overall": {"const": "ALLOW"},
+              "per_layer": {
+                "properties": {
+                  "capability": {"const": "must_allow"},
+                  "workflow": {"const": "must_allow"},
+                  "semantic": {"const": "must_allow"},
+                  "ifc": {"const": "must_allow"},
+                  "contracts": {"const": "must_allow"},
+                  "dcbf": {"const": "must_allow"},
+                  "hitl": {"const": "must_allow"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"is_malicious": {"const": true}}},
+      "then": {
+        "properties": {
+          "expected_decision": {"enum": ["DENY", "REQUIRE_APPROVAL"]},
+          "labels": {"properties": {"overall": {"enum": ["DENY", "REQUIRE_APPROVAL"]}}}
+        }
+      }
+    }
+  ]
+}

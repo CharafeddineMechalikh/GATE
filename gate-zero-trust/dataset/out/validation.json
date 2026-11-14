@@ -1,0 +1,464 @@
+{
+  "checks": [
+    {
+      "check": "schema_correctness",
+      "passed": true,
+      "detail": "680 rows checked against attack_case.schema.json; 0 violations",
+      "evidence": {
+        "violations": []
+      }
+    },
+    {
+      "check": "unique_ids",
+      "passed": true,
+      "detail": "680 ids, 680 distinct, 0 duplicated",
+      "evidence": {
+        "duplicates": []
+      }
+    },
+    {
+      "check": "id_encoding",
+      "passed": true,
+      "detail": "680 ids decoded; 0 inconsistent",
+      "evidence": {
+        "violations": []
+      }
+    },
+    {
+      "check": "mandatory_fields",
+      "passed": true,
+      "detail": "28 required fields; 0 missing, 0 null",
+      "evidence": {
+        "missing": {},
+        "null": []
+      }
+    },
+    {
+      "check": "category_and_subtype_assignments",
+      "passed": true,
+      "detail": "120 declared subtypes; 445 malicious rows; 0 violations",
+      "evidence": {
+        "violations": []
+      }
+    },
+    {
+      "check": "execution_levels",
+      "passed": true,
+      "detail": "levels present [1, 2, 3]; 0 invalid",
+      "evidence": {
+        "1": 526,
+        "2": 88,
+        "3": 66
+      }
+    },
+    {
+      "check": "ground_truth_labels",
+      "passed": true,
+      "detail": "680 rows; 0 label inconsistencies",
+      "evidence": {
+        "violations": []
+      }
+    },
+    {
+      "check": "expected_outcomes",
+      "passed": true,
+      "detail": "680 rows; 0 outcome inconsistencies",
+      "evidence": {
+        "violations": []
+      }
+    },
+    {
+      "check": "sequence_consistency",
+      "passed": true,
+      "detail": "680 sequences; 0 violations",
+      "evidence": {
+        "violations": []
+      }
+    },
+    {
+      "check": "benign_and_hard_negatives",
+      "passed": true,
+      "detail": "235 benign (38 hard negatives) across 14 tools and levels [1, 2, 3]",
+      "evidence": {
+        "by_tool": {
+          "agent_delegate": 17,
+          "ci_pipeline": 12,
+          "cloud_api": 1,
+          "code_execute": 5,
+          "database_query": 32,
+          "file_read": 20,
+          "file_write": 33,
+          "format_template": 1,
+          "http_request": 32,
+          "k8s_api": 9,
+          "memory_write": 19,
+          "payment_api": 22,
+          "send_email": 29,
+          "sql_query": 3
+        },
+        "by_level": {
+          "1": 201,
+          "2": 28,
+          "3": 6
+        }
+      }
+    },
+    {
+      "check": "class_distributions",
+      "passed": true,
+      "detail": "11 categories, 120 subtypes, every category with 10 subtypes",
+      "evidence": {
+        "categories_below_10_subtypes": {}
+      }
+    },
+    {
+      "check": "duplicates",
+      "passed": true,
+      "detail": "0 copy pairs, 0 near-duplicate description pairs (Jaccard >= 0.9); 56 cross-level/cross-subtype payload reuses (allowed)",
+      "evidence": {
+        "exact": [],
+        "near": [],
+        "informational_reuse": [
+          {
+            "a": "ZT-A01-L1-0003",
+            "b": "ZT-A01-L3-0001",
+            "subtypes": [
+              "A01",
+              "A01"
+            ],
+            "levels": [
+              1,
+              3
+            ]
+          },
+          {
+            "a": "ZT-B02-L1-0002",
+            "b": "ZT-B02-L2-0001",
+            "subtypes": [
+              "B02",
+              "B02"
+            ],
+            "levels": [
+              1,
+              2
+            ]
+          },
+          {
+            "a": "ZT-B06-L1-0001",
+            "b": "ZT-B06-L2-0001",
+            "subtypes": [
+              "B06",
+              "B06"
+            ],
+            "levels": [
+              1,
+              2
+            ]
+          },
+          {
+            "a": "ZT-B09-L1-0001",
+            "b": "ZT-K02-L3-0002",
+            "subtypes": [
+              "B09",
+              "K02"
+            ],
+            "levels": [
+              1,
+              3
+            ]
+          },
+          {
+            "a": "ZT-B10-L1-0002",
+            "b": "ZT-B10-L2-0001",
+            "subtypes": [
+              "B10",
+              "B10"
+            ],
+            "levels": [
+              1,
+              2
+            ]
+          },
+          {
+            "a": "ZT-B10-L1-0002",
+            "b": "ZT-BEN-L1-0192",
+            "subtypes": [
+              "B10",
+              "B10"
+            ],
+            "levels": [
+              1,
+              1
+            ]
+          },
+          {
+            "a": "ZT-B10-L2-0001",
+            "b": "ZT-BEN-L1-0192",
+            "subtypes": [
+              "B10",
+              "B10"
+            ],
+            "levels": [
+              2,
+              1
+            ]
+          },
+          {
+            "a": "ZT-BEN-L1-0005",
+            "b": "ZT-BEN-L3-0001",
+            "subtypes": [
+              "D01",
+              "K02"
+            ],
+            "levels": [
+              1,
+              3
+            ]
+          },
+          {
+            "a": "ZT-BEN-L1-0052",
+            "b": "ZT-BEN-L3-0005",
+            "subtypes": [
+              "C04",
+              "C02"
+            ],
+            "levels": [
+              1,
+              3
+            ]
+          },
+          {
+            "a": "ZT-BEN-L1-0153",
+            "b": "ZT-BEN-L1-0162",
+            "subtypes": [
+              "H01",
+              "H02"
+            ],
+            "levels": [
+              1,
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "check": "reproducibility",
+      "passed": true,
+      "detail": "rebuild matches the committed dataset",
+      "evidence": {
+        "rebuild_sha256": "2aeab156b9ee5dc7dbe2e7537b2acadecb290bad6acfb2f8a7cde206c3bd6f49",
+        "file_sha256": "2aeab156b9ee5dc7dbe2e7537b2acadecb290bad6acfb2f8a7cde206c3bd6f49",
+        "manifest_sha256": "2aeab156b9ee5dc7dbe2e7537b2acadecb290bad6acfb2f8a7cde206c3bd6f49",
+        "rebuild_rows": 680,
+        "file_rows": 680
+      }
+    },
+    {
+      "check": "manifest_matches_dataset",
+      "passed": true,
+      "detail": "9 manifest fields compared; 0 drift",
+      "evidence": {
+        "drift": {}
+      }
+    }
+  ],
+  "distributions": {
+    "total": 680,
+    "malicious": 445,
+    "benign": 235,
+    "by_category": {
+      "A": 33,
+      "B": 36,
+      "C": 72,
+      "D": 76,
+      "E": 43,
+      "F": 49,
+      "G": 62,
+      "H": 60,
+      "I": 60,
+      "J": 37,
+      "K": 152
+    },
+    "by_subtype": {
+      "A01": 4,
+      "A02": 3,
+      "A03": 3,
+      "A04": 3,
+      "A05": 3,
+      "A06": 3,
+      "A07": 3,
+      "A08": 3,
+      "A09": 3,
+      "A10": 4,
+      "B01": 4,
+      "B02": 3,
+      "B03": 2,
+      "B04": 3,
+      "B05": 3,
+      "B06": 4,
+      "B07": 4,
+      "B08": 3,
+      "B09": 3,
+      "B10": 5,
+      "C01": 5,
+      "C02": 4,
+      "C03": 5,
+      "C04": 3,
+      "C05": 4,
+      "C06": 3,
+      "C07": 4,
+      "C08": 4,
+      "C09": 5,
+      "C10": 5,
+      "D01": 4,
+      "D02": 4,
+      "D03": 3,
+      "D04": 3,
+      "D05": 4,
+      "D06": 4,
+      "D07": 3,
+      "D08": 4,
+      "D09": 4,
+      "D10": 4,
+      "E01": 3,
+      "E02": 3,
+      "E03": 3,
+      "E04": 3,
+      "E05": 3,
+      "E06": 3,
+      "E07": 3,
+      "E08": 4,
+      "E09": 3,
+      "E10": 3,
+      "F01": 3,
+      "F02": 4,
+      "F03": 3,
+      "F04": 4,
+      "F05": 3,
+      "F06": 3,
+      "F07": 3,
+      "F08": 4,
+      "F09": 3,
+      "F10": 3,
+      "G01": 5,
+      "G02": 3,
+      "G03": 3,
+      "G04": 3,
+      "G05": 3,
+      "G06": 4,
+      "G07": 4,
+      "G08": 5,
+      "G09": 5,
+      "G10": 4,
+      "H01": 5,
+      "H02": 5,
+      "H03": 4,
+      "H04": 4,
+      "H05": 3,
+      "H06": 3,
+      "H07": 3,
+      "H08": 3,
+      "H09": 3,
+      "H10": 4,
+      "I01": 4,
+      "I02": 3,
+      "I03": 5,
+      "I04": 4,
+      "I05": 3,
+      "I06": 3,
+      "I07": 4,
+      "I08": 4,
+      "I09": 6,
+      "I10": 3,
+      "J01": 4,
+      "J02": 3,
+      "J03": 3,
+      "J04": 3,
+      "J05": 3,
+      "J06": 3,
+      "J07": 3,
+      "J08": 3,
+      "J09": 5,
+      "J10": 4,
+      "K01": 5,
+      "K02": 6,
+      "K03": 3,
+      "K04": 2,
+      "K05": 3,
+      "K06": 1,
+      "K07": 8,
+      "K08": 3,
+      "K09": 6,
+      "K10": 2,
+      "K11": 1,
+      "K12": 5,
+      "K13": 4,
+      "K14": 5,
+      "K15": 6,
+      "K16": 7,
+      "K17": 5,
+      "K18": 8,
+      "K19": 4,
+      "K20": 3
+    },
+    "by_level": {
+      "1": 526,
+      "2": 88,
+      "3": 66
+    },
+    "by_level_malicious": {
+      "1": 325,
+      "2": 60,
+      "3": 60
+    },
+    "by_enforcing_layer": {
+      "capability": 126,
+      "contracts": 122,
+      "dcbf": 24,
+      "hitl": 21,
+      "ifc": 51,
+      "semantic": 60,
+      "workflow": 41
+    },
+    "by_severity": {
+      "critical": 186,
+      "high": 200,
+      "low": 239,
+      "medium": 55
+    },
+    "by_difficulty": {
+      "benign/contextual_hard": 6,
+      "benign/easy": 62,
+      "benign/hard_negative": 32,
+      "benign/moderate": 135,
+      "malicious/contextual_hard": 60,
+      "malicious/easy": 325,
+      "malicious/moderate": 60
+    },
+    "by_tool": {
+      "admin_tool": 34,
+      "agent_delegate": 36,
+      "calendar_api": 7,
+      "ci_pipeline": 28,
+      "cloud_api": 17,
+      "code_execute": 75,
+      "data_analysis": 8,
+      "database_query": 54,
+      "file_read": 37,
+      "file_write": 54,
+      "format_template": 1,
+      "http_request": 120,
+      "k8s_api": 22,
+      "memory_write": 24,
+      "payment_api": 58,
+      "send_email": 85,
+      "sql_query": 17,
+      "web_search": 3
+    },
+    "by_tenant": {
+      "tenant-alpha": 680
+    }
+  },
+  "passed": true
+}
