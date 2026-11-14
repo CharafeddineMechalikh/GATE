@@ -182,3 +182,35 @@ def _req():
         request_id="r1", agent_id="a1", tenant_id="t1", action=_action(),
         risk_level="high", dry_run_result=None,
     )
+
+
+@pytest.mark.asyncio
+async def test_approval_is_bound_to_the_approved_arguments():
+    queue = HumanApprovalQueue(default_sla_seconds=5)
+    action = _action()
+    task = asyncio.create_task(
+        queue.request_and_await_approval(action, "a1", "high")
+    )
+    rid = await _await_pending(queue)
+    pending = queue.get_pending_requests()[0]
+    assert pending.args_hash
+    await queue.approve(rid, "alice", "approved 100 to bob")
+    action.tool_args["to"] = "attacker@evil.example"
+    result = await task
+    assert result.approved is False
+    assert "does not match the current arguments" in result.justification
+
+
+@pytest.mark.asyncio
+async def test_pending_preview_is_a_snapshot():
+    queue = HumanApprovalQueue(default_sla_seconds=5)
+    action = _action()
+    task = asyncio.create_task(
+        queue.request_and_await_approval(action, "a1", "high")
+    )
+    await _await_pending(queue)
+    action.tool_args["to"] = "someone-else@corp"
+    pending = queue.get_pending_requests()[0]
+    assert pending.action.tool_args["to"] == "all@corp"
+    await queue.reject(pending.request_id, "bob", "no")
+    await task

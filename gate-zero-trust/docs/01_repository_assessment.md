@@ -136,18 +136,22 @@ sense required by Layer 6 of the task.
 - `request_and_await_approval`, `approve`, `reject`, Slack/PagerDuty notifications,
   `get_pending_requests`, `get_audit_log`.
 
-**Consequence:** the full `ToolCall` is stored, but approval is **not bound to a canonical
-parameter hash**: nothing prevents approving request R and then executing a *different* call with
-the same `request_id`, and expiry is advisory (`sla_timeout_seconds` recorded, not enforced at
-resolution). This is exactly the "approval of a general task must not authorize unrelated side
-effects" property the task requires.
+**Consequence:** approval is now bound to a canonical parameter hash
+(`action_hash` over tool name and arguments). The request snapshots the `ToolCall` so the preview
+a human sees cannot be altered afterwards, and `request_and_await_approval` withholds the
+operation if the caller's arguments change while the request is pending. What is still missing:
+approval outcomes remain in an in-process list and are not written to the audit log; a granted
+approval is not a single-use token that can be replayed against a later identical call.
 
 ### 2.7 Audit, circuit breaking, tenant isolation
 
-- `gate/audit/encrypted_logger.py`: per-tenant JSONL, PII masking, retention rotation. The
-  `local` KMS backend uses `_xor_encrypt` with a locally generated key — **obfuscation, not
-  tamper-evident logging**: there is no hash chain / MAC over records, so an attacker with file
-  access can rewrite the log. Do not describe it as tamper-resistant.
+- `gate/audit/encrypted_logger.py`: per-tenant JSONL, PII masking, retention rotation, and a
+  SHA-256 hash chain over every record (`entry_hash` includes `prev_hash`), with
+  `EncryptedAuditLogger.verify_chain()` detecting edited, deleted, or reordered entries. The
+  `local` KMS backend still uses `_xor_encrypt` with a locally generated key, and the chain is
+  **unkeyed**: an attacker with write access to the log and the `.chain_head` sidecar can rebuild
+  a consistent chain. Describe it as tamper-evident against accidental or naive edits, not as
+  tamper-proof.
 - `gate/security/circuit_breaker.py`: a generic availability breaker (failure threshold,
   half-open retry, fallback). It trips on *errors*, not on security violations, and does not
   suspend an agent or a delegation subtree.
@@ -209,8 +213,8 @@ Existing corpora:
 | 4 Information-flow control | **no** | taint bookkeeping only | no labels, no propagation, no egress authorization |
 | 5 Pre/postconditions | partial | regex contracts, post-execution check | no declarative language, no state-diff, no containment |
 | 6 Runtime monitoring / D-CBF | partial | real CBF on a small state | no frequency/budget/concurrency enforcement, no emergency suspension |
-| 7 Human-in-the-loop | partial | queue + approve/reject | no exact-parameter binding, no enforced expiry |
-| Audit | partial | encrypted JSONL | **no tamper evidence** (XOR, no chain) |
+| 7 Human-in-the-loop | partial | queue + approve/reject, args-hash binding | approvals not persisted to the audit log; not single-use |
+| Audit | partial | encrypted JSONL + SHA-256 chain + `verify_chain` | chain is unkeyed; local XOR placeholder |
 | Circuit breaker | partial | availability breaker | not wired to security violations |
 | Tenant isolation | partial | contexts + namespaces | not in the authorization decision |
 

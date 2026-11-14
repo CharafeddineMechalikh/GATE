@@ -44,6 +44,18 @@ class EncryptedEvent:
     timestamp: datetime
     event_type: str
     agent_id: str
+    prev_hash: str = ""
+    entry_hash: str = ""
+
+
+GENESIS_HASH = "0" * 64
+
+
+def _record_digest(record: Dict[str, Any]) -> str:
+    """SHA-256 over the canonical record fields (entry_hash excluded)."""
+    body = {k: v for k, v in record.items() if k != "entry_hash"}
+    canonical = json.dumps(body, sort_keys=True, default=str)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 @dataclass
@@ -216,6 +228,7 @@ class EncryptedAuditLogger:
         self._writer_task: Optional[asyncio.Task] = None
         self._rotation_task: Optional[asyncio.Task] = None
         self._running = False
+        self._chain_heads: Dict[str, str] = {}
         
         logger.info(
             f"EncryptedAuditLogger initialized: path={log_path}, "
@@ -339,6 +352,7 @@ class EncryptedAuditLogger:
             for tenant_id, events in by_tenant.items():
                 tenant_log = self._get_current_log_path(tenant_id)
                 tenant_log.parent.mkdir(parents=True, exist_ok=True)
+                head = self._chain_head(tenant_log.parent)
                 
                 with open(tenant_log, "a") as f:
                     for event in events:
@@ -350,13 +364,36 @@ class EncryptedAuditLogger:
                             "timestamp": event.timestamp.isoformat(),
                             "event_type": event.event_type,
                             "agent_id": event.agent_id,
+                            "prev_hash": head,
                         }
+                        record["entry_hash"] = _record_digest(record)
                         f.write(json.dumps(record) + "\n")
+                        head = record["entry_hash"]
+                
+                self._write_chain_head(tenant_log.parent, head)
             
             logger.debug(f"Flushed {len(batch)} audit events to disk")
         
         except Exception as e:
             logger.error(f"Failed to flush audit batch: {e}", exc_info=True)
+    
+    def _chain_head(self, tenant_dir: Path) -> str:
+        """Return the last chained digest for a tenant, or genesis."""
+        key = str(tenant_dir)
+        if key not in self._chain_heads:
+            head_file = tenant_dir / ".chain_head"
+            try:
+                self._chain_heads[key] = head_file.read_text().strip() or GENESIS_HASH
+            except FileNotFoundError:
+                self._chain_heads[key] = GENESIS_HASH
+        return self._chain_heads[key]
+    
+    def _write_chain_head(self, tenant_dir: Path, head: str) -> None:
+        self._chain_heads[str(tenant_dir)] = head
+        head_file = tenant_dir / ".chain_head"
+        tmp = head_file.with_suffix(".tmp")
+        tmp.write_text(head)
+        os.replace(tmp, head_file)
     
     def _get_current_log_path(self, tenant_id: str) -> Path:
         """Get the current log file path for a tenant."""
@@ -415,6 +452,42 @@ class EncryptedAuditLogger:
         except Exception as e:
             logger.error(f"Log purge failed: {e}", exc_info=True)
     
+    @staticmethod
+    def verify_chain(path: str, expect_prev: Optional[str] = None) -> Dict[str, Any]:
+        """Verify the hash chain of one tenant log file.
+
+        Returns ``{"ok": bool, "records": int, "head": str, "first_prev": str}``
+        on success; ``ok`` is False with ``line`` and ``reason`` on the first
+        broken link. Pass the previous file's ``head`` as ``expect_prev`` to
+        verify continuity across rotated files.
+        """
+        prev = expect_prev
+        first_prev: Optional[str] = None
+        records = 0
+        with open(path, "r", encoding="utf-8") as f:
+            for lineno, line in enumerate(f, 1):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    return {"ok": False, "records": records, "line": lineno,
+                            "reason": f"invalid JSON: {exc}"}
+                recorded_prev = record.get("prev_hash")
+                if prev is None:
+                    first_prev = recorded_prev
+                elif recorded_prev != prev:
+                    return {"ok": False, "records": records, "line": lineno,
+                            "reason": "prev_hash does not match the previous entry"}
+                if _record_digest(record) != record.get("entry_hash"):
+                    return {"ok": False, "records": records, "line": lineno,
+                            "reason": "entry_hash does not match the record contents"}
+                prev = record.get("entry_hash")
+                records += 1
+        return {"ok": True, "records": records, "head": prev or "",
+                "first_prev": first_prev or ""}
+
     def get_log_stats(self) -> Dict[str, Any]:
         """Get statistics about log files."""
         stats = {
