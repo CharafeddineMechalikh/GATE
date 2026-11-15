@@ -24,6 +24,7 @@ config = gateConfig(
 | `semantic_thresholds` | `SemanticThresholds()` | Partly: only the two SSS thresholds |
 | `embedding_model_name` | `"all-MiniLM-L6-v2"` | Yes, when the semantic stage is constructed |
 | `vector_store_path` | `None` | Yes, when the semantic stage is constructed |
+| `semantic_calibration_path` | `None` | Yes, when the semantic stage is constructed: seeds safe centroids for allowlisted tools that have none |
 | `timeout_seconds` | `300.0` | Yes: whole-invocation timeout in the adapters |
 | `tenant_id` | `"default"` | Yes: HITL requests and audit events |
 | `enable_forward_invariance_verification` | `True` | Yes: passed to the D-CBF monitor |

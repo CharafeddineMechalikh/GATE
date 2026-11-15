@@ -38,9 +38,9 @@ Default thresholds from `SemanticThresholds`:
 
 | SSS | Decision |
 |---|---|
-| `> 0.7` | ALLOW |
-| `< 0.5` | BLOCK |
-| `0.5 <= SSS <= 0.7` | ESCALATE |
+| `> 0.75` | ALLOW |
+| `< 0.60` | BLOCK |
+| `0.60 <= SSS <= 0.75` | ESCALATE |
 
 ```mermaid
 flowchart TD
@@ -53,15 +53,15 @@ flowchart TD
     E --> G
     F --> G
     G --> H{"SSS evaluation"}
-    H -->|"SSS > 0.7"| I["ALLOW: dispatch tool call"]
-    H -->|"SSS < 0.5"| K["BLOCK (fail closed)"]
-    H -->|"0.5 <= SSS <= 0.7"| N{"Fused harm check<br>cross-encoder NLI"}
-    N -->|"h(a) >= 0.9024"| K
-    N -->|"h(a) < 0.9024"| J["ESCALATE: withhold for human review"]
+    H -->|"SSS > 0.75"| I["ALLOW: dispatch tool call"]
+    H -->|"SSS < 0.60"| K["BLOCK (fail closed)"]
+    H -->|"0.60 <= SSS <= 0.75"| N{"Fused harm check<br>cross-encoder NLI"}
+    N -->|"h(a) >= 0.80"| K
+    N -->|"h(a) < 0.80"| J["ESCALATE: withhold for human review"]
     L["Embedding or scoring error"] --> K
 ```
 
-Both comparisons are strict. A score of exactly `0.7` falls into the escalation band; exactly `0.5` falls into the escalation band.
+Both comparisons are strict. A score of exactly `0.75` falls into the escalation band; exactly `0.60` falls into the escalation band. The defaults were recalculated on reference benign centroids; the earlier pair was `0.7` and `0.5` with much thinner centroids, so a store calibrated the old way needs re-evaluating rather than reusing the new bounds.
 
 An `ALLOW` authorizes the tool call to dispatch. A `BLOCK` stops validation and raises `SemanticSafetyViolation`, which the guard converts to `ToolExecutionBlocked`. An `ESCALATE` returns immediately with `escalated=True` and `requires_approval=True`; the call is withheld and routed to the human approval queue. If no queue is configured or the SLA expires, the call fails closed and execution is refused.
 
@@ -79,9 +79,9 @@ The stage then behaves as an intent-drift checker. Approximate behavior with an 
 |---|---|---|
 | 0.10 | 0.91 | ALLOW |
 | 0.30 | 0.77 | ALLOW |
-| 0.40 | 0.71 | ALLOW |
+| 0.40 | 0.71 | ESCALATE |
 | 0.50 | 0.67 | ESCALATE |
-| 1.00 | 0.50 | ESCALATE |
+| 1.00 | 0.50 | BLOCK |
 | 1.50 | 0.40 | BLOCK |
 
 With no anchor at all, `drift_to_intent` is `0.5`, so SSS is approximately `0.67` and every action escalates. Adapters set an anchor through `begin_run(intent)`, but only when the run input has a usable string form. An empty input, a call path that bypasses `begin_run`, or a firewall constructed outside an adapter can leave the anchor unset.
@@ -133,6 +133,23 @@ config = gateConfig(
 
 Prototype quality dominates the score. A handful of hand-written prototypes make the stage a rough anomaly detector, not a safety classifier. Build the prototype set from the actions you actually want to refuse, and evaluate it on normal traffic before enabling BLOCK decisions in production.
 
+## Calibrating from the shipped reference calls
+
+Collecting traffic before enabling the stage is not always possible, and a centroid built from a handful of calls makes `drift_to_safe` meaningless. The package ships `gate/benign_calls.jsonl`, 152 calls across the nine tools the runtime mediates (10 to 24 per tool), authored to look like ordinary business traffic for that tool. Setting `semantic_calibration_path` seeds a centroid for every allowlisted tool that does not already have one:
+
+```python
+config = gateConfig(
+    agent_profile=profile,
+    vector_store_path="gate-vectors",
+    semantic_calibration_path="gate/benign_calls.jsonl",
+    enabled_checks={"privilege", "dfa", "semantic"},
+)
+```
+
+Calibration only fills gaps: a centroid loaded from `vector_store_path` is never overwritten. Embeddings are cached per corpus path, so constructing many monitors over the same corpus pays the cost once, and tools outside the agent's allowlist are never written. The call is explicit rather than automatic because a store you calibrated offline should stay authoritative; call `gate.security.calibration.calibrate(firewall, path)` yourself if you build the firewall without a config path.
+
+The thresholds above were set on a store calibrated from this corpus. Measured on the 414 semantic-stage calls of GATE-Union, the per-tool centroid raises the single-score separation of `drift_to_safe` from AUC 0.778 (two tools, 5 and 3 calls) to 0.963 (mean reference). With the shipped thresholds the plain SSS line leaves 174 attacks hard-blocked and 51 in the escalation band, the fused bound refuses 41 of those, and the full operating point is 1696 attacks hard-blocked and 10 withheld, with 180 of 189 benign calls allowed, 9 escalated and none blocked. A store calibrated from a few calls should have its own bounds re-measured rather than inheriting these.
+
 ## Failure behavior
 
 `check_semantic_safety` catches every exception and returns a BLOCK score:
@@ -158,7 +175,7 @@ The embedding call inside `check_semantic_safety` goes directly to `EmbeddingMod
 - Each check embeds one short string. On CPU this is typically a few milliseconds after the model is loaded, but it is still the slowest deterministic-path stage by a wide margin.
 - The action description includes raw argument values, which may be large. A megabyte-long document in a tool argument becomes a long embedding input; truncate or summarise at the tool boundary if that is a concern.
 - The intent anchor is set from the **run input**, not from a planner's stated goal. For LangGraph, the adapter uses the first of `input["input"]` or `input["messages"]` and stringifies it; for LangChain it stringifies the input. A message list becomes a Python repr. This is a usable anchor for short prompts, not a semantic summary of the task.
-- Because the run input is model-visible, the anchor is not a trust boundary. In a measured perturbation on GATE-Union, anchoring on the attack's own text released 52 of 167 semantic-stage attacks. Removing the intent term (`w = 0` in `(d_harm + eps) / (d_safe + w * d_intent + eps)`) does not fix this: it releases the same 52 permanently, because those cases are refused only for being off-intent, and it raises benign auto-allow to 186 of 189 at a 4.5% review rate. Partial weight trades the failure rather than removing it (2 releases at `w = 0.5`, 15 at `w = 0.25`). The remedy that removes it is provenance: mint the anchor where the user's goal enters the system, verify it before use, and refuse an unverified anchor. With a trusted anchor the perturbed cases return to their unperturbed outcomes (124 block, 43 escalate, none allowed).
+- Because the run input is model-visible, the anchor is not a trust boundary. In a measured perturbation on GATE-Union, anchoring on the attack's own text released 162 of 225 semantic-stage attacks (72.0%). Removing the intent term (`w = 0` in `(d_harm + eps) / (d_safe + w * d_intent + eps)`) does not fix this: it releases the same 162 permanently, because those cases are refused only for being off-intent, and it auto-allows all 189 benign calls while only 3 attacks remain in review. Partial weight trades the failure rather than removing it (35 releases at `w = 0.5`, 104 at `w = 0.25`). The remedy that removes it is provenance: mint the anchor where the user's goal enters the system, verify it before use, and refuse an unverified anchor. With a trusted anchor the perturbed cases return to their unperturbed outcomes (215 block, 10 escalate, none allowed).
 - The score is computed on the proposed action text, not on the tool result. A benign-looking tool that returns sensitive data still passes the semantic stage.
 - The stage is not adversarially robust. An attacker who can shape the tool name and arguments can also shape the embedding. Treat it as one signal among several, not as an authorization boundary.
 
