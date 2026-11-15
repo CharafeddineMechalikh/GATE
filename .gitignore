@@ -54,3 +54,11 @@ _site/
 
 # Superseded packaging metadata
 /setup.cfg
+
+# Retired corpus, scratch output and private working notes (kept on disk, never published)
+/to_delete/
+/target/
+/papers/
+/gate_union/
+/gate-union/
+*.pre_fix_backup
