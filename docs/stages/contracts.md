@@ -9,7 +9,7 @@ Contracts are looked up by **exact tool name**. There is no pattern matching, no
 ```mermaid
 flowchart TD
     A["Tool call received
-(passed stages 1-2)"] --> B{"Contracts stage
+(passed stages 1-4)"] --> B{"Contracts stage
 enabled?"}
     B -->|No| Z["ALLOW
 (skip stage)"]

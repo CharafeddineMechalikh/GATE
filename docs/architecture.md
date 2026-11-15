@@ -14,9 +14,10 @@ flowchart TD
     M -->|validates every call| GT
     M --> P["1. Privilege enforcer"]
     M --> D["2. DFA supervisor"]
-    M --> C["3. Smart contracts registry"]
-    M --> B["4. D-CBF monitor"]
-    M --> S["5. Semantic firewall"]
+    M --> S["3. Semantic firewall"]
+    M --> I["4. Information-flow control"]
+    M --> C["5. Smart contracts registry"]
+    M --> B["6. D-CBF monitor"]
 ```
 
 | Component | Module | Responsibility |
@@ -26,8 +27,9 @@ flowchart TD
 | `gateMonitor` | `gate/core/monitor.py` | Runs the enabled stages in order and reduces them to a `ValidationResult` |
 | `DefaultPrivilegeEnforcer` | `gate/security/privilege_enforcer.py` | Tool allow-list, data scope, cost estimate |
 | `DefaultDFASupervisor` | `gate/security/dfa_supervisor.py` | Execution-phase transitions, step and loop budgets |
-| `ContractRegistry` | `gate/security/smart_contracts.py` | Exact-name contract lookup; preconditions and postconditions |
 | `DefaultSemanticFirewall` | `gate/security/semantic_firewall.py` | Embedding-based safety score and ternary decision |
+| `DefaultInformationFlowController` | `gate/security/ifc.py` | Read labels and the egress trust boundary |
+| `ContractRegistry` | `gate/security/smart_contracts.py` | Exact-name contract lookup; preconditions and postconditions |
 | `EnhancedDCBFMonitor` | `gate/security/dcbf_monitor.py` | Barrier functions and forward-invariance checks |
 | `HumanApprovalQueue` | `gate/security/hitl_queue.py` | Withholds escalated calls until a human resolves them |
 | `EncryptedAuditLogger` | `gate/audit/encrypted_logger.py` | PII-masked, encrypted event log (opt-in) |
@@ -76,15 +78,16 @@ The guard is installed on the live tool object, not on a copy. A `ToolNode`, `Ag
 
 ## Validation order
 
-`gateMonitor.validate_action` runs stages in this order and returns on the first denial:
+`gateMonitor.validate_action` runs the six enforcement layers in this order. A hard denial at any layer returns immediately; a semantic escalation withholds the call but lets the later layers run, because the combiner is deny-dominant:
 
 1. **Privilege**: is this agent allowed to call this tool, touch this data resource, and spend this estimated cost?
 2. **DFA**: is a tool call legal in the current execution phase, and are the step and loop budgets intact?
-3. **Contracts**: do the tool's registered preconditions hold?
-4. **D-CBF**: does the proposed transition keep every barrier inside the safe set?
-5. **Semantic**: is the action text semantically close to harm and far from intent?
+3. **Semantic**: is the action text semantically close to harm and far from intent? A score in the escalate band withholds the call for human approval.
+4. **Information-flow control**: may the data this call carries leave to its destination, given the confidentiality labels of everything the session has read?
+5. **Contracts**: do the tool's registered preconditions hold?
+6. **D-CBF**: does the proposed transition keep every barrier inside the safe set?
 
-The order is deliberate. Cheap deterministic checks run before the embedding-based check, and any stage can veto without consulting later stages. Because the firewall runs last, `D-CBF` evaluates the barrier state before the semantic stage is consulted, so a barrier violation is blocked outright rather than escalated past it; only a call that clears every deterministic stage can reach the `ESCALATE` band.
+The two cheapest structural checks run before the embedding-based firewall, and the stateful confidentiality and budget checks run after it. A hard block from IFC, contracts or D-CBF overrides a pending semantic escalation, so an ambiguous call that also breaches a structural invariant is blocked outright rather than pushed to a human. HITL is the final decision on a withheld call (ALLOW after approval, BLOCK otherwise), not a seventh layer.
 
 ## Decision semantics
 
@@ -106,6 +109,7 @@ Each `ToolEnforcement` owns one `AgentState`. `begin_run(intent)` replaces the s
 | `step_count` | `after_call` | Number of executed tool calls |
 | `loop_count["ACTING"]` | Guard on an ACTING self-loop | Consecutive tool calls without returning to planning |
 | `tool_history` | `after_call` | Executed calls, in order |
+| `read_labels` | IFC on allowed reads | Confidentiality labels joined into the session taint set |
 | `resource_usage.api_calls` | `after_call` | Incremented by one per executed call |
 | `resource_usage.cost_usd` | Nothing in the adapter path | Stays zero; see [Privilege](stages/privilege.md) |
 
@@ -133,9 +137,10 @@ GATE is fail-closed at the dispatch boundary, but the failure modes differ by st
 | Privilege, DFA, or contract precondition denies | `ValidationResult(is_allowed=False)`; guard raises `ToolExecutionBlocked` |
 | Semantic score is in the block band | `ValidationResult(is_allowed=False)` with the score attached |
 | Semantic scoring raises an error | The firewall returns a BLOCK score with `details["error"]`; the guard refuses the call |
+| IFC refuses an egress of labelled data | `ValidationResult(is_allowed=False)` with stage `ifc`; guard raises |
 | Postcondition returns false or raises | The output is withheld; guard raises `ToolExecutionBlocked(post_execution=True)` |
 | D-CBF barrier check denies | `ValidationResult(is_allowed=False)`; guard raises |
-| Unexpected exception inside privilege/DFA/contracts/D-CBF | The exception propagates out of `validate_action` and prevents dispatch; it is not converted to a `ValidationResult` |
+| Unexpected exception inside privilege/DFA/IFC/contracts/D-CBF | The exception propagates out of `validate_action` and prevents dispatch; it is not converted to a `ValidationResult` |
 | Monitor decision exceeds caller patience | The sync bridge surfaces a timeout; no tool body has run |
 | Approval queue absent, full, expired, or rejecting | Escalated call is denied |
 

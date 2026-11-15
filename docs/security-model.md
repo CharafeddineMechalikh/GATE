@@ -45,7 +45,7 @@ GATE assumes the process itself is not compromised. It does not protect against 
 For a **guarded** tool call through a framework dispatch path:
 
 1. **No body before a decision.** The original tool body runs only after the monitor returns ALLOW, or after a human approves an escalation. A BLOCK, a refusal before the monitor, or a failed approval prevents execution.
-2. **First denial wins.** Stages run in a fixed order and stop at the first denial. A later stage cannot override an earlier refusal.
+2. **Deny-dominant ordering.** Stages run in a fixed order and a hard denial returns immediately. A semantic ESCALATE is held pending while the later stages run, so a later hard block overrides it; only a call that clears every remaining stage is withheld for approval. No later stage can turn an earlier refusal into an allow.
 3. **Postcondition failures withhold output.** A failed postcondition raises `ToolExecutionBlocked(post_execution=True)` and its output never reaches the agent.
 4. **Semantic errors fail closed.** A scoring or embedding error produces a BLOCK score.
 5. **Pre-monitor guard failures prevent dispatch.** A completed-run refusal, an illegal DFA hop, or a monitor timeout raises before the original tool body is called.
@@ -86,8 +86,9 @@ GATE cannot detect these. Keep the tool object as the only handle, and do not ha
 |---|---|
 | Privilege | Data-scope checking applies only to string arguments containing a dot and no whitespace or `@`. Undotted identifiers and non-string resources are not checked. The cost check uses a per-call estimate the adapters never set, and is not cumulative. |
 | DFA | Phases are inferred from tool calls. The stage enforces step and loop budgets, not a task plan or tool ordering. |
-| Contracts | Exact tool-name matching. Built-in SQL rules are keyword and regex checks; the row limit is recorded but not applied to the dispatched query. Code-execution rules are substring checks that are easy to evade. |
 | Semantic | Embedding similarity with prototypes that are not shipped. It is not adversarially robust and can be shaped by the same arguments an attacker controls. |
+| IFC | Confidentiality labels are regex over argument text and resource names, not a data-flow tracker. The session label is monotonic (one confidential read taints every later egress), marker coverage is finite, and there is no declassification. It is a coarse data-loss guard, not a complete DLP system. |
+| Contracts | Exact tool-name matching. Built-in SQL rules are keyword and regex checks; the row limit is recorded but not applied to the dispatched query. Code-execution rules are substring checks that are easy to evade. |
 | D-CBF | The one-step successor model carries the proposed call, the next step count and the declared cost, but not the embeddings, because the outbound content is unknown before execution. Default privacy and safety barriers can be overly restrictive rather than too permissive; the scope barrier is inert in the adapter path. Calls dispatched as one concurrent batch all see the same pre-batch history, so accumulation is enforced for sequential dispatch only. |
 
 ### Postconditions are not transactions
@@ -122,6 +123,7 @@ In scope:
 - Accidental misuse of a powerful tool by a well-behaved agent.
 - Excessive tool use (step, loop, or repeated outbound actions).
 - Data-scope violations expressed as dotted resource names.
+- Egress of confidential or secret data to a destination outside the declared trust boundary.
 - Known-bad SQL, HTTP, email, and code patterns.
 - Semantic drift from the user's stated request.
 - Explicit human review for fuzzy cases.
@@ -141,7 +143,7 @@ Out of scope:
 1. Use a deny-by-default profile. Start with an empty `allowed_tools` and add exactly what the agent needs.
 2. Pass `tools=` explicitly for every framework and assert `_gate_enforcement` on each expected tool.
 3. Keep the guarded tool object as the only handle. Do not expose raw callables.
-4. Enable the deterministic stages first: privilege, DFA, contracts. Measure the block rate on normal traffic before adding semantic or D-CBF.
+4. Enable the deterministic stages first: privilege, DFA, IFC, contracts. Measure the block rate on normal traffic before adding semantic or D-CBF.
 5. Populate semantic prototypes from your own action distribution, not from generic examples alone.
 6. Replace the built-in email, HTTP, and code contracts with application-specific ones. The built-ins are examples.
 7. Route high-impact actions through HITL with an authenticated approval surface, and shorten the SLA.
@@ -152,7 +154,7 @@ Out of scope:
 
 ## Reporting
 
-GATE is research software at version 1.1.1. If you find a bypass, open an issue with a minimal reproduction and state whether the tool reached the guard. Do not include secrets or live credentials in a report.
+GATE is research software at version 1.3.0. If you find a bypass, open an issue with a minimal reproduction and state whether the tool reached the guard. Do not include secrets or live credentials in a report.
 
 ## Related pages
 

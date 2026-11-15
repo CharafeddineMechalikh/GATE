@@ -6,7 +6,7 @@ This page wraps a compiled LangGraph and shows what happens on each decision. Th
 flowchart LR
     A["wrap_agent()"] --> B["Agent invokes tool"]
     B --> C["GATE guard intercepts"]
-    C --> D{"All 5 stages pass?"}
+    C --> D{"All 6 layers pass?"}
     D -->|Yes| E["ALLOW
 Tool runs normally"]
     D -->|No| F["BLOCK
@@ -102,12 +102,12 @@ After `invoke` finishes, `finish_run()` moves the run to `ANSWERING`. A tool cal
 
 ## Enabling the semantic stage
 
-The default `gateConfig` enables all five stages. The semantic firewall needs harm prototypes and safe centroids before its score is meaningful; without them, one of its three drift terms is a constant and the score mostly reflects drift from the run's intent anchor.
+The default `gateConfig` enables all six layers. The semantic firewall needs harm prototypes and safe centroids before its score is meaningful; without them, one of its three drift terms is a constant and the score mostly reflects drift from the run's intent anchor.
 
 ```python
 config = gateConfig(
     agent_profile=profile,
-    enabled_checks={"privilege", "dfa", "contracts", "semantic", "dcbf"},
+    enabled_checks={"privilege", "dfa", "semantic", "ifc", "contracts", "dcbf"},
     vector_store_path="gate-vectors",   # directory containing the .npy prototypes
 )
 ```

@@ -28,12 +28,15 @@ tests/                    ~40 test modules, incl. adversarial/bypass tests
 Runtime pipeline as implemented in `gate/core/monitor.py::validate_action`:
 
 ```
-privilege -> dfa -> contracts -> dcbf -> semantic
+privilege -> dfa -> semantic -> ifc -> contracts -> dcbf
 ```
 
-Each stage is fail-fast: the first `SecurityViolation` returns `is_allowed=False` and the
-remaining stages do not run. Post-execution, `validate_result` re-checks contracts against the
-actual tool output and propagates taint/provenance into `AgentState`.
+Six enforcement layers; HITL is the final decision on a withheld call, not a seventh layer.
+A hard denial at any layer returns `is_allowed=False` immediately. A semantic `ESCALATE` is
+held pending while the later layers run (deny-dominant): a later hard block overrides it, and
+only a call that clears every remaining layer is withheld for human approval. Post-execution,
+`validate_result` re-checks contracts against the actual tool output and propagates
+taint/provenance and IFC read labels into `AgentState`.
 
 ---
 

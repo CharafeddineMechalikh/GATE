@@ -10,6 +10,7 @@ from .irreversibility import IrreversibilityHandler, ActionClassification
 from .circuit_breaker import CircuitBreaker, CircuitState
 from .tenant_isolator import TenantIsolator, TenantContext
 from .hitl_queue import HumanApprovalQueue, ApprovalResult
+from .ifc import DefaultInformationFlowController, LABEL_ORDER, READ_TOOLS, EGRESS_TOOLS
 
 __all__ = [
     "DefaultSemanticFirewall",
@@ -30,4 +31,8 @@ __all__ = [
     "TenantContext",
     "HumanApprovalQueue",
     "ApprovalResult",
+    "DefaultInformationFlowController",
+    "LABEL_ORDER",
+    "READ_TOOLS",
+    "EGRESS_TOOLS",
 ]

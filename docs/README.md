@@ -19,9 +19,10 @@ The pages below form a guided path from "what it does" to "how it is built" to "
 5. The security pipeline, in check order:
    1. [Privilege](stages/privilege.md) — tool allow-lists, data scope, budget checks
    2. [DFA supervision](stages/dfa.md) — phases, transitions, step and loop budgets
-   3. [Smart contracts](stages/contracts.md) — preconditions and postconditions
-   4. [D-CBF monitor](stages/dcbf.md) — barrier functions and forward invariance
-   5. [Semantic firewall](stages/semantic-firewall.md) — SSS scoring, intent anchor, thresholds
+   3. [Semantic firewall](stages/semantic-firewall.md) — SSS scoring, intent anchor, thresholds
+   4. [Information-flow control](stages/ifc.md) — confidentiality labels, egress trust boundary
+   5. [Smart contracts](stages/contracts.md) — preconditions and postconditions
+   6. [D-CBF monitor](stages/dcbf.md) — barrier functions and forward invariance
 6. [Enforcement plumbing](enforcement.md) — `ToolEnforcement`, guards, argument marshalling, timeouts
 7. [Configuration](configuration.md) — every field and whether the runtime uses it
 8. Adapters — what complete mediation means per framework:
@@ -49,8 +50,9 @@ The pages below form a guided path from "what it does" to "how it is built" to "
 | [Enforcement plumbing](enforcement.md) | `ToolEnforcement`, guards, argument marshalling, timeouts, custom adapters |
 | [Privilege](stages/privilege.md) | Tool allow-lists, data scope, budget checks |
 | [DFA supervision](stages/dfa.md) | Phases, transitions, step and loop budgets |
-| [Smart contracts](stages/contracts.md) | Preconditions, postconditions, built-in contracts, custom contracts |
 | [Semantic firewall](stages/semantic-firewall.md) | SSS scoring, intent anchor, prototypes, thresholds, limitations |
+| [Information-flow control](stages/ifc.md) | Confidentiality labels, read tracking, egress trust boundary |
+| [Smart contracts](stages/contracts.md) | Preconditions, postconditions, built-in contracts, custom contracts |
 | [D-CBF monitor](stages/dcbf.md) | Barrier functions, forward invariance, defaults, limitations |
 | [Configuration](configuration.md) | Every configuration field and whether the runtime uses it |
 | [Adapters](adapters/README.md) | What complete mediation means per framework |
@@ -72,7 +74,7 @@ The pages below form a guided path from "what it does" to "how it is built" to "
 |---|---|
 | Distribution name | `GATE-security` |
 | Import package | `gate` |
-| Version | 1.1.1 |
+| Version | 1.3.0 |
 | Python | 3.9 or newer |
 | License | [MIT](https://github.com/CharafeddineMechalikh/GATE/blob/main/LICENSE) |
 | Runtime dependencies | `pydantic`, `numpy`, `faiss-cpu`, `sentence-transformers`, `tenacity` |
@@ -89,4 +91,4 @@ Citation details are being finalised. The [repository README](https://github.com
 
 ## Status
 
-GATE is at version 1.1.1. The adapter integration tests drive real framework dispatch paths, but the semantic firewall and D-CBF stages are not a substitute for application-level authorization. Read [Security model](security-model.md) before deploying GATE in a production path. Security reports follow [`SECURITY.md`](https://github.com/CharafeddineMechalikh/GATE/blob/main/SECURITY.md).
+GATE is at version 1.3.0. The adapter integration tests drive real framework dispatch paths, but the semantic firewall and D-CBF stages are not a substitute for application-level authorization. Read [Security model](security-model.md) before deploying GATE in a production path. Security reports follow [`SECURITY.md`](https://github.com/CharafeddineMechalikh/GATE/blob/main/SECURITY.md).

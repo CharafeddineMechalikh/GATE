@@ -12,7 +12,7 @@ flowchart TD
 
     subgraph Interception["GATE In-Place Mediation"]
         AGT -->|"dispatches tool"| GRD["Guarded BaseTool._run"]
-        GRD --> MON["gateMonitor (5 Stages)"]
+        GRD --> MON["gateMonitor (6 Layers)"]
         MON -->|"ALLOW"| TOOL["Tool Execution"]
         MON -->|"BLOCK"| BLK["ToolExecutionBlocked Exception"]
     end

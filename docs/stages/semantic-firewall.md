@@ -1,6 +1,6 @@
 # Semantic firewall
 
-The semantic stage embeds the proposed action, compares it with three references, and produces a Semantic Safety Score (SSS). It is the only stage that uses a model, and the only stage that can return `ESCALATE`. It runs last in the chain, so escalation is genuinely a last resort: a call reaches it only after privilege, DFA, contracts and the barrier monitor have all allowed it.
+The semantic stage embeds the proposed action, compares it with three references, and produces a Semantic Safety Score (SSS). It is the only layer that uses a model, and the only layer that can return `ESCALATE`. It runs third in the chain, after privilege and DFA. An `ESCALATE` is held pending while IFC, contracts and D-CBF still run: a later hard block overrides it, and only a call that clears every remaining layer is withheld for human approval.
 
 ## Inputs
 
@@ -44,7 +44,7 @@ Default thresholds from `SemanticThresholds`:
 
 ```mermaid
 flowchart TD
-    A["Proposed ToolCall<br>(passed stages 1-4)"] --> B["Action text from get_action_description()"]
+    A["Proposed ToolCall<br>(passed privilege and DFA)"] --> B["Action text from get_action_description()"]
     B --> C["Embedding"]
     C --> D["drift_to_harm: distance to harm prototypes"]
     C --> E["drift_to_safe: distance to tool safe centroid"]
@@ -208,6 +208,6 @@ The adapters do not accept a firewall argument; they call `gateMonitor(config)` 
 
 ## Related pages
 
-- [D-CBF monitor](dcbf.md) for the preceding barrier stage.
+- [Information-flow control](ifc.md) for the next stage, which can override a held ESCALATE with a hard block.
 - [Human-in-the-loop](../human-in-the-loop.md) for handling ESCALATE.
 - [Configuration](../configuration.md) for the threshold and vector-store fields.

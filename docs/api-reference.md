@@ -60,10 +60,11 @@ All are defined in `gate.core.config`. Full field semantics are in [Configuratio
 gateConfig(
     agent_profile: AgentProfile,
     semantic_thresholds: SemanticThresholds = SemanticThresholds(),
-    enabled_checks: Set[str] = {"semantic", "contracts", "dcbf", "dfa", "privilege"},
+    enabled_checks: Set[str] = {"semantic", "contracts", "dcbf", "dfa", "privilege", "ifc"},
     log_level: LogLevel = LogLevel.INFO,
     embedding_model_name: str = "all-MiniLM-L6-v2",
     vector_store_path: Optional[str] = None,
+    semantic_calibration_path: Optional[str] = None,
     audit_log_path: Optional[str] = None,
     enable_async_batching: bool = True,
     batch_window_ms: int = 10,
@@ -73,6 +74,7 @@ gateConfig(
     retry_config: RetryConfig = RetryConfig(),
     circuit_breaker_config: CircuitBreakerConfig = CircuitBreakerConfig(),
     neural_cbf_config: NeuralCBFConfig = NeuralCBFConfig(),
+    ifc_config: IFCConfig = IFCConfig(),
     trajectory_ema_alpha: float = 0.3,
     enable_forward_invariance_verification: bool = True,
 )
@@ -104,12 +106,21 @@ DataScope(
 )
 
 SemanticThresholds(
-    sss_safe_threshold: float = 0.7,
-    sss_block_threshold: float = 0.5,
+    sss_safe_threshold: float = 0.75,
+    sss_block_threshold: float = 0.60,
     drift_threshold: float = 0.8,
     harm_threshold: float = 0.2,
+    alignment_weight: float = 0.5,
+    fused_block_threshold: float = 0.8,
+    degenerate_intent_threshold: float = 0.05,
+)
+
+IFCConfig(
+    trust_boundary: Set[str] = set(),
 )
 ```
+
+`IFCConfig` is defined in `gate.core.config` (import it from there, not from the `gate` top level). `trust_boundary` declares the egress destinations; the hosts of `data_scope.allowed_api_endpoints` are always included, and an empty boundary fails closed. See [Information-flow control](stages/ifc.md).
 
 `gateConfig.validate() -> None` raises `ValueError` for an empty `agent_id`, inverted SSS thresholds, non-positive `max_steps`, non-positive `timeout_seconds`, or `max_attempts < 1`. It is not called automatically.
 
@@ -152,10 +163,13 @@ AgentState(
     loop_count: Dict[str, int] = {},
     created_at: datetime = utcnow,
     last_updated: datetime = utcnow,
+    taint_sources: List[str] = [],
+    provenance: Optional[Dict[str, Any]] = None,
+    read_labels: List[str] = [],
 )
 ```
 
-Methods: `update_timestamp()`, `add_tool_call(tool_call)`, `increment_loop(phase)`, `get_recent_tool_calls(n=5)`, `to_dict()`.
+Methods: `update_timestamp()`, `add_tool_call(tool_call)`, `increment_loop(phase)`, `get_recent_tool_calls(n=5)`, `to_dict()`. `read_labels` holds the confidentiality labels joined by the IFC layer on allowed reads; `taint_sources` and `provenance` carry the tool-result provenance segments.
 
 ### `ResourceMetrics`
 
@@ -279,6 +293,7 @@ gateMonitor(
     dfa_supervisor=None,
     privilege_enforcer=None,
     audit_logger=None,
+    ifc_controller=None,
 )
 ```
 
@@ -325,6 +340,43 @@ DefaultDFASupervisor(max_steps=50, max_loops_per_phase=3, valid_transitions=None
 | `get_transition_history()` | List of `(from, to, timestamp)` |
 | `reset_history()` | Clear history |
 
+### Semantic firewall
+
+From `gate.security.semantic_firewall`:
+
+```python
+DefaultSemanticFirewall(
+    config,
+    embedding_circuit_breaker=None,
+    vector_store_circuit_breaker=None,
+    trajectory_ema_alpha=0.3,
+)
+TrajectoryTracker(ema_alpha=0.3, max_trajectory_length=20)
+```
+
+| Method | Description |
+|---|---|
+| `check_semantic_safety(action, tool_name, agent_id) -> SemanticScore` | Synchronous scoring |
+| `async embed(text) -> np.ndarray` | Embedding with the firewall circuit breaker |
+| `set_intent_anchor(user_prompt)` | Embed and set the initial anchor |
+
+`TrajectoryTracker`: `set_initial_anchor(embedding)`, `update(embedding)`, `get_current_anchor()`, `get_drift_from_trajectory(embedding)`.
+
+### Information-flow control
+
+From `gate.security.ifc`:
+
+```python
+DefaultInformationFlowController(config)
+```
+
+| Method | Description |
+|---|---|
+| `check_flow(action, state) -> (bool, str)` | Egress lattice check; `(False, reason)` blocks |
+| `record_read(action, state)` | Join a read's confidentiality label into `state.read_labels` |
+
+Module constants: `LABEL_ORDER` (`public` < `internal` < `confidential` < `restricted` < `secret`), `READ_TOOLS`, `EGRESS_TOOLS`. The trust boundary is `ifc_config.trust_boundary` plus the hosts of `data_scope.allowed_api_endpoints`. See [Information-flow control](stages/ifc.md).
+
 ### Contracts
 
 From `gate.security.smart_contracts`:
@@ -349,28 +401,6 @@ ContractRegistry()
 | `ContractRegistry.list_contracts()` | Registered names |
 
 Built-ins: `SQLQueryContract`, `HTTPRequestContract`, `EmailSendContract`, `CodeExecutionContract`, `AdminToolContract`.
-
-### Semantic firewall
-
-From `gate.security.semantic_firewall`:
-
-```python
-DefaultSemanticFirewall(
-    config,
-    embedding_circuit_breaker=None,
-    vector_store_circuit_breaker=None,
-    trajectory_ema_alpha=0.3,
-)
-TrajectoryTracker(ema_alpha=0.3, max_trajectory_length=20)
-```
-
-| Method | Description |
-|---|---|
-| `check_semantic_safety(action, tool_name, agent_id) -> SemanticScore` | Synchronous scoring |
-| `async embed(text) -> np.ndarray` | Embedding with the firewall circuit breaker |
-| `set_intent_anchor(user_prompt)` | Embed and set the initial anchor |
-
-`TrajectoryTracker`: `set_initial_anchor(embedding)`, `update(embedding)`, `get_current_anchor()`, `get_drift_from_trajectory(embedding)`.
 
 ### D-CBF
 
@@ -502,5 +532,5 @@ The firewall reads prototypes directly; it does not use `search_nearest_harm`.
 
 ```python
 import gate
-gate.__version__  # "1.1.1"
+gate.__version__  # "1.3.0"
 ```

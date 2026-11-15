@@ -4,7 +4,7 @@ Status: **measured** (2026-11-14)
 
 Corpus: `dataset/out/dataset.jsonl`. The current build has sha256 `4ed706b9…`, 1,957 cases (1,653 attacks, 304 benign): 972 authored cases plus 985 imported from GATE-Union. Its authored split is 532 L1, 197 L2 and 243 L3, with 9 benign tasks held for approval.
 
-**Corpus revision (2026-11-14).** The numbers in this page were measured on the preceding 1,665-case corpus (1,382 attacks, 283 benign, 680 authored, sha256 `ad223e5e…`). The additional authored scenarios raise compositional and contextual coverage and add approval-gated and embedded-instruction benign negatives. Those measured results have not been re-run on the expanded corpus; they remain the last measured run and are labelled as such. The dataset-side gates are in `dataset/out/validation.md` and `dataset/out/coverage.md`.
+**Corpus revision (2026-11-15).** The headline, per-source, per-level and per-category tables below are rebased to the current 1,957-case corpus (sha256 `4ed706b9…`), measured by the full re-run in `target/audit_replay/evaluation.json` (2026-11-14). The preceding 1,665-case run (1,382 attacks, 283 benign, sha256 `ad223e5e…`) is superseded; its authored-only standalone rerun is retained in section 5 for provenance and is labelled as such. The dataset-side gates are in `dataset/out/validation.md` and `dataset/out/coverage.md`.
 
 Driver: `USE_TF=0 USE_TORCH=1 python -m gzt.evaluate --dataset dataset/out/dataset.jsonl --out target`
 
@@ -22,7 +22,7 @@ Every number below comes from replaying the recorded action sequence of each cas
 - Intervals are Wilson 95%; recall and F1 also carry a seeded bootstrap over cases (1,000 resamples, seed fixed in the harness).
 - The calibration/test split is by `sha256(case_id)[0] & 1`; nothing is tuned on the test half.
 
-The configuration is all seven layers in the order capability, workflow, semantic, ifc, contracts, dcbf, hitl, with tenant isolation before the pipeline, the circuit breaker around it, and postcondition verification after execution.
+The configuration enables six enforcement layers in the order capability, workflow, semantic, ifc, contracts, dcbf, with HITL as the final decision on a withheld call (not a seventh layer), tenant isolation before the pipeline, the circuit breaker around it, and postcondition verification after execution.
 
 ## 2. Corpus composition
 
@@ -41,30 +41,55 @@ The authored subset still carries three execution levels: 526 L1, 88 L2 and 66 L
 
 | configuration | TP | FP | FN | TN | precision | recall | F1 | accuracy | exact | hard |
 |---|---|---|---|---|---|---|---|---|---|---|
-| allow-all (no layer) | 4 | 0 | 1,378 | 283 | 100.0% | 0.3% | 0.006 | 17.2% | 17.2% | 0.3% |
-| capability only | 202 | 0 | 1,180 | 283 | 100.0% | 14.6% | 0.255 | 29.1% | 29.1% | 14.6% |
-| capability + contracts | 987 | 6 | 395 | 277 | 99.4% | 71.4% | 0.831 | 75.9% | 75.6% | 71.4% |
-| + IFC | 1,029 | 6 | 353 | 277 | 99.4% | 74.5% | 0.851 | 78.4% | 78.1% | 74.5% |
-| **full (7 layers)** | **1,143** | **6** | **239** | **277** | **99.5% [98.9, 99.8]** | **82.7% [80.6, 84.6]** | **0.903** | **85.3%** | **84.6%** | **81.7%** |
+| allow-all (no layer) | 4 | 0 | 1,649 | 295 | 100.0% | 0.2% | 0.005 | 15.3% | 15.3% | 0.2% |
+| capability only | 257 | 1 | 1,396 | 294 | 99.6% | 15.5% | 0.269 | 28.3% | 28.2% | 15.5% |
+| capability + contracts | 1,147 | 8 | 506 | 287 | 99.3% | 69.4% | 0.817 | 73.6% | 73.3% | 69.4% |
+| + IFC | 1,205 | 8 | 448 | 287 | 99.3% | 72.9% | 0.841 | 76.6% | 76.3% | 72.9% |
+| **full (6 layers + HITL)** | **1,339** | **8** | **314** | **287** | **99.4% [98.8, 99.7]** | **81.0% [79.0, 82.8]** | **0.893** | **83.5%** | **82.7%** | **80.0%** |
 
-The full pipeline contains 1,143 of 1,382 attacks and blocks 6 of 283 benign cases. Test-split recall is 84.7% (561/662) with bootstrap `[0.8187, 0.8731]`; test F1 is 0.9152 with `[0.8980, 0.9296]`. Calibration split: 582/3/138/140, recall 0.8083, F1 0.8920.
+The full pipeline contains 1,339 of 1,653 attacks and hard-blocks 8 of 304 benign cases; 314 attacks execute end to end and are reported as escapes. Test-split recall is 82.2% (648/788) with bootstrap `[0.7941, 0.8474]`; test F1 is 0.8994. Calibration split: 691/3/174/146, recall 0.7988, F1 0.8865.
 
 The gap between this table and the authored-only table below is entirely the imported corpus: imported rows use another project's tool vocabulary and argument conventions, so this is a transfer measurement, not an authored accuracy.
 
 ## 4. Per source
 
-| source | cases | TP | FP | FN | TN | precision | recall | F1 | exact | attribution |
-|---|---|---|---|---|---|---|---|---|---|---|
-| authored | 680 | 444 | 2 | 1 | 233 | 99.6% | 99.8% | 0.997 | 97.9% | 80.9% |
-| gate_original | 148 | 86 | 4 | 28 | 30 | 95.6% | 75.4% | 0.843 | 77.7% | 72.1% |
-| injecagent | 745 | 579 | 0 | 152 | 14 | 100.0% | 79.2% | 0.884 | 79.6% | 7.4% |
-| safeclawbench | 92 | 34 | 0 | 58 | 0 | 100.0% | 37.0% | 0.540 | 37.0% | 85.3% |
+| source | decided | TP | FP | FN | TN | precision | recall | F1 | exact |
+|---|---|---|---|---|---|---|---|---|---|
+| authored | 963 (+9 gated) | 640 | 4 | 76 | 243 | 99.4% | 89.4% | 0.941 | 90.2% |
+| gate_original | 148 | 86 | 4 | 28 | 30 | 95.6% | 75.4% | 0.843 | 77.7% |
+| injecagent | 745 | 579 | 0 | 152 | 14 | 100.0% | 79.2% | 0.884 | 79.6% |
+| safeclawbench | 92 | 34 | 0 | 58 | 0 | 100.0% | 37.0% | 0.540 | 37.0% |
 
-The authored row reproduces the standalone rerun exactly. The imported rows are dominated by contracts-labelled cases that the semantic layer refuses first, which is why injecagent containment is high while its layer attribution is low.
+The imported rows are dominated by contracts-labelled cases that the semantic layer refuses first, which is why injecagent containment is high while its layer attribution is low. SafeClawBench remains the hardest tail (37.0% recall). Per-source layer attribution is in `target/audit_replay/evaluation.json`.
 
-## 5. Authored-only results (680 cases)
+### Per level (1,957 combined)
 
-The authored subset rerun alone gives the same decisions as the combined run and as the previous report.
+| level | decided | TP | FP | FN | TN | recall | precision | F1 | exact |
+|---|---|---|---|---|---|---|---|---|---|
+| L1 single action | 1,517 | 1,023 | 8 | 239 | 247 | 81.1% | 99.2% | 0.892 | 83.4% |
+| L2 tool chain | 197 | 152 | 0 | 17 | 28 | 89.9% | 100.0% | 0.947 | 87.8% |
+| L3 context-conditioned | 234 | 164 | 0 | 58 | 12 | 73.9% | 100.0% | 0.850 | 73.9% |
+
+### Per category (1,957 combined)
+
+| cat | decided | TP | FP | FN | TN | recall | precision |
+|---|---|---|---|---|---|---|---|
+| A privilege escalation | 62 | 49 | 0 | 12 | 1 | 80.3% | 100.0% |
+| B tenant boundary | 60 | 49 | 0 | 9 | 2 | 84.5% | 100.0% |
+| C data exfiltration | 91 | 56 | 0 | 4 | 31 | 93.3% | 100.0% |
+| D destructive action | 106 | 54 | 0 | 10 | 42 | 84.4% | 100.0% |
+| E injection | 96 | 65 | 1 | 18 | 12 | 78.3% | 98.5% |
+| F credential/secret | 77 | 51 | 1 | 8 | 17 | 86.4% | 98.1% |
+| G resource abuse | 81 | 52 | 0 | 5 | 24 | 91.2% | 100.0% |
+| H policy bypass | 84 | 58 | 1 | 2 | 23 | 96.7% | 98.3% |
+| I privacy | 80 | 57 | 0 | 2 | 21 | 96.6% | 100.0% |
+| J integrity | 71 | 62 | 0 | 6 | 3 | 91.2% | 100.0% |
+| K approval-gated | 155 | 87 | 1 | 0 | 67 | 100.0% | 98.9% |
+| X external (imported) | 985 | 699 | 4 | 238 | 44 | 74.6% | 99.4% |
+
+## 5. Historical authored-only rerun (680 cases, prior corpus)
+
+This section is retained for provenance: it is the standalone authored-subset rerun on the preceding 1,665-case corpus (680 authored), not the current 1,957-case combined run above. On that earlier corpus the authored subset rerun alone gave the same decisions as the combined run.
 
 | configuration | TP | FP | FN | TN | precision | recall | F1 | accuracy | exact | hard |
 |---|---|---|---|---|---|---|---|---|---|---|

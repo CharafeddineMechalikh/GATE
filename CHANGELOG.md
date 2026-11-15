@@ -1,13 +1,15 @@
 # Changelog
 
-## [Unreleased]
+## [1.3.0] - 2026-11-15
 
 ### Added
 
+- Information-flow control (IFC) stage: `DefaultInformationFlowController` (`gate/security/ifc.py`) tracks confidentiality labels on data read by read-shaped tools (`sql_query`, `database_query`, `file_read`, `web_search`, `memory_read`) and refuses egress (`send_email`, `http_request`, `webhook_post`) that carries protected data outside the declared trust boundary. Secret-labelled data never egresses; confidential-or-higher data egresses only to trusted destinations declared in `IFCConfig.trust_boundary` (unioned with the hosts of `allowed_api_endpoints`). A breach raises `IFCViolation`. `AgentState` now carries `taint_sources`, `provenance`, and `read_labels`, propagated by `validate_result`. The check is a label/regex heuristic over a monotonic session label, not a precise taint tracker.
 - `AdminToolContract`, registered for `admin_tool`, scopes the administrative grant to read-only operations: it whitelists read-shaped leading verbs and rejects a mutating, capability-granting, or security-altering action with `MUTATING_ADMIN_OPERATION`, and fails closed on an empty or missing action with `MISSING_ADMIN_ACTION`. Before this, `admin_tool` had no contract, so mutating administrative calls fell through the contract stage to the semantic firewall and many escalated instead of hard-blocking.
 
 ### Changed
 
+- Reordered the enforcement pipeline to six layers: `privilege → DFA → semantic → IFC → contracts → D-CBF`. The semantic firewall now runs third (it ran last in 1.2.0) and IFC is inserted fourth. A semantic `ESCALATE` no longer short-circuits: it is held pending while the remaining layers run, and a later hard block from IFC, contracts, or D-CBF overrides it (deny-dominant). If no later layer blocks, the withheld call goes to the human approval queue. HITL is the final decision on a withheld call (ALLOW after approval, BLOCK otherwise), not a seventh layer.
 - `EnhancedDCBFMonitor` now evaluates the discrete forward-invariance condition on a real successor: the proposed call is appended to the tool history, the step count advances by one, and the call's declared `estimated_cost`, or a configurable `per_call_cost_usd` (default `0.01`), is charged to cumulative spend. `ClassKFunction` defaults to `kappa = 1.0`, so the condition reduces to `h(next) >= 0`, and the stability barrier takes part in the forward test instead of being exempt. `privacy_budget` is now read by the privacy barrier instead of a hard-coded `0.5`; a budget of `0` means "unset" and selects the default. On the union benchmark the change leaves every attack decision unchanged and refuses two benign controls that the membership-only check admitted: a read that completes a dangerous pair with an earlier outbound call, and a third outbound call that would exceed the privacy budget.
 - `CodeExecutionContract` replaces its six-substring denylist with a categorised regular-expression list (`DANGEROUS_PATTERNS`) covering destructive filesystem calls, process/shell spawning, dynamic execution, reverse shells and download-and-run pipelines, encoded payloads, native/in-memory execution, credential access, keylogging, cryptomining, and defence tampering. A match raises `DANGEROUS_CODE`. The filter stays syntactic and is not a sandbox.
 

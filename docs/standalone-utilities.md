@@ -1,6 +1,6 @@
 # Standalone utilities
 
-The modules on this page live in `gate.security` and `gate.utils` and can be used on their own. They are **not** part of the five-stage monitor pipeline unless noted. Importing them does not change adapter behaviour.
+The modules on this page live in `gate.security` and `gate.utils` and can be used on their own. They are **not** part of the six-layer monitor pipeline unless noted. Importing them does not change adapter behaviour.
 
 | Utility | Module | Used by the monitor? |
 |---|---|---|
@@ -61,7 +61,7 @@ Behaviour worth knowing:
 
 ## Irreversibility handler
 
-`IrreversibilityHandler` adds a dry-run and human-approval workflow around a single action. It is an alternative to the five-stage pipeline, not one of its stages: the adapters never construct it.
+`IrreversibilityHandler` adds a dry-run and human-approval workflow around a single action. It is an alternative to the six-layer pipeline, not one of its layers: the adapters never construct it.
 
 ```python
 from gate.security.irreversibility import (
@@ -293,7 +293,7 @@ log_execution("search", {"query": "retention"}, "ok", allowed=True)
 
 ## Related pages
 
-- [Architecture](architecture.md) for where the five-stage monitor sits.
+- [Architecture](architecture.md) for where the six-layer monitor sits.
 - [D-CBF monitor](stages/dcbf.md) for the hand-designed barriers that `NeuralCBF` can replace.
 - [Audit](audit.md) for the current audit logger.
 - [Human-in-the-loop](human-in-the-loop.md) for the queue contract used by the irreversibility handler.

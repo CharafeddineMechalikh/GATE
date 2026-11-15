@@ -66,7 +66,7 @@ Those versions are not pinned by this package. Framework internals change, and t
 
 To avoid a download on first use in an offline deployment, preload the model once in the target environment, or set `embedding_model_name` to a model already present in the local Hugging Face cache. The model is loaded when the firewall is constructed, which happens when a `gateMonitor` is built with the semantic stage enabled.
 
-The deterministic stages (`privilege`, `dfa`, `contracts`) and the D-CBF stage do not need the embedding model. Configure `enabled_checks={"privilege", "dfa", "contracts", "dcbf"}` to run without it.
+The deterministic stages (`privilege`, `dfa`, `ifc`, `contracts`) and the D-CBF stage do not need the embedding model. Configure `enabled_checks={"privilege", "dfa", "ifc", "contracts", "dcbf"}` to run without it.
 
 ## Verify the installation
 
@@ -74,7 +74,7 @@ The deterministic stages (`privilege`, `dfa`, `contracts`) and the D-CBF stage d
 import gate
 from gate import gateConfig, AgentProfile
 
-print(gate.__version__)  # 1.1.1
+print(gate.__version__)  # 1.3.0
 
 config = gateConfig(
     agent_profile=AgentProfile(
