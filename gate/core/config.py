@@ -125,6 +125,18 @@ class CircuitBreakerConfig:
 
 
 @dataclass
+class IFCConfig:
+    """Configuration for the information-flow control layer.
+
+    ``trust_boundary`` declares the destinations (hosts, domains or email
+    domains) that labelled data may leave to. The hosts of the agent profile's
+    ``allowed_api_endpoints`` are always part of the boundary. An empty
+    boundary therefore fails closed: confidential content may not egress.
+    """
+    trust_boundary: Set[str] = field(default_factory=set)
+
+
+@dataclass
 class NeuralCBFConfig:
     """Configuration for Neural CBF."""
     enabled: bool = False
@@ -142,7 +154,7 @@ class gateConfig:
     agent_profile: AgentProfile
     semantic_thresholds: SemanticThresholds = field(default_factory=SemanticThresholds)
     enabled_checks: Set[str] = field(default_factory=lambda: {
-        "semantic", "contracts", "dcbf", "dfa", "privilege"
+        "semantic", "contracts", "dcbf", "dfa", "privilege", "ifc"
     })
     log_level: LogLevel = LogLevel.INFO
     embedding_model_name: str = "all-MiniLM-L6-v2"
@@ -160,6 +172,7 @@ class gateConfig:
     retry_config: RetryConfig = field(default_factory=RetryConfig)
     circuit_breaker_config: CircuitBreakerConfig = field(default_factory=CircuitBreakerConfig)
     neural_cbf_config: NeuralCBFConfig = field(default_factory=NeuralCBFConfig)
+    ifc_config: IFCConfig = field(default_factory=IFCConfig)
     
     trajectory_ema_alpha: float = 0.3
     enable_forward_invariance_verification: bool = True

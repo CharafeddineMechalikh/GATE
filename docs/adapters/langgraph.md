@@ -13,7 +13,7 @@ flowchart TD
 
     subgraph Guarded["Guarded ToolNode Execution"]
         TN --> G["GATE Guard (_run/_arun)"]
-        G --> M["gateMonitor (5 Stages)"]
+        G --> M["gateMonitor (6 Layers)"]
         M -->|"ALLOW"| EXEC["Actual Tool Body"]
         M -->|"BLOCK"| ERR["ToolExecutionBlocked"]
     end

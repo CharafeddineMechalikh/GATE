@@ -58,7 +58,7 @@ Adapters set the anchor from the run input through `begin_run(intent)`. A manual
 
 ### Why is a call allowed even though the tool is dangerous?
 
-Only enabled stages run. The default config enables all five, but an explicit `enabled_checks` set replaces the default. The semantic stage scores the **proposed action text**, not the tool result, and it is not adversarially robust. D-CBF only inspects the state it can see, and the adapters do not populate embeddings or cost. GATE is a runtime guard, not an authorization boundary for every possible effect. See [Security model](security-model.md#known-gaps-and-bypasses).
+Only enabled layers run. The default config enables all six, but an explicit `enabled_checks` set replaces the default. The semantic stage scores the **proposed action text**, not the tool result, and it is not adversarially robust. D-CBF only inspects the state it can see, and the adapters do not populate embeddings or cost. GATE is a runtime guard, not an authorization boundary for every possible effect. See [Security model](security-model.md#known-gaps-and-bypasses).
 
 ### Why did the tool run when the postcondition failed?
 
@@ -103,7 +103,7 @@ config = gateConfig(
 )
 ```
 
-The set replaces the default of all five stages. Unknown names are ignored. Add a test that asserts the stages you rely on are active, because a typo silently drops a check. See [Configuration](configuration.md#gateconfig-fields).
+The set replaces the default of all six layers. Unknown names are ignored. Add a test that asserts the layers you rely on are active, because a typo silently drops a check. See [Configuration](configuration.md#gateconfig-fields).
 
 One exception: the completed-run refusal lives in `ToolEnforcement`, not in the DFA stage. After `finish_run()`, later tool calls are refused even when `dfa` is disabled. See [Enforcement plumbing](enforcement.md).
 
@@ -155,7 +155,7 @@ This repository distributes the runtime framework, its adapters, and their tests
 
 ### Is GATE production-ready?
 
-It is version 1.1.1. The adapter dispatch paths are tested against real framework objects, but the semantic stage and D-CBF are best-effort signals, not a substitute for application authorization. Read [Security model](security-model.md) before putting GATE in a production path.
+It is version 1.3.0. The adapter dispatch paths are tested against real framework objects, but the semantic stage and D-CBF are best-effort signals, not a substitute for application authorization. Read [Security model](security-model.md) before putting GATE in a production path.
 
 ## Licensing
 

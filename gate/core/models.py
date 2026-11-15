@@ -104,6 +104,8 @@ class AgentState:
     # Provenance/taint (optional, backward-compatible)
     taint_sources: List[str] = field(default_factory=list)
     provenance: Optional[Dict[str, Any]] = None
+    # Confidentiality labels of resources read this session (IFC layer)
+    read_labels: List[str] = field(default_factory=list)
 
     def update_timestamp(self):
         """Update the last_updated timestamp."""

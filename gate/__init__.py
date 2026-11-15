@@ -3,7 +3,7 @@ gate - Guarded Agent Tool Execution
 Zero-trust security wrapper for LLM agent frameworks.
 """
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 __author__ = "gate Team"
 
 from .core.config import (
@@ -15,6 +15,7 @@ from .core.config import (
     RetryConfig,
     CircuitBreakerConfig,
     NeuralCBFConfig,
+    IFCConfig,
 )
 from .core.exceptions import (
     gateException,
@@ -24,6 +25,7 @@ from .core.exceptions import (
     PrivilegeViolation,
     ResourceBudgetExceeded,
     DCBFViolation,
+    IFCViolation,
     DFAViolation,
     DataScopeViolation,
     EmbeddingModelError,
@@ -44,6 +46,7 @@ __all__ = [
     "RetryConfig",
     "CircuitBreakerConfig",
     "NeuralCBFConfig",
+    "IFCConfig",
     
     # Exceptions
     "gateException",
@@ -53,6 +56,7 @@ __all__ = [
     "PrivilegeViolation",
     "ResourceBudgetExceeded",
     "DCBFViolation",
+    "IFCViolation",
     "DFAViolation",
     "DataScopeViolation",
     "EmbeddingModelError",

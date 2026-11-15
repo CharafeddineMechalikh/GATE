@@ -79,7 +79,7 @@ The checked items ship today. The unchecked ones are directions rather than comm
 - [x] Encrypted local audit logger.
 - [x] YAML policy loading, circuit breaker, retry helper, tenant isolator, and irreversibility detector.
 - [x] Real per-call enforcement in all four adapters: LangChain, LangGraph, the OpenAI Agents SDK, and CrewAI.
-- [x] 441 tests at 91% coverage, run in CI on every push and pull request.
+- [x] 746 tests at 88% coverage, run in CI on every push and pull request.
 
 ### Short term
 

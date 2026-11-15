@@ -1,6 +1,6 @@
 # Configuration
 
-`gateConfig` is a dataclass. Only `agent_profile` is required. The defaults enable all five stages, which is a demanding configuration: the semantic firewall needs prototypes to be meaningful, and the default D-CBF barriers block the third outbound action in a run. Start with the deterministic stages and add the others deliberately.
+`gateConfig` is a dataclass. Only `agent_profile` is required. The defaults enable all six layers, which is a demanding configuration: the semantic firewall needs prototypes to be meaningful, and the default D-CBF barriers block the third outbound action in a run. Start with the deterministic layers and add the others deliberately.
 
 ```python
 from gate import AgentProfile, ResourceBudget, gateConfig
@@ -20,11 +20,12 @@ config = gateConfig(
 | Field | Default | Used by the runtime? |
 |---|---|---|
 | `agent_profile` | required | Yes: privilege, DFA budgets, HITL, audit tenant |
-| `enabled_checks` | `{"semantic", "contracts", "dcbf", "dfa", "privilege"}` | Yes: selects stages |
+| `enabled_checks` | `{"semantic", "contracts", "dcbf", "dfa", "privilege", "ifc"}` | Yes: selects layers |
 | `semantic_thresholds` | `SemanticThresholds()` | Partly: only the two SSS thresholds |
 | `embedding_model_name` | `"all-MiniLM-L6-v2"` | Yes, when the semantic stage is constructed |
 | `vector_store_path` | `None` | Yes, when the semantic stage is constructed |
 | `semantic_calibration_path` | `None` | Yes, when the semantic stage is constructed: seeds safe centroids for allowlisted tools that have none |
+| `ifc_config` | `IFCConfig()` | Yes, when `ifc` is enabled: declares the egress trust boundary |
 | `timeout_seconds` | `300.0` | Yes: whole-invocation timeout in the adapters |
 | `tenant_id` | `"default"` | Yes: HITL requests and audit events |
 | `enable_forward_invariance_verification` | `True` | Yes: passed to the D-CBF monitor |
@@ -38,7 +39,7 @@ config = gateConfig(
 | `circuit_breaker_config` | `CircuitBreakerConfig()` | No: the firewall creates breakers with its own defaults |
 | `trajectory_ema_alpha` | `0.3` | No: the monitor constructs the firewall with its constructor default of `0.3` |
 
-`enabled_checks` is a set of stage names. Unknown names are ignored. The recognised names are `privilege`, `dfa`, `contracts`, `semantic`, and `dcbf`.
+`enabled_checks` is a set of layer names. Unknown names are ignored. The recognised names are `privilege`, `dfa`, `semantic`, `ifc`, `contracts`, and `dcbf`.
 
 `gateConfig.validate()` checks that `agent_id` is non-empty, that `sss_safe_threshold > sss_block_threshold`, that `max_steps > 0`, `timeout_seconds > 0`, and `max_attempts >= 1`. It is **not** called automatically by `gateMonitor`, `wrap_agent`, or the adapters. Call it yourself after building a config from untrusted input.
 
@@ -89,7 +90,15 @@ The monitor invokes `check_access` only for string arguments that contain `.` an
 | `drift_threshold` | `0.8` | No |
 | `harm_threshold` | `0.2` | No |
 
-Scores between the two thresholds escalate. Both comparisons are strict.
+Scores between the two thresholds escalate. Both comparisons are strict. An escalation is held pending while the remaining layers run; a later hard block overrides it.
+
+## `IFCConfig`
+
+| Field | Default | Used? |
+|---|---|---|
+| `trust_boundary` | empty set | Yes: destinations (hosts, domains, email domains) that labelled data may egress to |
+
+The hosts of `agent_profile.data_scope.allowed_api_endpoints` are always part of the boundary. An empty boundary fails closed: confidential content may not egress at all. See [IFC](stages/ifc.md).
 
 ## `NeuralCBFConfig`
 
@@ -118,6 +127,20 @@ config = gateConfig(
 ```
 
 This gives tool allow-listing, step and loop budgets, and contract checks with no embedding model and no D-CBF barrier surprises.
+
+**Add information-flow control:**
+
+```python
+from gate.core.config import IFCConfig
+
+config = gateConfig(
+    agent_profile=profile,
+    enabled_checks={"privilege", "dfa", "ifc", "contracts"},
+    ifc_config=IFCConfig(trust_boundary={"company.com", "api.trusted-partner.com"}),
+)
+```
+
+IFC is deterministic and needs no model. It labels data read by the agent and refuses egress of confidential or secret content to destinations outside the declared trust boundary. With an empty boundary it refuses all labelled egress, which is the fail-closed default.
 
 **Add semantic scoring:**
 
@@ -194,6 +217,7 @@ There is no configuration field for a per-tool or per-approval timeout. The appr
 - [Installation](installation.md)
 - [Privilege](stages/privilege.md)
 - [DFA supervision](stages/dfa.md)
+- [Semantic firewall](stages/semantic-firewall.md)
+- [IFC](stages/ifc.md)
 - [Smart contracts](stages/contracts.md)
 - [D-CBF monitor](stages/dcbf.md)
-- [Semantic firewall](stages/semantic-firewall.md)

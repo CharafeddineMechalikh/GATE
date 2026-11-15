@@ -4,9 +4,9 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-1.1.1-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-441%20passing-brightgreen.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen.svg)](docs/testing.md)
+[![Version](https://img.shields.io/badge/version-1.3.0-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-746%20passing-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-88%25-brightgreen.svg)](docs/testing.md)
 [![Security policy](https://img.shields.io/badge/security-policy-blue.svg)](SECURITY.md)
 [![Frameworks](https://img.shields.io/badge/frameworks-4-8A2BE2.svg)](#supported-frameworks)
 [![Stars](https://img.shields.io/github/stars/CharafeddineMechalikh/GATE.svg)](https://github.com/CharafeddineMechalikh/GATE/stargazers)
@@ -23,7 +23,7 @@ The accompanying manuscript is under review; this section and [`CITATION.cff`](C
 
 Plain text:
 
-> Mechalikh, C. (2026). *GATE: A Zero-Trust Runtime Reference Monitor for LLM Agent Frameworks* (Version 1.1.1) [Computer software]. https://github.com/CharafeddineMechalikh/GATE
+> Mechalikh, C. (2026). *GATE: A Zero-Trust Runtime Reference Monitor for LLM Agent Frameworks* (Version 1.3.0) [Computer software]. https://github.com/CharafeddineMechalikh/GATE
 
 BibTeX:
 
@@ -33,7 +33,7 @@ BibTeX:
   title        = {{GATE}: A Zero-Trust Runtime Reference Monitor for {LLM} Agent Frameworks},
   year         = {2026},
   howpublished = {\url{https://github.com/CharafeddineMechalikh/GATE}},
-  note         = {Version 1.1.1, MIT license}
+  note         = {Version 1.3.0, MIT license}
 }
 ```
 
@@ -67,9 +67,9 @@ GATE moves the security decision to the one place every tool action must pass th
 - **Framework-native.** Wrap the agent you already have. No DSL, no loop rewrite, no proxy in front of the model.
 - **Decision before side effects.** A guarded tool body runs only after `ALLOW` or explicit human approval.
 - **Three outcomes.** `ALLOW`, `BLOCK`, or `ESCALATE`; escalations go to a human queue instead of being silently allowed.
-- **Defense in depth.** Five configurable stages, evaluated in order: privilege, DFA supervision, smart contracts, a discrete control barrier function (D-CBF), and the semantic firewall.
+- **Defense in depth.** Six configurable layers, evaluated in order: privilege, DFA supervision, the semantic firewall, information-flow control (IFC), smart contracts, and a discrete control barrier function (D-CBF).
 - **Fails closed.** An unexpected stage error is a denial, not a pass, and a failed postcondition withholds the output.
-- **Tested as a framework component.** 441 tests, including real dispatch paths for all four frameworks, with no API key or network required.
+- **Tested as a framework component.** 746 tests, including real dispatch paths for all four frameworks, with no API key or network required.
 
 Typical places it fits:
 
@@ -86,7 +86,7 @@ GATE installs a guard on the live tool objects the framework already dispatches 
 
 1. marshals the framework's native arguments into a `ToolCall`;
 2. advances the execution state machine;
-3. awaits `monitor.validate_action`, which runs the enabled stages in order and short-circuits on the first failure;
+3. awaits `monitor.validate_action`, which runs the enabled layers in order; a hard denial short-circuits, a semantic escalation is held until the remaining layers have run;
 4. dispatches only on `ALLOW`;
 5. after execution, calls `monitor.validate_result` and withholds the output if a contract postcondition fails.
 
@@ -101,7 +101,7 @@ flowchart TD
             OA["OpenAI Agents"] ~~~ LC["LangChain"] ~~~ LG["LangGraph"] ~~~ CW["CrewAI"]
         end
 
-        M["GATE Reference Monitor (5 Sequential Stages)<br><b>Privilege ➔ DFA ➔ Contracts ➔ D-CBF ➔ Semantic</b>"]
+        M["GATE Reference Monitor (6 Sequential Layers)<br><b>Privilege ➔ DFA ➔ Semantic ➔ IFC ➔ Contracts ➔ D-CBF</b>"]
 
         B_NODE["BLOCK<br><code>ToolExecutionBlocked</code>"]
         E_NODE["ESCALATE<br><code>Human Approval Queue</code>"]
@@ -146,15 +146,16 @@ flowchart TD
 
 ## Security stages
 
-The default configuration enables all five stages. They run in a fixed order and the first denial wins.
+The default configuration enables all six layers. They run in a fixed order. A hard denial from any layer stops the call immediately; a semantic `ESCALATE` is held pending while the remaining layers run, and a later hard block overrides it (deny-dominant). If no later layer blocks, the call goes to the human approval queue. HITL is the final decision on a withheld call, not a seventh layer.
 
-| Stage | Key | What it checks | Docs |
+| Layer | Key | What it checks | Docs |
 |---|---|---|---|
 | Privilege | `privilege` | Tool allow-list, data scope, and resource budget. | [Privilege](docs/stages/privilege.md) |
 | DFA supervision | `dfa` | Execution phases, legal transitions, step and loop budgets. | [DFA supervision](docs/stages/dfa.md) |
+| Semantic firewall | `semantic` | Semantic drift from the run's intent anchor and known harm prototypes. | [Semantic firewall](docs/stages/semantic-firewall.md) |
+| Information-flow control | `ifc` | Confidentiality labels on read data; egress payloads may not carry protected data outside the declared trust boundary. | [IFC](docs/stages/ifc.md) |
 | Smart contracts | `contracts` | Preconditions before dispatch and postconditions after execution. | [Smart contracts](docs/stages/contracts.md) |
 | D-CBF monitor | `dcbf` | Discrete control barrier functions over the agent state. | [D-CBF monitor](docs/stages/dcbf.md) |
-| Semantic firewall | `semantic` | Semantic drift from the run's intent anchor and known harm prototypes. | [Semantic firewall](docs/stages/semantic-firewall.md) |
 
 The quick-start example enables only the deterministic stages so it runs without downloading an embedding model.
 
@@ -219,7 +220,7 @@ The full end-to-end scenario in each framework, including keyless drivers, is in
 For a guarded call that reaches the guard, GATE guarantees:
 
 1. **No body before a decision.** The original tool body runs only after `ALLOW` or an approved escalation.
-2. **First denial wins.** Stages run in a fixed order and stop at the first refusal.
+2. **Deny-dominant ordering.** Layers run in a fixed order; a hard denial stops the call at once, and a later hard block overrides a pending semantic escalation.
 3. **Postconditions withhold output.** A failed postcondition raises `ToolExecutionBlocked(post_execution=True)` and the output never reaches the agent.
 4. **Semantic errors fail closed.** A scoring or embedding error becomes a `BLOCK`.
 5. **Escalation requires approval.** An escalated call is never dispatched silently.
@@ -242,7 +243,7 @@ The rendered documentation is at <https://charafeddinemechalikh.github.io/GATE/>
 - [Quick start](docs/quickstart.md): a guarded agent, block handling, approvals, audit.
 - [Framework scenarios](docs/framework-scenarios.md): the same policy and scenario in LangGraph, LangChain, OpenAI Agents, and CrewAI.
 - [Architecture](docs/architecture.md) and [Enforcement plumbing](docs/enforcement.md): how a call reaches the monitor and how guards are installed.
-- [Security stages](docs/stages/privilege.md): privilege, DFA, contracts, D-CBF, and the semantic firewall.
+- [Security stages](docs/stages/privilege.md): privilege, DFA, the semantic firewall, IFC, contracts, and D-CBF.
 - [Framework adapters](docs/adapters/README.md): what complete mediation means for each framework.
 - [Human-in-the-loop](docs/human-in-the-loop.md) and [Audit](docs/audit.md): approvals, SLA, encrypted audit log.
 - [Empirical evaluation](docs/evaluation.md): benchmark results, layer attribution, ablation study, and adversarial analysis.

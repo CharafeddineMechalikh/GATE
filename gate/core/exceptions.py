@@ -106,6 +106,15 @@ class ResourceBudgetExceeded(SecurityViolation):
         self.current = current
 
 
+class IFCViolation(SecurityViolation):
+    """Raised when the information-flow layer refuses an egress of labelled data."""
+
+    def __init__(self, message: str, label: str, destination: str, **kwargs):
+        super().__init__(message, {"label": label, "destination": destination, **kwargs})
+        self.label = label
+        self.destination = destination
+
+
 class DFAViolation(SecurityViolation):
     """Raised when DFA supervisor rejects a state transition."""
     

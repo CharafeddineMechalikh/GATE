@@ -15,6 +15,7 @@ from .interfaces import (
     DCBFMonitor,
     DFASupervisor,
     PrivilegeEnforcer,
+    InformationFlowController,
 )
 from .config import gateConfig
 from .models import ToolCall, AgentState, ValidationResult, SemanticScore
@@ -28,6 +29,7 @@ from .exceptions import (
     DataScopeViolation,
     ResourceBudgetExceeded,
     DFAViolation,
+    IFCViolation,
 )
 from ..audit.encrypted_logger import EncryptedAuditLogger, SecurityEvent
 
@@ -63,6 +65,7 @@ class gateMonitor(SecurityMonitor):
         dfa_supervisor: Optional[DFASupervisor] = None,
         privilege_enforcer: Optional[PrivilegeEnforcer] = None,
         audit_logger: Optional[EncryptedAuditLogger] = None,
+        ifc_controller: Optional[InformationFlowController] = None,
     ) -> None:
         self.config = config
         self.semantic_firewall = semantic_firewall
@@ -71,6 +74,7 @@ class gateMonitor(SecurityMonitor):
         self.dfa_supervisor = dfa_supervisor
         self.privilege_enforcer = privilege_enforcer
         self.audit_logger = audit_logger
+        self.ifc_controller = ifc_controller
         
         self._initialize_components()
         
@@ -115,21 +119,33 @@ class gateMonitor(SecurityMonitor):
             from ..security.privilege_enforcer import DefaultPrivilegeEnforcer
             self.privilege_enforcer = DefaultPrivilegeEnforcer()
             self.privilege_enforcer.register_profile(self.config.agent_profile)
+
+        if self.config.is_check_enabled("ifc") and self.ifc_controller is None:
+            from ..security.ifc import DefaultInformationFlowController
+            self.ifc_controller = DefaultInformationFlowController(self.config)
     
     async def validate_action(self, action: ToolCall, state: AgentState) -> ValidationResult:
         """
-        Validate an action against all security checks.
-        
-        Runs checks in order:
-        1. Privilege check
-        2. DFA supervisor
-        3. Smart contracts
-        4. D-CBF monitor
-        5. Semantic firewall (last, so escalation is a last resort)
+        Validate an action against all six enforcement layers.
+
+        Runs layers in order:
+        1. Privilege (capability)
+        2. DFA supervisor (workflow)
+        3. Semantic firewall
+        4. Information-flow control
+        5. Smart contracts
+        6. D-CBF monitor
+
+        The combiner is deny-dominant: a semantic ESCALATE withholds the call
+        but does not short-circuit, so a hard block from a later layer (IFC,
+        contracts, D-CBF) overrides the pending escalation. HITL is the final
+        decision on a withheld call, not a seventh layer.
         """
         checks_passed: List[str] = []
         checks_failed: List[str] = []
-        
+        semantic_score = None
+        pending_escalation = None
+
         # 1. Privilege check
         if self.config.is_check_enabled("privilege") and self.privilege_enforcer:
             try:
@@ -146,7 +162,7 @@ class gateMonitor(SecurityMonitor):
                     checks_passed=checks_passed,
                     checks_failed=checks_failed,
                 )
-        
+
         # 2. DFA supervisor
         if self.config.is_check_enabled("dfa") and self.dfa_supervisor:
             try:
@@ -163,44 +179,8 @@ class gateMonitor(SecurityMonitor):
                     checks_passed=checks_passed,
                     checks_failed=checks_failed,
                 )
-        
-        # 3. Smart contracts
-        if self.config.is_check_enabled("contracts") and self.contract_registry:
-            try:
-                await self._check_contracts(action, state)
-                checks_passed.append("contracts")
-            except ContractViolation as e:
-                logger.warning(f"Contract check failed: {e}")
-                checks_failed.append("contracts")
-                await self._log_violation(action, state, "CONTRACT_VIOLATION", str(e))
-                return ValidationResult(
-                    is_allowed=False,
-                    reason=f"Contract violation: {e.message}",
-                    details=e.details,
-                    checks_passed=checks_passed,
-                    checks_failed=checks_failed,
-                )
-        
-        # 4. D-CBF monitor
-        semantic_score = None
-        if self.config.is_check_enabled("dcbf") and self.dcbf_monitor:
-            try:
-                await self._check_dcbf(action, state)
-                checks_passed.append("dcbf")
-            except DCBFViolation as e:
-                logger.warning(f"D-CBF check failed: {e}")
-                checks_failed.append("dcbf")
-                await self._log_violation(action, state, "DCBF_VIOLATION", str(e))
-                return ValidationResult(
-                    is_allowed=False,
-                    reason=f"D-CBF violation: {e.message}",
-                    details=e.details,
-                    semantic_score=semantic_score,
-                    checks_passed=checks_passed,
-                    checks_failed=checks_failed,
-                )
 
-        # 5. Semantic firewall
+        # 3. Semantic firewall
         if self.config.is_check_enabled("semantic") and self.semantic_firewall:
             try:
                 semantic_score = await self._check_semantic_safety(action, state)
@@ -222,6 +202,7 @@ class gateMonitor(SecurityMonitor):
                 # withheld and routed to the HITL approval queue (deny by
                 # default until a human approves). Not a stage failure, so
                 # it is not added to checks_failed and stays unattributed.
+                # Later layers still run: a hard block overrides the hold.
                 logger.info(
                     f"Semantic escalation: SSS={semantic_score.sss_value:.4f} "
                     f"fused={semantic_score.fused_harm} "
@@ -233,23 +214,82 @@ class gateMonitor(SecurityMonitor):
                     f"fused_harm={semantic_score.fused_harm} in escalate band; "
                     "withheld pending human approval",
                 )
+                pending_escalation = semantic_score
+
+        # 4. Information-flow control
+        if self.config.is_check_enabled("ifc") and self.ifc_controller:
+            is_allowed, reason = self.ifc_controller.check_flow(action, state)
+            if not is_allowed:
+                logger.warning(f"IFC check failed: {reason}")
+                checks_failed.append("ifc")
+                await self._log_violation(action, state, "IFC_VIOLATION", reason)
                 return ValidationResult(
                     is_allowed=False,
-                    escalated=True,
-                    requires_approval=True,
-                    reason=(
-                        f"Semantic escalation: SSS={semantic_score.sss_value:.4f} "
-                        "is in the escalate band; awaiting human approval"
-                    ),
-                    details={"needs_user_approval": True},
+                    reason=f"Information-flow violation: {reason}",
+                    details={"read_labels": list(state.read_labels),
+                             "destination": str(action.tool_args.get("to") or action.tool_args.get("url", ""))},
                     semantic_score=semantic_score,
                     checks_passed=checks_passed,
                     checks_failed=checks_failed,
                 )
-        
-        # All checks passed
+            checks_passed.append("ifc")
+
+        # 5. Smart contracts
+        if self.config.is_check_enabled("contracts") and self.contract_registry:
+            try:
+                await self._check_contracts(action, state)
+                checks_passed.append("contracts")
+            except ContractViolation as e:
+                logger.warning(f"Contract check failed: {e}")
+                checks_failed.append("contracts")
+                await self._log_violation(action, state, "CONTRACT_VIOLATION", str(e))
+                return ValidationResult(
+                    is_allowed=False,
+                    reason=f"Contract violation: {e.message}",
+                    details=e.details,
+                    semantic_score=semantic_score,
+                    checks_passed=checks_passed,
+                    checks_failed=checks_failed,
+                )
+
+        # 6. D-CBF monitor
+        if self.config.is_check_enabled("dcbf") and self.dcbf_monitor:
+            try:
+                await self._check_dcbf(action, state)
+                checks_passed.append("dcbf")
+            except DCBFViolation as e:
+                logger.warning(f"D-CBF check failed: {e}")
+                checks_failed.append("dcbf")
+                await self._log_violation(action, state, "DCBF_VIOLATION", str(e))
+                return ValidationResult(
+                    is_allowed=False,
+                    reason=f"D-CBF violation: {e.message}",
+                    details=e.details,
+                    semantic_score=semantic_score,
+                    checks_passed=checks_passed,
+                    checks_failed=checks_failed,
+                )
+
+        if pending_escalation is not None:
+            return ValidationResult(
+                is_allowed=False,
+                escalated=True,
+                requires_approval=True,
+                reason=(
+                    f"Semantic escalation: SSS={pending_escalation.sss_value:.4f} "
+                    "is in the escalate band; awaiting human approval"
+                ),
+                details={"needs_user_approval": True},
+                semantic_score=pending_escalation,
+                checks_passed=checks_passed,
+                checks_failed=checks_failed,
+            )
+
+        # All layers passed
+        if self.config.is_check_enabled("ifc") and self.ifc_controller:
+            self.ifc_controller.record_read(action, state)
         await self._log_action_approved(action, state)
-        
+
         return ValidationResult(
             is_allowed=True,
             reason="All security checks passed",
@@ -290,6 +330,8 @@ class gateMonitor(SecurityMonitor):
                 elif hasattr(state, 'taint_sources'):
                     for s in srcs:
                         if s not in state.taint_sources: state.taint_sources.append(s)
+                if self.config.is_check_enabled("ifc") and self.ifc_controller:
+                    self.ifc_controller.record_read(action, state)
             except Exception as e:
                 logger.debug(f"Taint propagation skipped: {e}")
 

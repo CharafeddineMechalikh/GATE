@@ -10,7 +10,7 @@ flowchart TD
     Frameworks -->|"tool call"| G["GATE Guard
 (same enforcement for all)"]
     G --> M["gateMonitor
-Privilege → DFA → Contracts → D-CBF → Semantic"]
+Privilege → DFA → Semantic → IFC → Contracts → D-CBF"]
     M -->|"ALLOW"| T["Tool executes"]
     M -->|"BLOCK"| B["ToolExecutionBlocked
 raised into framework"]
@@ -386,7 +386,7 @@ assert delete_records.calls == []
 
 The following are the same for all four frameworks:
 
-- Stage order and decisions: privilege, DFA, contracts, D-CBF, semantic firewall.
+- Layer order and decisions: privilege, DFA, semantic firewall, IFC, contracts, D-CBF; deny-dominant, with HITL as the final decision on a withheld call.
 - `approval_queue=` on every `wrap_agent` call for handling `ESCALATE`.
 - Contract lookup by exact tool name, registered on `secure.monitor.contract_registry`.
 - `ToolExecutionBlocked` carries the same `ValidationResult` fields.

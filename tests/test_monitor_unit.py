@@ -27,7 +27,7 @@ def _config(**overrides):
     )
     base = dict(
         agent_profile=profile,
-        enabled_checks={"privilege", "dfa", "contracts", "semantic", "dcbf"},
+        enabled_checks={"privilege", "dfa", "contracts", "semantic", "dcbf", "ifc"},
     )
     base.update(overrides)
     return gateConfig(**base)
@@ -59,7 +59,7 @@ class SemStub:
     def __init__(self, decision="ALLOW", sss=0.9):
         self.decision, self.sss = decision, sss
 
-    def check_semantic_safety(self, action, tool_name, agent_id):
+    def check_semantic_safety(self, action, tool_name, agent_id, **kwargs):
         return SemanticScore(
             sss_value=self.sss,
             drift_to_intent=0.0,
@@ -153,7 +153,8 @@ class TestValidateActionPass:
         mon = _monitor()
         result = await mon.validate_action(_action(), AgentState(agent_id="a1"))
         assert result.is_allowed is True
-        assert set(result.checks_passed) == {"privilege", "dfa", "contracts", "semantic", "dcbf"}
+        assert set(result.checks_passed) == {"privilege", "dfa", "contracts", "semantic", "dcbf", "ifc"}
+        assert result.checks_passed == ["privilege", "dfa", "semantic", "ifc", "contracts", "dcbf"]
 
     @pytest.mark.asyncio
     async def test_approved_logged(self):
@@ -256,8 +257,8 @@ class TestDcbfStage:
 
     @pytest.mark.asyncio
     async def test_dcbf_blocks_before_escalate(self):
-        # The firewall runs after D-CBF now, so a call that trips a barrier and
-        # also sits in the escalate band is hard-blocked, not pushed to a human.
+        # The combiner is deny-dominant: a call in the escalate band that also
+        # trips a barrier is hard-blocked, not pushed to a human.
         mon = _monitor(
             sem=SemStub(decision="ESCALATE", sss=0.6),
             dcbf=DcbfStub(safe=False, reason="barrier breached"),
@@ -266,6 +267,61 @@ class TestDcbfStage:
         assert result.escalated is False
         assert result.is_allowed is False
         assert "dcbf" in result.checks_failed
+
+
+class TestIfcStage:
+    @pytest.mark.asyncio
+    async def test_secret_egress_denied(self):
+        mon = _monitor()
+        result = await mon.validate_action(
+            _action("send_email", {"to": "x@outside.com", "body": "api_key=ABCDEFGH12345678"}),
+            AgentState(agent_id="a1"),
+        )
+        assert result.is_allowed is False
+        assert result.checks_failed == ["ifc"]
+
+    @pytest.mark.asyncio
+    async def test_tainted_read_then_egress_denied(self):
+        mon = _monitor()
+        state = AgentState(agent_id="a1")
+        read = _action("database_query", {"table": "customers"})
+        assert (await mon.validate_action(read, state)).is_allowed is True
+        assert "confidential" in state.read_labels
+        result = await mon.validate_action(
+            _action("send_email", {"to": "x@outside.com", "body": "forwarding"}),
+            state,
+        )
+        assert result.is_allowed is False
+        assert result.checks_failed == ["ifc"]
+
+    @pytest.mark.asyncio
+    async def test_clean_egress_allowed(self):
+        mon = _monitor()
+        result = await mon.validate_action(
+            _action("send_email", {"to": "x@outside.com", "body": "see you monday"}),
+            AgentState(agent_id="a1"),
+        )
+        assert result.is_allowed is True
+        assert "ifc" in result.checks_passed
+
+    @pytest.mark.asyncio
+    async def test_ifc_block_overrides_escalation(self):
+        mon = _monitor(sem=SemStub(decision="ESCALATE", sss=0.6))
+        result = await mon.validate_action(
+            _action("send_email", {"to": "x@outside.com", "body": "password=ABCDEFGH12345678"}),
+            AgentState(agent_id="a1"),
+        )
+        assert result.escalated is False
+        assert result.is_allowed is False
+        assert result.checks_failed == ["ifc"]
+
+    @pytest.mark.asyncio
+    async def test_escalation_survives_later_passing_layers(self):
+        mon = _monitor(sem=SemStub(decision="ESCALATE", sss=0.6))
+        result = await mon.validate_action(_action(), AgentState(agent_id="a1"))
+        assert result.escalated is True
+        assert result.requires_approval is True
+        assert result.checks_passed == ["privilege", "dfa", "semantic", "ifc", "contracts", "dcbf"]
 
 
 class TestValidateResult:
@@ -379,3 +435,4 @@ class TestLazyInit:
         assert isinstance(mon.dfa_supervisor, DefaultDFASupervisor)
         assert mon.dcbf_monitor is not None
         assert mon.privilege_enforcer is not None
+        assert mon.ifc_controller is not None

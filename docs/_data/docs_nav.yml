@@ -27,10 +27,12 @@
       url: /stages/privilege.html
     - title: DFA supervision
       url: /stages/dfa.html
-    - title: Smart contracts
-      url: /stages/contracts.html
     - title: Semantic firewall
       url: /stages/semantic-firewall.html
+    - title: Information-flow control
+      url: /stages/ifc.html
+    - title: Smart contracts
+      url: /stages/contracts.html
     - title: D-CBF monitor
       url: /stages/dcbf.html
 

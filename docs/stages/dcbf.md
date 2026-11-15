@@ -1,6 +1,6 @@
 # D-CBF monitor
 
-The D-CBF (discrete control barrier function) stage asks whether the next action keeps the agent inside a safe set defined by five barrier functions. It runs after privilege, DFA and contracts and immediately before the semantic firewall, so a barrier violation is blocked outright before an ambiguous call can be escalated past it.
+The D-CBF (discrete control barrier function) stage asks whether the next action keeps the agent inside a safe set defined by five barrier functions. It runs last in the chain, after privilege, DFA, the semantic firewall, IFC and contracts, so a barrier violation is blocked outright even when an earlier semantic check left an escalation pending.
 
 ## The safe set
 
@@ -28,7 +28,7 @@ where `alpha(h) = kappa * h^power`. The default is `kappa = 1.0` and `power = 1`
 ```mermaid
 flowchart TD
     A["Tool call received
-(passed stages 1-3)"] --> B["Compute h_i for each barrier
+(passed stages 1-5)"] --> B["Compute h_i for each barrier
 on current state"]
     B --> C{"Any h_i(current) < 0?"}
     C -->|Yes| D["BLOCK
@@ -164,11 +164,11 @@ With `enabled=True` and the `dcbf` stage enabled, the monitor builds `NeuralCBF`
 - A barrier exception becomes `-1.0` and denies the transition.
 - A D-CBF denial raises `DCBFViolation`; the monitor records `checks_failed=["dcbf"]` and the guard raises `ToolExecutionBlocked`.
 - An unexpected exception outside a barrier's own try block propagates out of `validate_action` and prevents dispatch without producing a `ValidationResult`.
-- D-CBF runs before the semantic stage, so barrier violations are blocked outright before escalation can be considered.
+- D-CBF runs after the semantic stage, so a barrier violation hard-blocks a call even when a semantic escalation is pending (deny-dominant ordering).
 - A framework that dispatches several tool calls as one concurrent batch checks each call against the same pre-batch history, because history is recorded when a call returns. A batch of outbound calls can therefore pass the per-call successor test together even though the batch as a whole would leave the safe set. Sequential dispatch, the common one-call-per-turn loop, accumulates normally. With LangGraph's `ToolNode`, a batch of tool calls in a single `AIMessage` is dispatched concurrently, so use one call per message when the stateful barriers matter.
 
 ## Related pages
 
-- [Semantic firewall](semantic-firewall.md) for the subsequent stage.
+- [Semantic firewall](semantic-firewall.md) for the upstream layer whose escalation a D-CBF block overrides.
 - [Architecture](../architecture.md) for the full validation order.
 - [Standalone utilities](../standalone-utilities.md) for Neural CBF and the circuit breaker.

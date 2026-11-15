@@ -203,6 +203,35 @@ class PrivilegeEnforcer(ABC):
         pass
 
 
+class InformationFlowController(ABC):
+    """Interface for taint-based information-flow control (egress lattice)."""
+
+    @abstractmethod
+    def check_flow(self, action: ToolCall, state: AgentState) -> Tuple[bool, str]:
+        """
+        Check whether the data this call carries may leave to its destination.
+
+        Args:
+            action: Proposed tool call
+            state: Current agent state (carries the session read labels)
+
+        Returns:
+            Tuple of (is_allowed, reason_if_denied)
+        """
+        pass
+
+    @abstractmethod
+    def record_read(self, action: ToolCall, state: AgentState) -> None:
+        """
+        Attach a confidentiality label to a read and join it into the session.
+
+        Args:
+            action: Read tool call whose data enters the session
+            state: Current agent state
+        """
+        pass
+
+
 class SecurityMonitor(ABC):
     """Main interface for the security monitoring layer."""
     

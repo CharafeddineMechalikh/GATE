@@ -2,7 +2,7 @@
 
 A semantic `ESCALATE` is a third outcome: the action is neither clearly safe nor clearly harmful. GATE withholds it and asks a human. Until a human approves, the tool body does not run. If no approval queue is configured, the escalation becomes a refusal.
 
-Only the semantic stage escalates. Privilege, DFA, contracts, and D-CBF return binary decisions.
+Only the semantic layer escalates. Privilege, DFA, IFC, contracts, and D-CBF return binary decisions. A pending escalation is overridden if any later layer hard-blocks the call; HITL is the final decision on a call that survives all six layers, not a seventh layer.
 
 ## Configure a queue
 
